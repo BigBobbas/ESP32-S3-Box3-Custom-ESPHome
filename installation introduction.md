@@ -20,9 +20,8 @@ This guide assumes that you already have a working 'stock' firmware installed on
    Details of how to run ESPHome in different ways, can be found here INSERT LINK
  * A Working installation of HomeAssistant preferably on the same network/vlan as the device, to avoid connection issues.
  * For Voice Asssistant to function you will either need a Nabu Casa (HomeAssistant Cloud) subscription. INSERT LINK or an installation of the following add-ons (available in the HomeAssistant add-on store) 
-Whisper
-Piper
-Openwakeword
+Whisper, Piper & openwakeword
+
 
 
 To get started INSERT LINK
