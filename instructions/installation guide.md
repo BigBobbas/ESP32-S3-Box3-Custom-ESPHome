@@ -11,7 +11,7 @@
    
 6. Open your existing device config in your ESPHome installation either dashboard or editor of your choice.
    
-7. Select the entire contents of the existing config and paste in the new config to overwrite everything in the file.
+7. Select the entire contents of the existing config and paste in the new config to overwrite everything in the file.<br><br>
    
 8. click 'save' and then install - select 'wirelessly' if your device is already up and runnning with the 'stock' firmware.  Once compiling has finished and the created firmware is uploaded to the device you can then re-add it to the ESPHome integration. HomeAssistant may detect this automatically, alternatively you can manually add the device in the integration. To do this you will need the ip address assigned to the device by your router. This will be shown in the ESPHome device logs after compiling or you can obtain this from your router.
 Once the device is added to the integration, open the device from the integration and press the 'reboot' button, under the Configuration section.
