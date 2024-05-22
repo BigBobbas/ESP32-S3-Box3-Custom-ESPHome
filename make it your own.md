@@ -1,0 +1,1 @@
+In this guide I will show how to customise the config in order to add your own sensors and control your own devices that are integrated into HomeAssistant I will also provide details of how you can make changes to colours, icons etc
