@@ -3,7 +3,7 @@
    ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5fff9caf-415b-48c1-865d-61fc38c3a6e3)
 
    
-3. Copy the images and fonts folders to your config/esphome folder using Samba share add-on. If the folders already exist then copy the contents of both folder from the zip and paste them into the existing corresponding config/esphome/images and config/esphome/fonts folders.
+3. Copy the images and fonts folders to your config/esphome folder using Samba share add-on. If the folders already exist then copy the contents of both folders from the zip and paste them into the existing corresponding config/esphome/images and config/esphome/fonts folders.
    
 4. Delete the existing device from the HomeAsssistant ESPHome integration in HA >> Settings >> Devices & Services >> ESPHome - click on the 3 dot menu next to the device name and select delete.
    
