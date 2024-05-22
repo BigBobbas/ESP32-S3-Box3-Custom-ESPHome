@@ -1,5 +1,6 @@
 ## Things to do in this iteration - in no particular order.
 * write instructions
+* add instructions to output audio to a different media player.
 * create quick tap for temp to toggle heating on to a preset temp, long press to go to climate page.
 * Change display update to update on change rather than interval
 * add local media player - ADF-Pipeline
