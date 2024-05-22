@@ -26,7 +26,7 @@ The line below is in a lambda and requires a different way to comment out. this 
 now highlight everything including the i2c: line all the way to the end of the config and also comment this out , there will be many lines!<br> 
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/e0152499-6d50-4842-a343-f0a71fd448a7)<br><br>
 
-Once everything has been commented out, click save and exit the editor. Now from the device card in the dashboard click on the 3 dot menu , followed by 'clean build files' <br><br>
+Once everything has been commented out, click save and exit the editor. Now from the device card in the dashboard click on the 3 dot menu , followed by 'clean build files' <br><br>a short video can be viewed here >> [how to clean build files](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/resources/clean%20build.mp4>)<br><br>
   2. Once the dialogue says done! click install and select wirelessly.<br><br>
   3. After the firmware has uploaded the device will restart. Touch will not function and we just need at this point to check that Voice Assistant is working, assuming all is good at this point. it's now time to do the final steps.<br><br>
   4. Open the device config once more in the editor from the dashboard. you now need to un-comment all of the lines that you commented out in the steps above. simply repeat the above steps 1 & 2 (pressing ctrl & / will also remove commented blocks when highlighted) make sure to follow all of the steps including 'clean build files'<br><br>
