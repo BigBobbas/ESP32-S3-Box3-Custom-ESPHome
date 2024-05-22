@@ -8,7 +8,8 @@
 * consider moving battery state to info page and move ptt button to top bar to show on all pages
 * consider a screen timeout auto dimming with time display or other info - full brightness on touch or voice
 * create zip with all neccessary image and font files together with yaml
-
+* test bluetooth proxy operation
+  
 ## Things to do in next iteration
 * add lvgl for more dynamic controls, sliders , color picker for lights etc
   
