@@ -1,5 +1,6 @@
-## Things to do in this iteration
+## Things to do in this iteration - in no particular order.
 * write instructions
+* create quick tap for temp to toggle heating on to a preset temp, long press to go to climate page.
 * Change display update to update on change rather than interval
 * add local media player - ADF-Pipeline
 * fix API status showing as offline
@@ -9,7 +10,10 @@
 * consider a screen timeout auto dimming with time display or other info - full brightness on touch or voice
 * create zip with all neccessary image and font files together with yaml
 * test bluetooth proxy operation
+* add sensor page/pages
   
 ## Things to do in next iteration
 * add lvgl for more dynamic controls, sliders , color picker for lights etc
+* add stats pages for energy
+* 
   
