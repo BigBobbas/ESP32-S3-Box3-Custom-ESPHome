@@ -1,11 +1,11 @@
 # How to install
-1. Download and unzip the neccessary files from here INSERT LINK
+1. Download and unzip the files from here [here](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.zip)
    
-2. copy the images and fonts folders to your config/esphome folder using Samba share add-on. If the folders already exist then copy the contents of both folder from the zip and paste them into the existing corresponding config/esphome/images and config/esphome/fonts folders.
+2. Copy the images and fonts folders to your config/esphome folder using Samba share add-on. If the folders already exist then copy the contents of both folder from the zip and paste them into the existing corresponding config/esphome/images and config/esphome/fonts folders.
    
 3. Delete the existing device from the HomeAsssistant ESPHome integration in HA >> Settings >> Devices & Services >> ESPHome - click on the 3 dot menu next to the device name and select delete.
    
-4. Open sb3.yaml from the zipped download and copy the entire contents too your clipboard.
+4. Open sb3.yaml from the zipped download and copy the entire contents to your clipboard.
    
 5. Open your existing device config in your ESPHome installation either dashboard or editor of your choice.
    
