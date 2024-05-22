@@ -215,27 +215,22 @@ globals:
     initial_value: "false" 
 
 image:
-  - file: images/error_320_240.png
-    id: error_img
-    resize: 320x240
-    type: RGB24
-    use_transparency: true
-  - file: images/idle_320_240.png
+  - file: images/idle.png
     id: idle_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/listening_320_240.png
+  - file: images/listening.png
     id: listening_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/thinking_320_240.png
+  - file: images/thinking.png
     id: thinking_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/replying_320_240.png
+  - file: images/replying.png
     id: replying_img
     resize: 320x240
     type: RGB24
@@ -245,16 +240,7 @@ image:
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/error-no-wifi.png
-    id: error_no_wifi
-    resize: 320x240
-    type: RGB24
-    use_transparency: true
-  - file: images/error-no-ha.png
-    id: error_no_ha
-    resize: 320x240
-    type: RGB24
-    use_transparency: true
+
 
 sensor:
   - platform: aht10 #comment out lines 260 - 268 when fixing 'no voice' as per instructions on line 640
