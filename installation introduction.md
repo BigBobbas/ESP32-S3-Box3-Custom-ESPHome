@@ -19,7 +19,7 @@ This guide assumes that you already have a working 'stock' firmware installed on
    Please note that the compile of the config is fairly resource hungry and may fail on older devices with low ram and low processing power. However running ESPHome from a local machine with more power, will make this much faster and less likeliehood of encountering errors.
    Details of how to run ESPHome in different ways, can be found here INSERT LINK
  * A Working installation of HomeAssistant preferably on the same network/vlan as the device, to avoid connection issues.
- * Samba Share HomeAssistant add-on (available in the add-on store)or some other means of accessing your HomeAssistant files and folders. you will need to access the config/esphome ESPHome folder from your local computer in order to copy the required image files and fonts. 
+ * Samba Share HomeAssistant add-on (available in the add-on store)or some other means of accessing your HomeAssistant files and folders. you will need to access the config/esphome folder from your local computer in order to copy the required image files and fonts. 
  * For Voice Asssistant to function you will either need a Nabu Casa (HomeAssistant Cloud) subscription. INSERT LINK or an installation of the following add-ons (available in the HomeAssistant add-on store) 
 Whisper, Piper & openwakeword
 
