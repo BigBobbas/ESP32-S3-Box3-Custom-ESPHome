@@ -54,7 +54,7 @@ as great as the S3 Box 3 is, the internal speaker is hardly earth shattering, so
 Firstly find the entity_id: of the media player you want to stream the audio to. You should be able to find this from the device in question in HomeAssistant Devices & Services. Open the device page and click on the media player entity then click on the clog icon at the top of the enity box. You should now see a page similar to below, you need to make a note or copy the 
 Entity ID <br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ff31a6ea-86f9-4483-a06e-c7b19ae64e77)<br>
 Now go to the ESPHome dashboard and click 'EDIT' on the device card. You now need to scroll down and find the voice_assistant: section.<br>
-and paste in the following lines, making sure to keep the on_tts inline with the other on_xxx lines.
+Paste in the following lines, making sure to keep the on_tts inline with the other on_xxx lines.
 Don't forget to change the entity_id: to the one you copied earlier.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/27c16c06-304d-41a9-b9bb-945de94ed5cf)<br>
 to make it easier here is the code that you can copy and paste.<br>
@@ -70,7 +70,9 @@ to make it easier here is the code that you can copy and paste.<br>
               announce: "true"
 ```
 if you only want the sound output on the external device and not on the s3box you can remove or comment out the following lines.<br>
-Now you have edited the cdevice config you can click save and this time before you install you will need to carry out a 'clean build files' as described in the installation guide [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) under step 8.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d72e1bc8-6100-4d8e-ae1c-9cf630c785c4)<br><br>
+
+Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' as described in the installation guide [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) under step 8.<br>
 Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After firmware has uploaded, resboot the device and your new config should be working, with audio outputting to your external speaker.
 
 
