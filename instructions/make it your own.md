@@ -69,6 +69,9 @@ to make it easier here is the code that you can copy and paste.<br>
               media_content_type: music
               announce: "true"
 ```
+if you only want the sound output on the external device and not on the s3box you can remove or comment out the following lines.<br>
+Now you have edited the cdevice config you can click save and this time before you install you will need to carry out a 'clean build files' as described in the installation guide [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) under step 8.<br>
+Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After firmware has uploaded, resboot the device and your new config should be working, with audio outputting to your external speaker.
 
 
 
