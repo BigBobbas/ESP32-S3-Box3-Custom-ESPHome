@@ -215,6 +215,11 @@ globals:
     initial_value: "false" 
 
 image:
+  - file: images/error.png
+    id: error_img
+    resize: 320x240
+    type: RGB24
+    use_transparency: true
   - file: images/idle.png
     id: idle_img
     resize: 320x240
