@@ -6,7 +6,6 @@ The following guide will cover these topics.
    * setting your own display images for the Voice Assistant process.
    * Changing the on-device (micro wake word) wake word.
    * Divert audio responses to other media players.
-   * Add a wake word detected response sound either local to the device or to another media player.
 <br><br>
 * Add entities to the touch buttons
 * Add sensors to display the values on the screen
@@ -77,7 +76,42 @@ Once the clean is done you can then proceed to click 'install' followed by 'wire
 if you have no audio after the above steps , make sure that the s3box is allowed to make services calls. To do this open the ESPhome integration in HA next to the device there will be a configure button, click this and then tick the box as shown below.<br>
 https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e4999c-54ba-482f-897d-505828dfe71a
 <br><br>
-### Adding a 'wake' sound when Wake Word is detected.
+### Adding entities to the touch buttons, so that you can 'tap' to toggle on or off an external device.
+in the example firmware it is possible to assign devices to the 6 buttons from the home screen (bottom 2 rows). this is a fairly straight forward process for on/off entities.<br><br>
+
+In the config the middle button on the middle row is for a simple on/off light entity. We can control this by making a service call to HomeAssistant.<br><br> 
+Firstly you will need to find the Entity ID of the device you want to control. Follow the steps above that we used for finding the media player ID, it should be a similar method.<br><br>
+In the config the touch buttons are defined under the binary_sensor: section, which is right towards the end of the config. The buttons have an id of control_1 to control_6, in this example we will be looking at control_2
+<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/171547b8-d433-4bda-9367-ff2968710432)<br>
+the lines you are interested in are these :-
+```yaml
+      then:
+        - display.page.show: lights_page
+```
+everything above is the configuration of the button itself.<br>
+Currently this button is configured to open a separate page, if for example you wanted to add multiple light entities.<br>
+In order to change this we need to add the service call to HomeAssistant like so<br>
+```yaml
+        - homeassistant.service:
+            service: light.toggle
+            data:
+              entity_id: light.workshop_light
+```
+If your light is controlled by a relay , or you want to control a smartplug / socket or other on/off device. The config would look something like this.
+```yaml
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.workshop_light
+```
+the changed config should be similar to this <br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b459b975-c7af-41ba-b998-c4fe191bb057)<br>
+
+After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device from the integration! (hopefully you are getting the routine at this stage)
+
+
+
 
 
 
