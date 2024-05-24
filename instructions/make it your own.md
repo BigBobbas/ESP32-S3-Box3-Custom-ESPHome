@@ -120,26 +120,34 @@ this defines that the following block is part of the touchscreen component<br>
   ```yaml
   - platform: touchscreen
 ```
-The page_id: sets which page the button will be active on, for example if you have 2 or more pages and don't define the page_id: then tapping the screen will result in the action being applied to all pages. This can lead to unwanted results.
-    ```yaml
+The page_id: sets which page the button will be active on, for example if you have 2 or more pages and don't define the page_id: then tapping the screen will result in the action being applied to all pages. This can lead to unwanted results, with actions from multiple pages being actioned at once, or actions being applied that are not relevant to the page being displayed.
+```yaml
     page_id: idle_page
-    ```
-    
-    id: control_2 # the id: is used for internal automations on the device and allows the button to be controlled from elsewhere in the config.
+```
+```yaml
+    id: control_2
+```
+```yaml 
     internal: true # this tells the config that the button will not be exposed to HomeAssistant
+```
+```yaml
     x_min: 110
     x_max: 210
     y_min: 90
     y_max: 170
+```
+```yaml
     on_click:
       min_length: 10ms
       max_length: 500ms
-      then:
+```
+```yaml
+       then:
         - homeassistant.service:
             service: switch.toggle
             data:
               entity_id: switch.workshop_light
-          ``` 
+``` 
 
 
 
