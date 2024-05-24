@@ -78,6 +78,7 @@ https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e49
 <br><br>
 ### Adding entities to the touch buttons, so that you can 'tap' to toggle on or off an external device.
 in the example firmware it is possible to assign devices to the 6 buttons from the home screen (bottom 2 rows). this is a fairly straight forward process for on/off entities.<br><br>
+I would be looking at introducing more complex controls in the next release of this config. Such as sliders for brightness and the ability to change light colours etc. This can be done now using scenes, which we will cover later in this guide. However I'm sure you will agree that having direct control from the screen would be much better!<br><br>
 
 In the config the middle button on the middle row is for a simple on/off light entity. We can control this by making a service call to HomeAssistant.<br><br> 
 Firstly you will need to find the Entity ID of the device you want to control. Follow the steps above that we used for finding the media player ID, it should be a similar method.<br><br>
@@ -108,7 +109,38 @@ If your light is controlled by a relay , or you want to control a smartplug / so
 the changed config should be similar to this <br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b459b975-c7af-41ba-b998-c4fe191bb057)<br>
 
-After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device from the integration! (hopefully you are getting the routine at this stage)
+After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device from the integration! (hopefully you are getting the routine at this stage). Now go ahead and test that tapping the button toggles your light or switch on or off.<br><br>
+this method can be applied to any of the buttons.<br><br>
+I will now go into a little more detail, to hopefully give you the information to create your own touch buttons.<br><br>
+Each button consists of 2 parts.<br>
+1. The touch - where on the screen you click and how it reacts.
+2. What you visually see on the screen to represent the button.
+   #### The Touch
+this defines that the following block is part of the touchscreen component<br>
+  ```yaml
+  - platform: touchscreen
+```
+The page_id: sets which page the button will be active on, for example if you have 2 or more pages and don't define the page_id: then tapping the screen will result in the action being applied to all pages. This can lead to unwanted results.
+    ```yaml
+    page_id: idle_page
+    ```
+    
+    id: control_2 # the id: is used for internal automations on the device and allows the button to be controlled from elsewhere in the config.
+    internal: true # this tells the config that the button will not be exposed to HomeAssistant
+    x_min: 110
+    x_max: 210
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.workshop_light
+          ``` 
+
 
 
 
