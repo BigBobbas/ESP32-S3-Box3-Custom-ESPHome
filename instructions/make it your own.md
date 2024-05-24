@@ -124,23 +124,30 @@ The page_id: sets which page the button will be active on, for example if you ha
 ```yaml
     page_id: idle_page
 ```
+The id: you will see in multiple places within any ESPHome yaml config, this is used to reference this section internally within the code, to allow other components and services access, for internal automations etc. 
 ```yaml
     id: control_2
 ```
+This line defines that the entity is not to be exposed to HomeAssistant and only to be used internally by the config.
 ```yaml 
-    internal: true # this tells the config that the button will not be exposed to HomeAssistant
+    internal: true 
 ```
+The following lines define where and what area that you want the button to be active on the display. With the s3box3 the screeen dimensions are 320 x 240 pixels. The below lines instruct that the start of the touch area will be at the 110th pixel accross and will end at the 210th pixel accross, it will start at the 90th pixel down and end at the 170th pixel down, resulting in a rectangle that will be active as a button. It is important whne defining touch areas that the co-ordintates don't overlap as this will result in 2 buttons being pressed simultaneously.
+
 ```yaml
     x_min: 110
     x_max: 210
     y_min: 90
     y_max: 170
 ```
+You will often see lines in ESPHome configs that start with on_ these are triggers, or hooks and in this instance say that 
+on_click (when you tap the defined area) and your touch was for at least 10ms and no more than 500ms then carry out the action defined below. 
 ```yaml
     on_click:
       min_length: 10ms
       max_length: 500ms
 ```
+This is the action part of the automation so reading the full config it essentially says if this area is pressed for this duration then do the following. in this case is is configured to make the service call to HomeAssistant to toggle an entity and the entity is ...
 ```yaml
        then:
         - homeassistant.service:
@@ -148,7 +155,7 @@ The page_id: sets which page the button will be active on, for example if you ha
             data:
               entity_id: switch.workshop_light
 ``` 
-
+to add a new button, you can copy and paste the block for one button and change the id: so that it is unique, you can't use the same id: twice. Define which page you want the button to be active on, using page_id: , adjust the dimensions and location of the button and finally add the automation for what you want the button to do.<br><br> There are various other things that can be done using the touchscreen that are beyond the scope of this guide. More information can be found [here](<https://esphome.io/components/touchscreen/index.html>)
 
 
 
