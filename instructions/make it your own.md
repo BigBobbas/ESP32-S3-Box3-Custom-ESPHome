@@ -114,8 +114,8 @@ this method can be applied to any of the buttons.<br><br>
 I will now go into a little more detail, to hopefully give you the information to create your own touch buttons.<br><br>
 Each button consists of 2 parts.<br>
 1. The touch - where on the screen you click and how it reacts.
-2. What you visually see on the screen to represent the button.
-   #### The Touch
+2. What you visually see on the screen to represent the button.<br>
+#### The Touch
 this defines that the following block is part of the touchscreen component<br>
   ```yaml
   - platform: touchscreen
@@ -155,7 +155,48 @@ This is the action part of the automation so reading the full config it essentia
             data:
               entity_id: switch.workshop_light
 ``` 
-to add a new button, you can copy and paste the block for one button and change the id: so that it is unique, you can't use the same id: twice. Define which page you want the button to be active on, using page_id: , adjust the dimensions and location of the button and finally add the automation for what you want the button to do.<br><br> There are various other things that can be done using the touchscreen that are beyond the scope of this guide. More information can be found [here](<https://esphome.io/components/touchscreen/index.html>)
+to add a new button, you can copy and paste the block for one button and change the id: so that it is unique, you can't use the same id: twice. Define which page you want the button to be active on, using page_id: , adjust the dimensions and location of the button and finally add the automation for what you want the button to do.<br><br> There are various other things that can be done using the touchscreen that are beyond the scope of this guide. More information can be found [here](<https://esphome.io/components/touchscreen/index.html>)<br><br>
+#### The Display<br><br>
+So now we have covered how the touch buttons ae created and how they work, let's take a look at how we make them visible on the display. There are several ways that you can visually represent the area to be touched to make it a button. You can simply display text, and image or in this case we will use material design icons, these are used in HomeAssistant so it is nice to have uniforimty accross platforms.<br><br>
+The source I use for obtaining the icons is [here](<https://pictogrammers.com/library/mdi/>)<br>
+In this example I will show how to add an icon that can be used in your config. The first part of the config we need to look at for this is the font: section<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/c159cf5e-e05c-4d6e-a633-c51258f01e45)<br>
+Here we can define a liste of icons to be used throughout the config.<br>
+all of the mdi-icons are defined in the same manner "\U000" and then after the thress 0's we add the code from the site i posted above. I will show how to add a switch icon. Firstly search for the icon you want in this case i will type "switch" <br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a05ce114-dcb1-4ec2-8957-fb58ffd48265)<br>
+I will use the light-switch for this example. If you click on the icon you want to use you will now see a box with the relavant code required in order to use that icon.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/2fea9c65-563f-40df-81f4-76ca550c0048)<br>
+I have outlined the code we need in red in the image above. all you need to do is add this code after the three zeros asshown above. the result being "\U000F097E" add this to the list in the code like so.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ad541c60-9471-4495-a00d-a8642f43cfe3)<br>
+adding #name(light switch in this case) will make it easier for you to loacte the icon code to use later. the # prefix is required to make this a comment and not part of the yaml config.<br><br>
+Now that you have your icon added you can now use it on the display. To do this we need to locate the display: part of the config<br><br>
+and the part we are interested in is this<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b3dfbd09-32ef-4c67-bacd-ba3ed498d05c)
+<br>
+The line that we want to change is this one.<br>
+```
+          it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
+```
+<br>
+lets break it down<br>
+it.printf is the instruction to print the following to the screen<br>
+the numbers are the x and y coordinates. So the icon will be positioned at 120 pixels accross and 75 pixels from the top. These coordinates define the top left corner of the icon and because the icon has it's own dimensions depending on the pixel size defined for the font set, we don't need to define a size.<br>
+id(icon_font_80) defines which font set to use which is identified by it's id: <br>
+in the config under font: you will see<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5b64a595-bbf5-40d9-b2fe-860981d9efaf)<br>
+which tells the config where the font file is located, what id: to use to reference this font and what size the font is. in this case 75px<br><br>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
