@@ -174,23 +174,35 @@ and the part we are interested in is this<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b3dfbd09-32ef-4c67-bacd-ba3ed498d05c)
 <br>
 The line that we want to change is this one.<br>
-```
+```yaml
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
 ```
 <br>
 lets break it down<br>
-```it.printf``` is the instruction to print the following to the screen<br>
-the numbers are the x and y coordinates. So the icon will be positioned at 120 pixels accross and 75 pixels from the top. These coordinates define the top left corner of the icon and because the icon has it's own dimensions depending on the pixel size for the font, we don't need to define a size.<br><br>
-```id(icon_font_80)``` defines which font set to use which is identified by it's id: <br>
-in the config under font: you will see<br>
+
 ```yaml
- - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icon_font_80
-    size: 75
+it.printf
 ```
+
+is the instruction to print the following to the screen<br>
+the numbers are the x and y coordinates. So the icon will be positioned at 120 pixels accross and 75 pixels from the top. These coordinates define the top left corner of the icon and because the icon has it's own dimensions depending on the pixel size for the font, we don't need to define a size.<br><br>
+```yaml
+id(icon_font_80)
+```
+defines which font set to use which is identified by it's id: <br>
+in the config under font: you will see<br>
+
+```yaml
+   - file: "fonts/materialdesignicons-webfont.ttf"
+      id: icon_font_80
+      size: 75
+```
+
+<br>   
 which tells the config where the font file is located, what id: to use to reference this font and what size the font is. in this case 75px<br><br>
-you can replace and add fonts, by adding font files to the config/esphome/fonts folder and then creating a codeblock under font: to define it's location, ID, size and any non-standard characters to use under glyphs:<br><br>
-next we have 'yellow' which is the colour that the icon will be displayed as. colours are defined under the color: section and are defined with an id: which allows you to reference the colour to use in that section of code and also the hex value so that the colour can be translated into a value that the code can use. You can add your own colours by copying an entry already in the color: component and assigning an id: and a hex value of the colour you want to use.<br>I have kept the coulour id's the same as the colours name to make it easy when editing code, it avoids having to keep scrolling up to get the id.<br>The section in the config for colours is like below<br>
+you can replace and add fonts, by adding font files to the config/esphome/fonts folder and then creating a codeblock under font: to define it's location, id:, size and any non-standard characters to use, under glyphs:<br><br>
+next we have 'yellow' which is the colour that the icon will be displayed as. colours are defined under the color: section and are defined with an id: which allows you to reference the colour to use in that section of code and also the hex value so that the colour can be translated into a value that the code can use. You can add your own colours by copying an entry already in the color: component and assigning an id: and a hex value of the colour you want to use.<br>I have kept the colour id's the same as the colours name to make it easy when editing code, it avoids having to keep scrolling up to get the id.<br>The section in the config for colours is like below<br>
+
 ```yaml
 color:
   - id: green
@@ -203,7 +215,7 @@ color:
     hex: '085296'
 ```
 <br><br>
-please remember that any code using color, needs to be spelled in that way, please excuse my use of colour as I am in the UK!!<br>
+please remember that any code using color, needs to be spelled in that way, please excuse my use of colour but I am a brit!!<br>
 whenever copying sections of code it is very important to make sure you add everything in the exact same manner, including any punctuation and also make sure that everything lines up the same, as where things are placed prom the lefthand column (indentation) is vital. incorrect indentation will result in errors.<br><br>
 
 
