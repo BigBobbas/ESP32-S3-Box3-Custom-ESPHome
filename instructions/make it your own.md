@@ -220,7 +220,16 @@ whenever copying sections of code it is very important to make sure you add ever
 more information with regards to display configuration can be found [here](<https://esphome.io/components/display/index.html>)<br><br>
 In the next steps we will show how to change the devices icon and color depending on the state of the output you are controlling.<br><br>
 Again we will use the light bulb icon as our example. The default is that the bulb is a static yellow icon. what we will do is change this to an icon that is grey and and doesnt have the light illumination dashes when the light is off and change to yellow with illumination dashes when the light is on.<br><br>
-in order to do this we will need the id: of the binary sensor (the touch button) so that we can check it's state.
+In order to do this we will need:-
+* id: of the binary sensor (the touch button) so that we can check it's state.
+* the 2 icon codes to put into the display code (display lambda)
+* the id:'s of the 2 colours
+<br>
+the line that we will be changing is this one.
+```yaml
+          it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
+```
+
 
 
 
