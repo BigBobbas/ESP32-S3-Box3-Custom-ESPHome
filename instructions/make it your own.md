@@ -1,4 +1,4 @@
-## Making it your own.
+# Making it your own.
 The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other HomeAssistant devices and display sensor values and much more.
 <br><br>
 The following guide will cover these topics.
