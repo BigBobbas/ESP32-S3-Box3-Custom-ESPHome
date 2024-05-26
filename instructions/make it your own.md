@@ -225,7 +225,8 @@ In order to do this we will need:-
 * the 2 icon codes to put into the display code (display lambda)
 * the id:'s of the 2 colours
 <br>
-the line that we will be changing is this one.
+the line that we will be working with is this one.
+
 ```yaml
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
 ```
