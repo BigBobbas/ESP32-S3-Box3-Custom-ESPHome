@@ -271,6 +271,52 @@ we will add an action to toggle the switch, like so. this is just a single line.
             data:
               entity_id: switch.workshop_light
 ``` 
+<br>
+Now that yoou have changed the config, you can go ahead and save and install, and as always after the device has the updated firmware go ahead and reboot it. And test, hopefully everything should now be working with a device being toggled on and off when the touch button is tapped and the icon and colour should change to refelect the state.<br>
+The steps above are exactly the same for all on/off devices you want to control from HomeAssistant. You should now be able to configure the other buttons in this example config to control the devices you want.<br><br>
+#### Adding pages.<br><br>
+If for example you have more than one light you wish to control, we can create a new page to display the buttons for all the lights you wish to control. For simplicity we will use the same button that we configured but will revert back to the original config for this example.<br><br>
+The sections of the config we will be looking at are as follows:-<br><br>
+
+The print line
+```yaml
+          it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
+```
+The touch button<br>
+```yaml
+  - platform: touchscreen
+    page_id: idle_page
+    id: control_2
+    internal: true
+    x_min: 110
+    x_max: 210
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - switch.toggle: light1
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.sitting_room_s1
+```
+<br>
+We will also add a new entry to the display: component to configure the page, which is where we will start.<br>
+in the display block <br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/1f5bea76-eb55-4d7b-a468-f707f48135c7). <br>
+Creating a new page is quite simple and we just need to add the lines below.<br>
+
+```yaml
+      - id: lights_page
+        lambda: |-  
+          it.fill(id(black));
+```
+This will create a blank page, the id: for the page which we will use later is lights_page and the background colour of the page will be black, as defined by the it.fill line which basically says Fill the screen with the colour 'black', black being the id for the colour defined in the color: component above in the config.<br><br>
+Now that you have a blank page you want to add some icons. the easiest way is to copy and paste these from another section of the config to make sure that the icons are displayed in the correct position.
+
+
 
 
 
