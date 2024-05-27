@@ -221,7 +221,7 @@ more information with regards to display configuration can be found [here](<http
 In the next steps we will show how to change the devices icon and color depending on the state of the output you are controlling.<br><br>
 Again we will use the light bulb icon as our example. The default is that the bulb is a static yellow icon. what we will do is change this to an icon that is grey and and doesnt have the light illumination dashes when the light is off and change to yellow with illumination dashes when the light is on.<br><br>
 In order to do this we will need:-
-* id: of the binary sensor (the touch button) so that we can check it's state.
+* create a switch template to give us an on / off state of the device we are turning on and off
 * the 2 icon codes to put into the display code (display lambda)
 * the id:'s of the 2 colours
 <br>
@@ -230,6 +230,50 @@ the line that we will be working with is this one.
 ```yaml
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
 ```
+and the template we will create is below, Which will be added under the switch: component. This is required as we are only sending an instruction to HomeAssistant to turn the light on or off, therefore the S3box doesn't know from HomeAssistant what the state of the light is. This is similar to creating a toggle helper in HomeAssistant.
+```yaml
+- platform: template
+  id: light1
+  optimistic: true
+```
+<br>
+We will also add the service call and the automation to toggle the template switch on and off when the touch button is pressed.<br>
+
+Firstly copy the above template yaml under the switch: component so it looks like below. MAke sure that the - platform is in line with the entry below it<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/88353003-01bd-4fc6-b876-c96a54a62814)<br>
+next we need to tell the line that prints our output to the screen. To do this we need to use 2 print lines, 1 for each state. We will use an if statement to tell the display which line to print (draw on the display)<br>
+this is how the completed block will look.
+```
+if(id(light1).state) {
+                it.printf(120, 75, id(icon_font_80), blue_drk,"\U000F0335");
+          } else {
+                it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8");
+          }
+```
+the first print line is the state when the light is off so use your icon and colour of choice in the lines above. light1 is the id: we gave to the template switch so you need these to match.  The line below else is the line used to print the on state of the light, again use your colour and icon of choice. It is very important to avoid compile errors that the whole block is in line and correctly indented with the rest of the config. the completed result should like below.<br>
+this section displays the 3 icons in the middle row on the display.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/4403b522-df07-45ee-831d-058e3ab82366)<br>
+Now we need to edit the touch button, to tell it to also turn on the 'helper' template switch. Working with the example above where we added the service call.<br>
+```yaml
+       then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.workshop_light
+```
+we will add an action to toggle the switch, like so. this is just a single line.<br>
+
+```yaml
+       then:
+        - switch.toggle: light1
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.workshop_light
+``` 
+
+
+
 
 
 
