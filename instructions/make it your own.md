@@ -305,7 +305,8 @@ The touch button<br>
 <br>
 We will also add a new entry to the display: component to configure the page, which is where we will start.<br>
 in the display block <br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/1f5bea76-eb55-4d7b-a468-f707f48135c7). <br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/1f5bea76-eb55-4d7b-a468-f707f48135c7). 
+<br>
 Creating a new page is quite simple and we just need to add the lines below.<br>
 
 ```yaml
