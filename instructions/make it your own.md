@@ -260,8 +260,9 @@ this section displays the 3 icons in the middle row on the display.<br>
 <br>
 Now that you have changed the config, you can go ahead and save and install, and as always after the device has the updated firmware go ahead and reboot it and test. Hopefully everything should now be working with a device being toggled on and off when the touch button is tapped and the icon and colour should change to refelect the state.<br>
 The steps above are exactly the same for all on/off devices that you want to control from HomeAssistant. You should now be able to configure the other buttons in this example config to control the devices that you want.<br><br>
+
 #### Adding pages.<br><br>
-If for example you have more than one light you wish to control, we can create a new page to display the buttons for all the lights you wish to control. For simplicity we will use the same button that we configured but will revert back to the original config for this example.<br><br>
+If for example you have more than one light you wish to control, we can create a new page to display the buttons for all of those lights. For simplicity we will use the same button that we configured but will revert back to the original config for this example.<br><br>
 The sections of the config we will be looking at are as follows:-<br><br>
 
 The print line
@@ -282,7 +283,6 @@ The touch button<br>
       min_length: 10ms
       max_length: 500ms
       then:
-        - switch.toggle: light1
         - homeassistant.service:
             service: switch.toggle
             data:
@@ -290,9 +290,8 @@ The touch button<br>
 ```
 <br>
 We will also add a new entry to the display: component to configure the page, which is where we will start.<br>
-in the display block <br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/1f5bea76-eb55-4d7b-a468-f707f48135c7). 
-<br>
+in the display block <br><br>
+
 Creating a new page is quite simple and we just need to add the lines below.<br>
 
 ```yaml
