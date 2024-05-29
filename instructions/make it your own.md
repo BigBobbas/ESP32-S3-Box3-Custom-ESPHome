@@ -300,7 +300,66 @@ Creating a new page is quite simple and we just need to add the lines below.<br>
           it.fill(id(black));
 ```
 This will create a blank page, the id: for the page which we will use later is lights_page and the background colour of the page will be black, as defined by the it.fill line which basically says Fill the screen with the colour 'black', black being the id for the colour defined in the color: component above in the config.<br><br>
-Now that you have a blank page you want to add some icons. the easiest way is to copy and paste these from another section of the config to make sure that the icons are displayed in the correct position.
+Now that you have a blank page you want to add some icons. the easiest way is to copy and paste these from another section of the display config to make sure that the icons are displayed in the correct position.<br> 
+The process then will be the same as above for changing the light icon. You will need to add a text_sensor: for each entity to be controlled. Don't repeat the text_sensor: line and add each additional entity with it's on id: for the state. example below<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b1d2e4cb-7d75-400c-a9de-42a97365487a)<br><br>
+and remember that each entity will need 2 print lines in the display section with an if: / else:<br><br>
+To add the touch controls for this page, you can copy and paste to duplicate the control buttons from the idle page making sure to change the id: of each button and also the page_id: as we will only want these buttons to be actionable on the newly created page. you will also need to add the service call automation so that HomeAssistant will know which entity to turn on and off.<br>below is an example of how it should look.<br><br>
+```yaml
+  - platform: touchscreen
+    page_id: lights_page
+    id: light_control_1
+    internal: true
+    x_min: 5
+    x_max: 105
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.sitting_room_s1
+
+  - platform: touchscreen
+    page_id: lights_page
+    id: light_control_2
+    internal: true
+    x_min: 110
+    x_max: 210
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.sitting_room_s2
+
+  - platform: touchscreen
+    page_id: lights_page
+    id: light_control_3
+    internal: true
+    x_min: 215
+    x_max: 315
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.sitting_room_s3
+```
+
+
+
 
 
 
