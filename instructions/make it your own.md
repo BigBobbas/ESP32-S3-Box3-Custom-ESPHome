@@ -358,7 +358,8 @@ To add the touch controls for this page, you can copy and paste to duplicate the
               entity_id: switch.sitting_room_s3
 ```
 Once you have made the changes above, you can now save and install, I may have mentioned previously ;) restart the device after the firmware has uploaded.<br><br>
-We are left with just 2 more components that you can customise and they are the top lefthand side button and the front red circle button, with these you can use the instructions above to add service call or an on device automation to these. Both buttons are customised in the same way. The 2 blocks that we need to edit are :-
+#### Extra buttons and prescence 
+We are left with just 3 more components that you can customise and they are the top lefthand side button, the front red circle button, and the radar sensor. with these you can use the instructions above to add service call or an on device automation to these. all three are buttons(binary sensors) and are customised in the same way. The 3 blocks that we need to edit are :-
 <br>
 ```yaml
 ###### top left hand physical button #######
@@ -378,15 +379,47 @@ binary_sensor:
     index: 0
     on_press:
       - display.page.show: idle_page
+###### radar sensor ########
+  - platform: gpio
+    pin:
+      number: GPIO21
+    name: "Presence detect"
+    disabled_by_default: false
+    device_class: "occupancy"
 ```
 <br>
 in both cases you can change the line below on_press: to call the action that you want to perform. As you can see from the config above. the top left button is set to toggle led - led is the id: of the screens backlight so pressing this will turn the screen on or off. you can change this to perform any action that we have mentioned in the sections above for customising the touch buttons.<br>
-The front red circle is currently configured to show the idle page a 'Home' button in this config. You can change either of these buttons to do many things.<br>
-You will find many automation options in the ESPHome docs, i will provide a list of links below that you may find useful and are relevant to what we have covered in this guide.
+The front red circle is currently configured to show the idle page a 'Home' button in this config. <br><br>
+Finally the radar button currently has no automation configured. by adding the following, this will now toggle my light on and off based on presence.
+You can change any of these buttons/sensor to do many things.<br>
+You will find lots of automation options in the ESPHome docs, i will provide a list of links below in the summary that you may find useful and are relevant to what we have covered in this guide.<br><br>
+
+#### Prescence/Radar Sensor
+###### radar sensor ########
+  - platform: gpio
+    pin:
+      number: GPIO21
+    name: "Presence detect"
+    disabled_by_default: false
+    device_class: "occupancy"
+    on_press: 
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.sitting_room_s1
+#### Displaying Sensor information
 
 
 ### Summary.
 
+links:
+docs
+display
+touch
+gt911
+automations
+home assistant
 
 
 
