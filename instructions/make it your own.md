@@ -454,7 +454,10 @@ now to display this sensors value, we just need to put the id in so the print li
 ```
 There are many other options beyond the scope of this guide that can be found by reading the [ESPHome display docs](<https://esphome.io/components/display/index.html#display-component>) 
 
-### Summary.
+### A final note from me.
+I hope that the information that I have given has been as easy as can be to follow and that it has given you the insight as to how the config works, and given you some pointers to allow you to tackle customising your device. The information in this guide can be applied to lots of other devices and is not entirely specific to the ESP32 S3 box.<br><br>
+Resources that have been invaluable to me in my journey configuring ESPHome devices have been the ESPHome docs and the  ESPHome Discord server. I have found the best way of finding ESPHome docs has to been to google "esphome" followed by the name of component i need help with, then selecting the results that are linked to esphome.io, this search term has most often taken me straight to the pages i've needed.<br> 
+If you have any feedback, issues or have spotted any inacuricies or ways you think would be better to describe how to do certain parts in this guide. Please make me aware by raising an issue from the link at the top of the github page. 
 
 links:
 docs
