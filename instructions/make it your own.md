@@ -390,12 +390,9 @@ binary_sensor:
 <br>
 in both cases you can change the line below on_press: to call the action that you want to perform. As you can see from the config above. the top left button is set to toggle led - led is the id: of the screens backlight so pressing this will turn the screen on or off. you can change this to perform any action that we have mentioned in the sections above for customising the touch buttons.<br>
 The front red circle is currently configured to show the idle page a 'Home' button in this config. <br><br>
-Finally the radar button currently has no automation configured. by adding the following, this will now toggle my light on and off based on presence.
-You can change any of these buttons/sensor to do many things.<br>
-You will find lots of automation options in the ESPHome docs, i will provide a list of links below in the summary that you may find useful and are relevant to what we have covered in this guide.<br><br>
+Finally the radar button currently has no automation configured. by adding the following this will now toggle the defined light on and off based on prescence detected. ( this is not a practical automation but a sample to show how it works.<br>
 
-#### Prescence/Radar Sensor
-###### radar sensor ########
+```yaml
   - platform: gpio
     pin:
       number: GPIO21
@@ -408,8 +405,54 @@ You will find lots of automation options in the ESPHome docs, i will provide a l
             service: switch.toggle
             data:
               entity_id: switch.sitting_room_s1
-#### Displaying Sensor information
+```
 
+You can change any of these buttons/sensor to do many things.<br>
+There are lots of automation options in the ESPHome docs, and I will provide a list of links summary that you may find useful and are relevant to what has been covered in this guide.<br><br>
+
+#### Displaying Sensor information<br><br>
+Now that we have covered how to display things on the screen and adding functionality to send actions to other devices, lets take a look at displaying information from sensors. Starting with the sensors that are on the device. We will look at how to add the value from the temperature and humidity sensor that are built into the s3box device base.<br>
+Because these sensors are already setup in the config no additional component setup is required and we can use the id: of the sensors to display their readings on the screen. The full sample config already has the temperature displayed, which is overlaid on top of the temperature icon.<br>
+The sensor which is configured in this block<br><br>
+```yaml
+sensor:
+  - platform: aht10 
+    i2c_id: bus_b
+    variant: AHT20
+    temperature:
+      name: "Temperature"
+      id: s3temp
+    humidity:
+      name: "Humidity"
+      id: s3hum
+    update_interval: 60s
+```
+and the display config we need to look at is here. <br>
+```yaml
+          it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
+          it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state);
+```
+<br>
+You will notice that this part of the print line is different to what we have encountered so far.<br>
+
+```
+"%.f", id(s3temp).state);
+```
+for the best description of what this means and what effect it has on the displayed line is best described [here](<https://esphome.io/components/display/index.html>)
+<br>
+in the line you can see (s3temp) this is where we put the id: of the sensor we wish to display. changing this to (s3hum) would display the current reading of the humidity sensor. The same principle is applied if we wish to display sensor values from other devices that are configured in HomeAssistant. We will however need to add a sensor to our ESPHome config that pulls in the values from HomeAssistant and provides an id: for us to use in the display config. To do this we need to add the following to the sensor: component.<br>
+```yaml
+  - platform: homeassistant
+    id: liv_temp
+    entity_id: sensor.living_room_temp
+    internal: true
+```
+in the above config, we have given the sensor an id: which is what we will use in the display print line. Then add the entity_id: of the sensor from HomeAssistant, we covered this earlier in the guide. and finally setting internal: true , says don't expose this to HomeAssistant (we got it from there so no need to send it back) <br>
+now to display this sensors value, we just need to put the id in so the print line looks like so. <br>
+```yaml
+          it.printf(40, 120, id(my_font3), white, "%.f", id(liv_temp).state);
+```
+There are many other options beyond the scope of this guide that can be found by reading the [ESPHome display docs](<https://esphome.io/components/display/index.html#display-component>) 
 
 ### Summary.
 
