@@ -64,6 +64,7 @@ api:
   on_client_connected:
     - lambda: |-
         id(api_connection) = true;
+    - component.update: s3_box_lcd
   on_client_disconnected:
     - lambda: |-
         id(api_connection) = false;
@@ -90,6 +91,49 @@ wifi:
 time:
   - platform: homeassistant
     id: ha_time
+interval:
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            # check last connection state
+            - lambda: 'return { (id(api_connection) != true) };'
+          then:
+            - if:
+                condition:
+                  api.connected:
+                then:
+                  # just connected now
+                  - lambda: "id(api_connection) = true;"
+          else:
+            - if:
+                condition:
+                  not:
+                    api.connected:
+                then:
+                  # just disconnected now
+                  - lambda: "id(api_connection) = false;"
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            # check last connection state
+            - lambda: 'return { (id(wifi_connection) != true) };'
+          then:
+            - if:
+                condition:
+                  api.connected:
+                then:
+                  # just connected now
+                  - lambda: "id(wifi_connection) = true;"
+          else:
+            - if:
+                condition:
+                  not:
+                    api.connected:
+                then:
+                  # just disconnected now
+                  - lambda: "id(wifi_connection) = false;"
 
 button:
   - platform: restart
@@ -539,8 +583,16 @@ display:
         lambda: |-  
   
           it.fill(id(black));
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -600,9 +652,17 @@ display:
 
       - id: template_page
         lambda: |-
-          it.fill(Color::BLACK);
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          it.fill(id(black));
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -666,9 +726,17 @@ display:
 
       - id: info_page
         lambda: |-
-          it.fill(Color::BLACK);
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          it.fill(id(black));
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -722,9 +790,17 @@ display:
 
       - id: climate_page
         lambda: |-
-          it.fill(Color::BLACK);
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          it.fill(id(black));
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -788,10 +864,17 @@ display:
 
       - id: lights_page
         lambda: |-
-          it.fill(Color::BLACK);
-                    it.fill(id(black));
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          it.fill(id(black));
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -854,8 +937,16 @@ display:
       - id: media_page
         lambda: |-  
           it.fill(id(black));
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
@@ -913,10 +1004,17 @@ display:
 
       - id: scenes_page
         lambda: |-
-          it.fill(Color::BLACK);
-
-          it.printf(15, 5, id(icon_font_55), blue, "%s", id(api_connection) ?  "\U000F07D0" : "\U000F087B");
-          it.printf(80, 5, id(icon_font_55), yellow, "%s", id(wifi_connection) ?  "\U000F16BD" : "\U000F16BC");
+          it.fill(id(black));
+          if(id(api_connection) == true) {
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          } else {
+                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
+          }
+          if(id(wifi_connection) == true) {
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+          } else {
+                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
+          }
           if(id(battery_voltage).has_state ()) {
               if(id(battery_voltage).state <= 2.7) {
                   // Replace battery, less than 10% 420, 558 / 87
