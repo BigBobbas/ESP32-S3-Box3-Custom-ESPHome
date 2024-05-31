@@ -9,11 +9,15 @@
    
 4. Open sb3.yaml from the zipped download and copy the entire contents to your clipboard.
    
-5. Open your existing device config in your ESPHome installation either dashboard or editor of your choice.
+5. Open your existing device config in your ESPHome installation, either dashboard or editor of your choice.
    
 6. Select the entire contents of the existing config and paste in the new config to overwrite everything in the file.<br><br>
    
-7. click 'save' and then install - select 'wirelessly' if your device is already up and runnning with the 'stock' firmware.  Once compiling has finished and the created firmware is uploaded to the device you can then re-add it to the ESPHome integration. HomeAssistant may detect this automatically, alternatively you can manually add the device in the integration.<br><br>
+7. Click save and exit the editor. Now from the device card in the dashboard click on the 3 dot menu , followed by 'clean build files' <br><br>here is a short video showing the clean build files process. 
+
+https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/34e01cd7-f9f5-4ac1-9a8a-358cd61e4d11
+
+Once the clean has finished. Click install followed by 'wirelessly'. Once compiling has finished and the created firmware is uploaded to the device you can then re-add it to the ESPHome integration. HomeAssistant may detect this automatically, alternatively you can manually add the device in the integration.<br><br>
 To do this you will need the ip address assigned to the device by your router. This will be shown in the ESPHome device logs after compiling or you can obtain this from your router.<br><br>
 Once the device is added to the integration, open the device from the integration and press the 'reboot' button, under the Configuration section.<br><br>
 After rebooting, test functionality of the touch screen and Voice Assistant, if Voice isn't working then go to the next steps. if everything is working then thats the installation complete and you can move on to the 'make it your own' guide [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)
