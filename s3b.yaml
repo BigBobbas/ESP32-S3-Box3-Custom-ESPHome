@@ -9,9 +9,8 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
-  name: esp32-s3-box-3
-  friendly_name: ESP32 S3 Box 3
-  
+  name: esp32-s3box2
+  friendly_name: S3 Box 3
 ####################################################################
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
@@ -57,8 +56,12 @@ external_components:
     components: [ adf_pipeline, i2s_audio ]
     refresh: 0s  
 
+captive_portal:
 
+esp32_improv:
+  authorizer: none
 
+improv_serial:
 
 api:
   on_client_connected:
@@ -76,8 +79,8 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # if you are having problems connecting to the device, add the devices ip address from your router and add it to the line below and un-comment the line by deleting the # 
-  # use_address: xxx.xxx.xxx.xxx
+  
+  #use_address: xxx.xxx.xxx.xxx     #uncomment the section before this note and change the xxx.xxx.xxx.xxx for the ip of the device if you have trouble connecting
   ap:
 
   on_connect:
@@ -96,14 +99,12 @@ interval:
     then:
       - if:
           condition:
-            # check last connection state
             - lambda: 'return { (id(api_connection) != true) };'
           then:
             - if:
                 condition:
                   api.connected:
                 then:
-                  # just connected now
                   - lambda: "id(api_connection) = true;"
           else:
             - if:
@@ -111,28 +112,24 @@ interval:
                   not:
                     api.connected:
                 then:
-                  # just disconnected now
                   - lambda: "id(api_connection) = false;"
   - interval: 10s
     then:
       - if:
           condition:
-            # check last connection state
             - lambda: 'return { (id(wifi_connection) != true) };'
           then:
             - if:
                 condition:
-                  api.connected:
+                  wifi.connected:
                 then:
-                  # just connected now
                   - lambda: "id(wifi_connection) = true;"
           else:
             - if:
                 condition:
                   not:
-                    api.connected:
+                    wifi.connected:
                 then:
-                  # just disconnected now
                   - lambda: "id(wifi_connection) = false;"
 
 button:
@@ -147,22 +144,26 @@ switch:
     optimistic: True
     on_turn_on:
       - voice_assistant.stop: 
-      - micro_wake_word.stop 
+      - micro_wake_word.stop:
+      - delay: 50ms
       - lambda: id(va).set_use_wake_word(false);
       - lambda: |-
-          id(mute_value) = false;
-    on_turn_off:
-      - lambda: |-
           id(mute_value) = true;
+      - media_player.volume_set: 0%
+    on_turn_off:
+      - media_player.volume_set: 100%
+      - lambda: |-
+          id(mute_value) = false;
       - if:
           condition:
             lambda: return id(wake_word_engine_location).state == "In Home Assistant";
           then:
             - lambda: id(va).set_use_wake_word(true);
-            - delay: 100ms
+            - delay: 50ms
             - voice_assistant.start_continuous: 
 
           else:
+            - delay: 50ms
             - micro_wake_word.start       
 
 output:
@@ -236,9 +237,6 @@ media_player:
     on_play:
       - display.page.show: media_page
       - component.update: s3_box_lcd
-    on_announcement:
-      - display.page.show: replying_page
-      - component.update: s3_box_lcd
 
 microphone:
   - platform: adf_pipeline
@@ -275,18 +273,22 @@ voice_assistant:
     - delay: 5s 
     - display.page.show: idle_page
     - component.update: s3_box_lcd
-
+  on_end:
+    - if:
+        condition:
+          lambda: return id(wake_word_engine_location).state == "On device";
+        then:
+          - micro_wake_word.start
 
   on_client_connected:
     - if:
         condition:
-          lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          lambda: return id(wake_word_engine_location).state == "On device";
         then:
-          - lambda: id(va).set_use_wake_word(true);
-          - delay: 100ms
-          - voice_assistant.start_continuous: 
+          - micro_wake_word.start 
         else:
-          - micro_wake_word.start    
+          - lambda: id(va).set_use_wake_word(true);
+          - voice_assistant.start_continuous:      
 
 select:
   - platform: template
@@ -298,7 +300,7 @@ select:
     options:
       - In Home Assistant
       - On device
-    initial_option: On device
+    initial_option: In Home Assistant
     on_value:
       - if:
           condition:
@@ -441,8 +443,6 @@ font:
     id: icon_font_55
     size: 45
     glyphs: [
-      # "\U000F036D",
-      # "\U000F036C",
       "\U000F0079",#battery 100%
       "\U000F0082",#battery 90%
       "\U000F0081",#battery 80%
@@ -459,7 +459,6 @@ font:
       "\U000F16BD",#wifi connected
       "\U000F16BC",#wifidisconnected
       "\U000F07D0",#api connected
-      # "\U000F1247",
       "\U000F12A8",#touch button
       "\U000F0EBA",#stats
       "\U000F087B",#api disconnected
@@ -1397,9 +1396,10 @@ binary_sensor:
     on_press:
       then:
         - micro_wake_word.stop
-        - lambda: id(va).set_use_wake_word(false);
         - delay: 50ms
-        - voice_assistant.start
+        - lambda: id(va).set_use_wake_word(false);
+        - delay: 150ms
+        - voice_assistant.start:
         - display.page.show: listening_page
         - component.update: s3_box_lcd
     on_release:
@@ -1412,6 +1412,8 @@ binary_sensor:
             - voice_assistant.start_continuous: 
           else:
             - micro_wake_word.start         
+            
+            
 ########### end of control buttons #######################
 ########### set of 6 control buttons per page to get you started - just give each button an id: also uncomment the 3 lines below y_max: and add your automation #######################
   - platform: touchscreen
@@ -1425,6 +1427,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+    #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -1438,7 +1444,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-
+    
+    #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
@@ -1451,6 +1460,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
@@ -1463,6 +1476,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -1476,6 +1493,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
 
 
@@ -1490,6 +1511,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: lights_page 
+            # - component.update: s3_box_lcd
 
 
     #### climate page ###
@@ -1504,6 +1529,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
 
 #### Climate page buttons ####
   - platform: touchscreen
@@ -1517,6 +1546,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd   
 
 
   - platform: touchscreen
@@ -1530,6 +1563,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: climate_page
@@ -1542,6 +1579,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -1555,8 +1596,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-
-
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: climate_page
@@ -1569,6 +1612,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
 
     #### scenes page ###
   - platform: touchscreen
@@ -1582,6 +1629,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: scenes_page
@@ -1594,6 +1645,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -1607,6 +1662,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: scenes_page
@@ -1619,6 +1678,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -1632,6 +1695,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
 
 
@@ -1646,5 +1713,9 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 
 ################## config end ############################
