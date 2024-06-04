@@ -9,8 +9,8 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
-  name: esp32-s3box3
-  friendly_name: S3 Box 3
+  name: esp32-s3box-3
+  friendly_name: ESP32-S3-Box-3
 ####################################################################
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
@@ -57,8 +57,8 @@ esp32_improv:
   authorizer: none
   
 dashboard_import:
-  package_import_url: github://envishun/pottre-esp/configs/dev.yaml@main
-  import_full_config: false # or true
+  package_import_url: github://BigBobbas/ESP32-S3-Box3-Custom-ESPHome/s3b.yaml@main
+  import_full_config: true
   
 external_components:
   - source:
