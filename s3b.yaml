@@ -27,7 +27,9 @@ esphome:
     then:
       - display.page.show: loading_page
       - component.update: s3_box_lcd
-
+  project:
+    name: "BigBobbas.s3box"
+    version: "2024.06.01"
 esp32:
   board: esp32s3box
   flash_size: 16MB
