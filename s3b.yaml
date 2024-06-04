@@ -51,8 +51,6 @@ psram:
   mode: octal
   speed: 80MHz
  
-<<<<<<< HEAD
-=======
 improv_serial:
 captive_portal: 
 esp32_improv:
@@ -61,7 +59,6 @@ esp32_improv:
 dashboard_import:
   package_import_url: github://BigBobbas/ESP32-S3-Box3-Custom-ESPHome/s3b.yaml@main
   import_full_config: true
->>>>>>> c45f3c1eae49c33785de1c9c7b05127714d1dc20
   
 external_components:
   - source:
