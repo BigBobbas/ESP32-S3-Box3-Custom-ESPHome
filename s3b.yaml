@@ -27,7 +27,9 @@ esphome:
     then:
       - display.page.show: loading_page
       - component.update: s3_box_lcd
-
+  project:
+    name: "BigBobbas.s3box"
+    version: "2024.06.01"
 esp32:
   board: esp32s3box
   flash_size: 16MB
@@ -44,10 +46,20 @@ esp32:
         source: github://jesserockz/esp32-s3-box-3-board@main
         refresh: 0s
 
+    
 psram:
   mode: octal
   speed: 80MHz
-
+ 
+improv_serial:
+captive_portal: 
+esp32_improv:
+  authorizer: none
+  
+dashboard_import:
+  package_import_url: github://BigBobbas/ESP32-S3-Box3-Custom-ESPHome/s3b.yaml@main
+  import_full_config: true
+  
 external_components:
   - source:
       type: git
@@ -71,12 +83,10 @@ logger:
 
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  #use_address: xxx.xxx.xxx.xxx   #uncomment the section before this note and change the xxx.xxx.xxx.xxx for the ip of the device if you have trouble connecting
+ 
   ap:
-
+    ssid: ${name}
+    password: s3box123
   on_connect:
     - lambda: |-
         id(wifi_connection) = true;
