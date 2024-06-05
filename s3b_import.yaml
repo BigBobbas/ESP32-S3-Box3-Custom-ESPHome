@@ -50,6 +50,7 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+ 
   
 external_components:
   - source:
@@ -591,6 +592,7 @@ display:
     pages:
       - id: idle_page ##### home page ######
         lambda: |-  
+  
           it.fill(id(black));
           if(id(api_connection) == true) {
                   it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
@@ -1412,23 +1414,20 @@ binary_sensor:
         - lambda: id(va).set_use_wake_word(false);
         - delay: 50ms
         - voice_assistant.stop:
-        - delay: 50ms 
-        - voice_assistant.start
+        - delay: 50ms
+        - voice_assistant.start:
         - display.page.show: listening_page
         - component.update: s3_box_lcd
     on_release:
-      - delay: 100ms
       - if:
           condition:
             lambda: return id(wake_word_engine_location).state == "In Home Assistant";
           then:
-            - voice_assistant.stop: 
             - lambda: id(va).set_use_wake_word(true);
             - delay: 50ms
             - voice_assistant.start_continuous: 
           else:
-            - voice_assistant.stop: 
-            - delay: 100ms            
+            - delay: 100ms
             - micro_wake_word.start         
             
             
