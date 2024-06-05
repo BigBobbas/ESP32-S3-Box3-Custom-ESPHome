@@ -266,7 +266,7 @@ voice_assistant:
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
-    - delay: 5s 
+    - delay: 2.5s 
     - display.page.show: idle_page
     - component.update: s3_box_lcd
   on_end:
@@ -378,7 +378,7 @@ image:
     use_transparency: true
 
 sensor:
-  - platform: aht10 # After initial install comment out lines in this block not including sensor: (8 lines to comment in total)
+  - platform: aht10 
     i2c_id: bus_b
     variant: AHT20
     temperature:
@@ -1422,6 +1422,8 @@ binary_sensor:
           condition:
             lambda: return id(wake_word_engine_location).state == "In Home Assistant";
           then:
+            - delay: 100ms
+            - voice_assistant.stop
             - lambda: id(va).set_use_wake_word(true);
             - delay: 50ms
             - voice_assistant.start_continuous: 
