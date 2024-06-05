@@ -46,6 +46,14 @@ esp32:
         source: github://jesserockz/esp32-s3-box-3-board@main
         refresh: 0s
 
+improv_serial:
+captive_portal: 
+esp32_improv:
+  authorizer: none
+  
+dashboard_import:
+  package_import_url: github://BigBobbas/ESP32-S3-Box3-Custom-ESPHome/s3b.yaml@main
+  import_full_config: true
     
 psram:
   mode: octal
