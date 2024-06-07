@@ -1,10 +1,4 @@
-###################################################################
-##      Stock ESPHome ESP32-s3-box3 config - Voice assistant     ##
-##       I have tweaked the stock yaml to allow you to compile   ##
-##     and install using your preffered method HA Add-on is      ## 
-##                   a good option to start with                 ##
-###################################################################
-## You can change the friendly name if you wish on line 13 below. The friendly name is how the device will show in HA 
+## You can change the friendly name if you wish on line 7 below. The friendly name is how the device will show in HA 
 ## However the <name:> is how HA connects to the device eg. esp32-s3-box-3.local is the mDNS hostname for the device.
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
@@ -50,7 +44,6 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
- 
   
 external_components:
   - source:
@@ -266,7 +259,7 @@ voice_assistant:
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
-    - delay: 2.5s 
+    - delay: 5s 
     - display.page.show: idle_page
     - component.update: s3_box_lcd
   on_end:
@@ -591,7 +584,7 @@ display:
     ##################################################################################################
     pages:
       - id: idle_page ##### home page ######
-        lambda: |-    
+        lambda: |-  
           it.fill(id(black));
           if(id(api_connection) == true) {
                   it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
@@ -1086,14 +1079,6 @@ display:
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F0FCE");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0FCE");
 
-      # - id: announcing
-      #   lambda: |-
-      #     it.image(0, 0, id(replying_img));
-
-      # - id: playing_music
-      #   lambda: |-
-      #     it.image(0, 0, id(loading_img));
-
 
       - id: loading_page
         lambda: |-
@@ -1124,20 +1109,6 @@ display:
           it.printf(160, 120, id(my_font4), yellow, TextAlign::CENTER, "Mic & Speaker - Muted");
 
 
-##########################################################################################################################
-####   in order to get Voice to respond after initial install, you need to comment out everything below               ####
-####   these instructions to the end of the config.                                                                   ####
-####   highlight all text below then on your keyboard press ctrl + /  this will comment everything with #'s           ####
-####   you also need to comment out the line number 505 (above) this needs to be done using // (2 forward slashes)    ####
-####   like so //it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state);                                    ####
-####   lastly you need to comment the AHT sensor block , under the sensor: component further up in the config         #### 
-####   Once everything is commented out. save the config exit the editor and click 'clean build files' from the       ####
-####   the device card 3 dot menu. Install the config and test voice works.                                           #### 
-####   if voice is working , then uncomment everything above, save and exit the editor do another 'clean build files' ####
-####   and install.                                                                                                   ####
-####   once installed, test voice and touch. if touch isn't functioning, reboot the device using the bottom left      ####
-####   button on the side of the device.                                                                               ####                    
-##########################################################################################################################
 i2c:
   - id: bus_a
     sda: GPIO08
@@ -1413,22 +1384,23 @@ binary_sensor:
         - lambda: id(va).set_use_wake_word(false);
         - delay: 50ms
         - voice_assistant.stop:
-        - delay: 50ms
-        - voice_assistant.start:
+        - delay: 50ms 
+        - voice_assistant.start
         - display.page.show: listening_page
         - component.update: s3_box_lcd
     on_release:
+      - delay: 100ms
       - if:
           condition:
             lambda: return id(wake_word_engine_location).state == "In Home Assistant";
           then:
-            - delay: 100ms
-            - voice_assistant.stop
+            - voice_assistant.stop: 
             - lambda: id(va).set_use_wake_word(true);
             - delay: 50ms
             - voice_assistant.start_continuous: 
           else:
-            - delay: 100ms
+            - voice_assistant.stop: 
+            - delay: 100ms            
             - micro_wake_word.start         
             
             
