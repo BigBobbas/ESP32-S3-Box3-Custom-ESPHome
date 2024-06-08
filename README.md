@@ -14,12 +14,13 @@ The s3box is quite a capapable device and NOT just a voice assistant.
 
 ## This configuration will enable the following features.
 * ### new feature - Media Player
+Thanks to [gnumpi](<https://github.com/gnumpi/esphome_audio>) 'ESPHome audio' has made it possible to have the s3box behave like a media player. You can stream music and tts direct from Home Assistant.
 * Touch Screen 
 * Red circle button on front of display
 * Top lefthand side hardware button
 * Temp and Humidity Sensor
 * Prescence sensor
-* Voice assistant with switchable on Device wake word or HomeAssistant wakeword engine eg. Openwakeword
+* Voice assistant with switchable on Device wake word or Home Assistant wakeword engine eg. Openwakeword
 
  ## Requirements
  * ESP32 S3 Box 3 (This config is only applicable to the version with the sensor dock)
