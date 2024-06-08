@@ -31,7 +31,13 @@ then configure your wifi.<br>
 
 You should have a link on your computer screen. If this doesn't appear, you can add the device manually. To add manually, in Home Assistant go to Settings >> Devices & Services >> ESPHome (right arrow) >> at the bottom of the list of devices click 'add device'. You will be prompted for a host: you can use either the IP address or hostname displayed on the S3Box screen.<br>
 
-9. Once the device is added to the integration as per step 8. you need to adopt the device into the ESPHome dashboard. This will pull down a full config for you to customise and add your own entities etc. Once this is imported to the dashboard it then needs to do one final install to the S3Box and then setup is complete.
+9. Once the device is added to the integration as per step 8. you need to adopt the device into the ESPHome dashboard. This will pull down a full config for you to customise and add your own entities etc. Once this is imported to the dashboard it then needs to do one final install to the S3Box and then setup is complete. Open your ESPHome dashboard and you should have a new card appeared that looks like the image below.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/c7ae7cb1-f59d-4964-a971-edcd785051d9)<br>
+
+Click Adopt, followed by install. To avoid any complications at this point do not change the name of the device, you can always change the name once you know everything is working.<br>
+## NOTE:<br>
+> The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues, it all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words ;) )
+
 
 
 
