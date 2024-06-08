@@ -19,7 +19,7 @@ The following guide will cover these topics.
 
 ## Customising Voice Assistant.
 ### Changing displayed images
-in order to do this you will need to access your HomeAssistant config/esphome/images folder. (Samba share add-on makes this very easy)
+in order to do this you will need to access your Home Assistant config/esphome/images folder. (Samba share add-on makes this very easy)
 You can use any image including transparencies and they should be named to match the device configuration to avoid changing any code. The files need to be 320 x 240 pixels and should be named as followed.
 * error.png
 * loading.png
@@ -27,11 +27,9 @@ You can use any image including transparencies and they should be named to match
 * replying.png
 * listening.png
   <br><br>
-  
-I will cover adding other images for page backgrounds later in this guide.
-Once you have your set of 5 images you need to copy them into the config/esphome/images folder from your local computer, using Samba share. You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
+Once you have your set of 5 images, you need to copy them into the config/esphome/images folder from your local computer, using Samba share. You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
 Now that the images are copied over you will need to install the device config from the ESPHome dashboard (add-on) You do not to change or save anything in the config as the code pointing to the images will already in place and the images just need to be compiled into a new firmware .bin file so that they are present on the device.<br><br>
-As always, I recommend rebooting the device after the firmware has been installed, to do this, press the reboot button in the ESPHome integration entry for the device.<br><br>
+As always, I recommend rebooting the device after the firmware has been installed, to do this press the reboot button on the bottom left side of the device.<br><br>
   
 After rebooting , test the Voice Assistant and you should now see your new images displayed.<br><br>
 ### Changing wake word
