@@ -45,7 +45,7 @@ it is as simple as changing the name circled in red <br>![image](https://github.
 make sure you type it exactly the same as it is shown in the comments above the line you edit.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a1825d9a-706a-43e2-81d4-d9a82b2a7f4b)<br>
 Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading reboot the device from the integration as described above. Once the device has restarted go ahead and test out the wake word.<br><br>
-You can switch between on-device wakeword and HomeAssistant wake word from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
+You can switch between on-device wakeword and Home Assistant wake word from the info page on the s3Box or from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5d5265fe-7692-4419-a636-6248c371cc1e)
 <br><br><br>
 ### Outputting audio responses to another media player device
