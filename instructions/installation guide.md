@@ -38,6 +38,8 @@ Click Adopt, followed by install. To avoid any complications at this point do no
 ## NOTE:<br>
 > The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues, it all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words ;) )
 
+Hopefully you now have the S3box configured with the template firmware. For a guide on how to personalise the device to suit you. [Click Here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)
+
 
 
 
