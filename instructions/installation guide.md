@@ -5,14 +5,16 @@ What you will need.
 * USB C cable
 * Home Assistant 
 * ESPHome Add-on Dashboard
+  
 What will happen?
 * an initial firmware will be loaded to the device
 * you configure your wifi
 * you connect to your network and add the device to Home Assistant
 * you import the full working config into the ESPHome dashboard and finally upload this to the device.
+  
 How do I do it?
 1. if you have set your device up previously in Home Assistant and ESPHome dashboard then it is best to remove these as they can cause the installation not to go as described. Make sure to delete any related devices from the ESPHome integration in Home Assistant>> Devices & Services >> ESPHome. Also delete any entries in the ESPHome dashboard, by clicking on the 3 dot menu on the device card followed by delete.
-2. plug your S3box into your computer and open Chrome then click this link [S3 Box installation page](<https://support.bbdl.co.uk>)
+2. plug your S3box into your computer and open Chrome then click this link <a href="https://support.bbdl.co.uk" target="_blank">S3 Box installation page.</a>
 3. Click the blue CONNECT button.
 4. Now select your COM Port and connect. You should see a box similar to the screenshot below.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a76dfaba-fe8b-4b92-9597-a51a4ee905be) <br>
