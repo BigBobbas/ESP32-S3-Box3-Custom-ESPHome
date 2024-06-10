@@ -1,3 +1,5 @@
+## *** NOTE ***<br>
+I have noticed during testing that whenever the device is flashed or reboots. you then have to do a reboot again! otherwise the touch won't work. I haven't looked into this yet, but once it has the 2nd reboot all is good. it's just a 'quirk'.
 # Installation
 What you will need.
 * Esp32-S3-Box-3 with sensor dock
