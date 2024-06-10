@@ -5,7 +5,9 @@
 
  
  # Introduction.<br>
+ >Firstly I am not a coder/developer/programer. I Just know the small amount I do know from having a go, and spending many frustrated hours until things do what I want them to do. I apologise if the config makes you pro's cringe... as I am sure there will be many different ways that I could have made this config that would be the 'correct way' however it does what I want, so i will take that as a win. 
 This example config allows use of the touch screeen and other sensors on the ESP32-S3-Box-3 using ESPhome for use with Home Assistant. The provided config is intended to be used as template for you to customise for your own purposes. I will provide as much detailed instruction as possible for you to achieve this.<br><br>
+If you have any ideas, feedback or feel you could help make things 'even better' then it would be great to hear your thoughts.
  
 ## Instalation and setup notes
 follow the installation instructions [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) 
@@ -14,12 +16,14 @@ The s3box is quite a capapable device and NOT just a voice assistant.
 
 ## This configuration will enable the following features.
 * ### new feature - Media Player
-Thanks to [gnumpi](<https://github.com/gnumpi/esphome_audio>) 'ESPHome audio' has made it possible to have the s3box behave like a media player. You can stream music and tts direct from Home Assistant.
-* Touch Screen 
+Thanks to [gnumpi](<https://github.com/gnumpi/esphome_audio>) 'ESPHome audio' has made it possible to have the s3box act as a media player. You can stream music and tts direct from Home Assistant.
+* Touch Screen - to control your home
+* Screen saver
 * Red circle button on front of display
 * Top lefthand side hardware button
 * Temp and Humidity Sensor
 * Prescence sensor
+* Push to talk voice assistant
 * Voice assistant with switchable on Device wake word or Home Assistant wakeword engine eg. Openwakeword
 
  ## Requirements
