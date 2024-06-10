@@ -820,7 +820,7 @@ display:
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
           it.printf(160, 66, id(my_font5), yellow, TextAlign::CENTER, "IP: %s", id(ip_addr).state.c_str());
-          it.printf(160, 90, id(my_font5), lime, TextAlign::CENTER, "tap to change");
+          it.printf(155, 90, id(my_font5), lime, TextAlign::CENTER, "tap to change");
           it.printf(20, 120, id(my_font5), yellow, "WakeWord: ");
           it.printf(220, 130, id(my_font5), yellow, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
           it.printf(80, 175, id(my_font5), yellow, "screensaver :");
