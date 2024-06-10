@@ -1,5 +1,7 @@
 # Making it your own.
-The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other HomeAssistant devices and display sensor values and much more.
+The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other HomeAssistant devices and display sensor values and much more.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d5268d37-94bf-4cad-87e4-c4360fa7c76b)
+
 <br><br>
 The following guide will cover these topics.
 * Customise the voice assistant.
@@ -17,7 +19,7 @@ The following guide will cover these topics.
 
 ## Customising Voice Assistant.
 ### Changing displayed images
-in order to do this you will need to access your HomeAssistant config/esphome/images folder. (Samba share add-on makes this very easy)
+in order to do this you will need to access your Home Assistant config/esphome/images folder. (Samba share add-on makes this very easy)
 You can use any image including transparencies and they should be named to match the device configuration to avoid changing any code. The files need to be 320 x 240 pixels and should be named as followed.
 * error.png
 * loading.png
@@ -25,11 +27,9 @@ You can use any image including transparencies and they should be named to match
 * replying.png
 * listening.png
   <br><br>
-  
-I will cover adding other images for page backgrounds later in this guide.
-Once you have your set of 5 images you need to copy them into the config/esphome/images folder from your local computer, using Samba share. You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
+Once you have your set of 5 images, you need to copy them into the config/esphome/images folder from your local computer, using Samba share. You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
 Now that the images are copied over you will need to install the device config from the ESPHome dashboard (add-on) You do not to change or save anything in the config as the code pointing to the images will already in place and the images just need to be compiled into a new firmware .bin file so that they are present on the device.<br><br>
-As always, I recommend rebooting the device after the firmware has been installed, to do this, press the reboot button in the ESPHome integration entry for the device.<br><br>
+As always, I recommend rebooting the device after the firmware has been installed, to do this press the reboot button on the bottom left side of the device.<br><br>
   
 After rebooting , test the Voice Assistant and you should now see your new images displayed.<br><br>
 ### Changing wake word
@@ -44,8 +44,8 @@ Once you are in the editor near the top of the config you will see this section<
 it is as simple as changing the name circled in red <br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5e8899d3-7c6e-4c4d-be83-fc39876d6210)<br>
 make sure you type it exactly the same as it is shown in the comments above the line you edit.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a1825d9a-706a-43e2-81d4-d9a82b2a7f4b)<br>
-Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading reboot the device from the integration as described above. Once the device has restarted go ahead and test out the wake word.<br><br>
-You can switch between on-device wakeword and HomeAssistant wake word from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
+Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading reboot the device with the bottom left button. Once the device has restarted go ahead and test out the wake word.<br><br>
+You can switch between on-device wakeword and Home Assistant wake word from the info page on the s3Box or from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5d5265fe-7692-4419-a636-6248c371cc1e)
 <br><br><br>
 ### Outputting audio responses to another media player device
@@ -71,16 +71,16 @@ to make it easier here is the code that you can copy and paste.<br>
 if you only want the sound output on the external device and not on the s3box you can remove or comment out the following lines.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d72e1bc8-6100-4d8e-ae1c-9cf630c785c4)<br><br>
 
-Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' as described in the installation guide [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) under step 8.<br>
+Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' by clicking on the 3 dot menu of the device card in the dashboard. 
 Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After the firmware has uploaded, reboot the device and your new config should be working, with audio outputting to your external speaker.<br><br>
 if you have no audio after the above steps , make sure that the s3box is allowed to make services calls. To do this open the ESPhome integration in HA next to the device there will be a configure button, click this and then tick the box as shown below.<br>
-https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e4999c-54ba-482f-897d-505828dfe71a
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e4999c-54ba-482f-897d-505828dfe71a)
 <br><br>
 ### Adding entities to the touch buttons, so that you can 'tap' to toggle on or off an external device.
 in the example firmware it is possible to assign devices to the 6 buttons from the home screen (bottom 2 rows). this is a fairly straight forward process for on/off entities.<br><br>
-I would be looking at introducing more complex controls in the next release of this config. Such as sliders for brightness and the ability to change light colours etc. This can be done now using scenes, which we will cover later in this guide. However I'm sure you will agree that having direct control from the screen would be much better!<br><br>
+I would be looking at introducing more complex controls in the next release of this config. Such as sliders for brightness and the ability to change light colours etc. This can be done now using scenes. However I'm sure you will agree that having direct control from the screen would be much better!<br><br>
 
-In the config the middle button on the middle row is for a simple on/off light entity. We can control this by making a service call to HomeAssistant.<br><br> 
+In the config the middle button on the middle row is for a simple on/off light entity. We can control this by making a service call to Home Assistant.<br><br> 
 Firstly you will need to find the Entity ID of the device you want to control. Follow the steps above that we used for finding the media player ID, it should be a similar method.<br><br>
 In the config the touch buttons are defined under the binary_sensor: section, which is right towards the end of the config. The buttons have an id of control_1 to control_6, in this example we will be looking at control_2
 <br>
@@ -92,7 +92,7 @@ the lines you are interested in are these :-
 ```
 everything above is the configuration of the button itself.<br>
 Currently this button is configured to open a separate page, if for example you wanted to add multiple light entities.<br>
-In order to change this we need to add the service call to HomeAssistant like so<br>
+In order to change this we need to add the service call to Home Assistant like so<br>
 ```yaml
         - homeassistant.service:
             service: light.toggle
@@ -109,7 +109,7 @@ If your light is controlled by a relay , or you want to control a smartplug / so
 the changed config should be similar to this <br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b459b975-c7af-41ba-b998-c4fe191bb057)<br>
 
-After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device from the integration! (hopefully you are getting the routine at this stage). Now go ahead and test that tapping the button toggles your light or switch on or off.<br><br>
+After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device (hopefully you are getting the routine at this stage). Now go ahead and test that tapping the button toggles your light or switch on or off.<br><br>
 this method can be applied to any of the buttons.<br><br>
 I will now go into a little more detail, to hopefully give you the information to create your own touch buttons.<br><br>
 Each button consists of 2 parts.<br>
@@ -459,13 +459,7 @@ I hope that the information that I have given has been as easy as can be to foll
 Resources that have been invaluable to me in my journey configuring ESPHome devices have been the ESPHome docs and the  ESPHome Discord server. I have found the best way of finding ESPHome docs has to been to google "esphome" followed by the name of component i need help with, then selecting the results that are linked to esphome.io, this search term has most often taken me straight to the pages i've needed.<br> 
 If you have any feedback, issues or have spotted any inacuricies or ways you think would be better to describe how to do certain parts in this guide. Please make me aware by raising an issue from the link at the top of the github page. 
 
-links:
-docs
-display
-touch
-gt911
-automations
-home assistant
+
 
 
 
