@@ -8,7 +8,7 @@
  >Firstly I am not a coder/developer/programmer. I Just know the small amount I do know from having a go, and spending many frustrated hours until things do what I want them to do. I apologise if the config makes you pro's cringe... as I am sure there will be many different ways that I could have made this config that would be the 'correct way' however it does what I want, so I will take that as a win.<br><br> 
 This example config allows use of the touch screen and other sensors on the ESP32-S3-Box-3 using ESPhome for use with Home Assistant. The provided config is intended to be used as template for you to customise for your own purposes. I will provide as much detailed instruction as possible for you to achieve this.<br><br>
 If you have any ideas, feedback or feel you could help make things 'even better' then it would be great to hear your thoughts.
-### Please Remember to backup any previous configs and associated files that you may have previously used for the device. <br><br>Using this config or installing the .bin via the web installer is at your own risk. They work for me... but I am not a professional.
+#### Please Remember to backup any previous configs and associated files that you may have previously used for the device. <br><br>Using this config or installing the .bin via the web installer is at your own risk. They work for me... but I am not a professional.
  
 ## Installation and setup notes
 follow the installation instructions [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) 
