@@ -1,5 +1,5 @@
 # Making it your own.
-The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other HomeAssistant devices and display sensor values and much more.<br>
+The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other Home Assistant devices and display sensor values and much more.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d5268d37-94bf-4cad-87e4-c4360fa7c76b)
 
 <br><br>
@@ -299,7 +299,16 @@ Creating a new page is quite simple and we just need to add the lines below.<br>
         lambda: |-  
           it.fill(id(black));
 ```
-This will create a blank page, the id: for the page which we will use later is lights_page and the background colour of the page will be black, as defined by the it.fill line which basically says Fill the screen with the colour 'black', black being the id for the colour defined in the color: component above in the config.<br><br>
+This will create a blank page, the id: for the page which we will use later is lights_page and the background colour of the page will be black, as defined by the it.fill line which basically says Fill the screen with the colour 'black', black being the id for the colour defined in the color: component above in the config. You can display an image on the screen, which includes transparancies. using <br><br>
+`it.image((it.get_width() / 2), (it.get_height() / 2), id(your_image_id), ImageAlign::CENTER);`<br><br>To keep dimensions correct use an image that is 320 x 240. You will also need to add the image to the image: component, shown below, the image file needs to be stored in the 'esphome' folder on the computer that you are compiling the firmware from, if this is  the Home Assistant add-on then you will need to use Samba share or similar to access config/esphome/images This will then be compiled and built into the final .bin file that is flashed to the device.<br><br>
+```yaml
+image:
+  - file: images/your-image-file.png
+    id: my_img
+    resize: 320x240
+    type: RGB24
+    use_transparency: true
+```
 Now that you have a blank page you want to add some icons. the easiest way is to copy and paste these from another section of the display config to make sure that the icons are displayed in the correct position.<br> 
 The process then will be the same as above for changing the light icon. You will need to add a text_sensor: for each entity to be controlled. Don't repeat the text_sensor: line and add each additional entity with it's on id: for the state. example below<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b1d2e4cb-7d75-400c-a9de-42a97365487a)<br><br>
