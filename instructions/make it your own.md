@@ -1,9 +1,12 @@
 # Making it your own.
 The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other Home Assistant devices and display sensor values and much more.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d5268d37-94bf-4cad-87e4-c4360fa7c76b)
-
 <br><br>
-The following guide will cover these topics.
+## *****NOTE*****<br>
+You will need to use Samba Share add-on or equivelant, to copy the image and font files to your Home Assistant config/esphome folder. These are available in a zip [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3box-files.zip>)<br>
+
+#### The following guide will cover these topics.<br>
+
 * Customise the voice assistant.
    * setting your own display images for the Voice Assistant process.
    * Changing the on-device (micro wake word) wake word.
