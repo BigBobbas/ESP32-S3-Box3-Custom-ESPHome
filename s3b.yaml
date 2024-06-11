@@ -73,7 +73,7 @@ logger:
 
 wifi:
   ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  password: !secret wifi_password 
   ap:
     ssid: ${name}
     password: s3box123
@@ -88,6 +88,7 @@ wifi:
 time:
   - platform: homeassistant
     id: ha_time
+    
 interval:
   - interval: 10s
     then:
@@ -125,6 +126,89 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
+
+select:
+  - platform: template
+    entity_category: config
+    name: Wake word engine location
+    id: wake_word_engine_location
+    optimistic: true
+    restore_value: true
+    options:
+      - In Home Assistant
+      - On device
+    initial_option: In Home Assistant
+    on_value:
+      - if:
+          condition:
+            lambda: return x == "In Home Assistant";
+          then:
+            - micro_wake_word.stop
+            - delay: 500ms
+            - lambda: id(va).set_use_wake_word(true);
+            - voice_assistant.start_continuous:
+            - text_sensor.template.publish:
+                id: wakeword_location
+                state: !lambda 'return "Home Assistant";'
+            - component.update: s3_box_lcd
+      - if:
+          condition:
+            lambda: return x == "On device";
+          then:
+            - text_sensor.template.publish:
+                id: wakeword_location
+                state: !lambda 'return "On Device";'
+            - lambda: id(va).set_use_wake_word(false);
+            - voice_assistant.stop
+            - delay: 500ms
+            - micro_wake_word.start
+            - component.update: s3_box_lcd
+script:
+  - id: set_volume
+    then:
+      - media_player.volume_set:
+          volume: !lambda return 0.5 + id(speaker_volume) * 0.05 ;
+          
+  - id: saver_enabled
+    then:
+      - if:
+          condition: 
+            switch.is_on: s_saver 
+          then:
+            - light.turn_on: 
+                id: led
+                brightness: 100%
+            - delay: 30s
+            - light.turn_on: 
+                id: led
+                brightness: 30%
+            - display.page.show: saver_page
+            - component.update: s3_box_lcd
+      - if:
+          condition:
+            - switch.is_on: s_saver_mode            
+          then:
+            - delay: 180s
+            - light.turn_off: led
+    mode: restart 
+    
+globals:
+  - id: wifi_connection
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: api_connection
+    type: bool
+    restore_value: no
+    initial_value: "false" 
+  - id: mute_value
+    type: bool
+    restore_value: no
+    initial_value: "false" 
+  - id: speaker_volume
+    type: int
+    restore_value: no
+    initial_value: '5'
 
 button:
   - platform: restart
@@ -168,7 +252,19 @@ switch:
     on_turn_on:
       - script.execute: saver_enabled
     on_turn_off:
-      - script.execute: saver_enabled        
+      - script.execute: saver_enabled    
+      
+  - platform: template
+    name: Screensaver_mode
+    id: s_saver_mode
+    optimistic: true    
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - script.execute: saver_enabled
+    on_turn_off:
+      - script.execute: saver_enabled    
+
+      
 
 output:
   - platform: ledc
@@ -183,6 +279,57 @@ light:
     output: backlight_output
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 500ms
+    
+sensor:
+  - platform: aht10 
+    i2c_id: bus_b
+    variant: AHT20
+    temperature:
+      name: "Temperature"
+      id: s3temp
+    humidity:
+      name: "Humidity"
+    update_interval: 60s
+
+
+  - platform: adc
+    pin: GPIO10
+    name: "Battery voltage"
+    id: battery_voltage
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    device_class: "voltage"
+    entity_category: "diagnostic"
+    disabled_by_default: true
+    update_interval: 30s
+    attenuation: auto
+    filters:
+        - multiply: 4.11
+
+  - platform: copy
+    id: battery_percent
+    source_id: battery_voltage
+    name: "Battery level"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    device_class: "battery"
+    entity_category: "diagnostic"
+    filters:
+      - lambda: return (x - 2.7) / (4.2 - 2.7) * 100;
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+      address_0:
+        name: ESP IP Address 0
+      id: ip_addr
+      
+  - platform: template
+    id: wakeword_location
 
 i2s_audio:
   - id: i2s_shared
@@ -203,7 +350,6 @@ adf_pipeline:
       model: es8311
       address: 0x18
       enable_pin: GPIO46
-
     sample_rate: 16000
     bits_per_sample: 16bit
     fixed_settings: true
@@ -218,11 +364,9 @@ adf_pipeline:
       i2c_id: bus_a
       model: es7210
       address: 0x40
-
     sample_rate: 16000
     bits_per_sample: 16bit
     fixed_settings: true
-
 
 media_player:
   - platform: adf_pipeline
@@ -295,84 +439,6 @@ voice_assistant:
           - lambda: id(va).set_use_wake_word(true);
           - voice_assistant.start_continuous:      
 
-select:
-  - platform: template
-    entity_category: config
-    name: Wake word engine location
-    id: wake_word_engine_location
-    optimistic: true
-    restore_value: true
-    options:
-      - In Home Assistant
-      - On device
-    initial_option: In Home Assistant
-    on_value:
-      - if:
-          condition:
-            lambda: return x == "In Home Assistant";
-          then:
-            - micro_wake_word.stop
-            - delay: 500ms
-            - lambda: id(va).set_use_wake_word(true);
-            - voice_assistant.start_continuous:
-            - text_sensor.template.publish:
-                id: wakeword_location
-                state: !lambda 'return "Home Assistant";'
-            - component.update: s3_box_lcd
-      - if:
-          condition:
-            lambda: return x == "On device";
-          then:
-            - text_sensor.template.publish:
-                id: wakeword_location
-                state: !lambda 'return "On Device";'
-            - lambda: id(va).set_use_wake_word(false);
-            - voice_assistant.stop
-            - delay: 500ms
-            - micro_wake_word.start
-            - component.update: s3_box_lcd
-script:
-  - id: set_volume
-    then:
-      - media_player.volume_set:
-          volume: !lambda return 0.5 + id(speaker_volume) * 0.05 ;
-          
-  - id: saver_enabled
-    then:
-      - if:
-          condition: 
-            switch.is_on: s_saver 
-          then:
-            - light.turn_on: 
-                id: led
-                brightness: 100%
-            - delay: 30s
-            - light.turn_on: 
-                id: led
-                brightness: 30%
-            - display.page.show: saver_page
-            - component.update: s3_box_lcd
-            - delay: 180s
-            - light.turn_off: led
-    mode: restart 
-globals:
-  - id: wifi_connection
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: api_connection
-    type: bool
-    restore_value: no
-    initial_value: "false" 
-  - id: mute_value
-    type: bool
-    restore_value: no
-    initial_value: "false" 
-  - id: speaker_volume
-    type: int
-    restore_value: no
-    initial_value: '5'
-
 image:
   - file: images/error.png
     id: error_img
@@ -404,59 +470,7 @@ image:
     resize: 320x240
     type: RGB24
     use_transparency: true
-
-sensor:
-  - platform: aht10 
-    i2c_id: bus_b
-    variant: AHT20
-    temperature:
-      name: "Temperature"
-      id: s3temp
-    humidity:
-      name: "Humidity"
-    update_interval: 60s
-
-
-  - platform: adc
-    pin: GPIO10
-    name: "Battery voltage"
-    id: battery_voltage
-    unit_of_measurement: "V"
-    accuracy_decimals: 1
-    device_class: "voltage"
-    entity_category: "diagnostic"
-    disabled_by_default: true
-    update_interval: 30s
-    attenuation: auto
-    filters:
-        - multiply: 4.11
-
-  - platform: copy
-    id: battery_percent
-    source_id: battery_voltage
-    name: "Battery level"
-    unit_of_measurement: "%"
-    accuracy_decimals: 0
-    device_class: "battery"
-    entity_category: "diagnostic"
-    filters:
-      - lambda: return (x - 2.7) / (4.2 - 2.7) * 100;
-      - clamp:
-          min_value: 0
-          max_value: 100
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ESP IP Address
-      address_0:
-        name: ESP IP Address 0
-      id: ip_addr
-      
-  - platform: template
-    id: wakeword_location
-    
-
+ 
 font:
   - file: "fonts/consola.ttf"
     id: my_font
@@ -510,6 +524,8 @@ font:
       "\U000F06E8",#light bulb illuminated
       "\U000F0335",#light bulb off
       "\U000F075A",#music
+      "\U000F0A19",#toggle off
+      "\U000F0521",#toggle on
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -614,7 +630,7 @@ display:
     update_interval: never
     ##################################################################################################
     ################ The below section defines, what is displayed on the screen,        ##############
-    ################ the colours and mdi icons are defined above under FONTS and Color, ##############
+    ################ the colours and mdi icons are defined above under font: and Color: ##############
     ################ they are then referenced in the config below.                      ##############
     ##################################################################################################
     pages:
@@ -760,6 +776,7 @@ display:
           it.printf(20, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F06E8");
+          
       - id: info_page
         lambda: |-
           it.fill(id(black));
@@ -821,18 +838,22 @@ display:
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
           it.printf(160, 66, id(my_font5), yellow, TextAlign::CENTER, "IP: %s", id(ip_addr).state.c_str());
-          it.printf(155, 90, id(my_font5), lime, TextAlign::CENTER, "tap to change");
+          it.printf(155, 105, id(my_font5), lime, TextAlign::CENTER, "tap to change");
           it.printf(20, 120, id(my_font5), yellow, "WakeWord: ");
-          it.printf(220, 130, id(my_font5), yellow, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
-          it.printf(80, 175, id(my_font5), yellow, "screensaver :");
+          it.printf(220, 130, id(my_font5), light_blue, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
+          it.printf(90, 175, id(my_font5), yellow, "screensaver :");
           if(id(s_saver).state) {
-                 it.printf(265, 175, id(my_font5), yellow, "on");
+                 it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
           } else {   
-                 it.printf(265, 175, id(my_font5), yellow, "off");
-          }                    
-                    it.rectangle(130, 110, 180, 40);
-                    it.rectangle(250, 165, 60, 40);
-                    
+                 it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
+          } 
+          it.printf(35, 205, id(my_font5), yellow, "Timeout to blank :");          
+          if(id(s_saver_mode).state) {
+                 it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
+          } else {   
+                 it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
+          }           
+                     
                     
       - id: climate_page
         lambda: |-
@@ -1182,64 +1203,6 @@ touchscreen:
     - script.execute: saver_enabled
     
 binary_sensor:
-###### media player ######
-  - platform: touchscreen
-    page_id: media_page
-    name: Volume Minus
-    x_min: 5
-    x_max: 105
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - logger.log: "Volume Minus pressed"
-        - lambda: |-
-            if (id(speaker_volume) > 0) {
-              id(speaker_volume) -= 1;
-            }
-        - component.update: s3_box_lcd
-        - script.execute: set_volume
-
-  - platform: touchscreen
-    page_id: media_page
-    name: Volume Plus
-    x_min: 215
-    x_max: 315
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - logger.log: "Volume Plus pressed"
-        - lambda: |-
-            if (id(speaker_volume) < 10) {
-              id(speaker_volume) += 1;
-            }
-        - component.update: s3_box_lcd
-        - script.execute: set_volume
-
-  - platform: touchscreen
-    page_id: media_page
-    name: Play Pause
-    x_min: 110
-    x_max: 210
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - if:
-            condition:
-              media_player.is_idle:
-            then:
-              - media_player.play
-            else:
-              - media_player.stop
-        - logger.log: "Play Paused pressed"
 
 ###### top left hand physical button #######
 
@@ -1273,7 +1236,7 @@ binary_sensor:
     name: "Presence detect"
     disabled_by_default: false
     device_class: "occupancy"
-
+    
  ########## Top status bar buttons 1-5 ##########
   - platform: touchscreen
     id: status_bar_1
@@ -1459,6 +1422,103 @@ binary_sensor:
             
 ########### end of control buttons #######################
 ########### set of 6 control buttons per page to get you started - just give each button an id: also uncomment the 3 lines below y_max: and add your automation #######################
+      #### climate page ###
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate1
+    internal: true
+    x_min: 5
+    x_max: 105
+    y_min: 90
+    y_max: 170
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
+
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate2
+    internal: true
+    x_min: 110
+    x_max: 210
+    y_min: 90
+    y_max: 170
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd   
+
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate3
+    internal: true
+    x_min: 215
+    x_max: 315
+    y_min: 90
+    y_max: 170
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
+
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate4
+    internal: true
+    x_min: 5
+    x_max: 105
+    y_min: 175
+    y_max: 240
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
+
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate5
+    internal: true
+    x_min: 110
+    x_max: 210
+    y_min: 175
+    y_max: 240
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
+
+  - platform: touchscreen
+    page_id: climate_page
+    id: climate6
+    internal: true
+    x_min: 215
+    x_max: 315
+    y_min: 175
+    y_max: 240
+    # on_click:
+    #   min_length: 10ms
+    #   max_length: 500ms
+    
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: climate_page 
+            # - component.update: s3_box_lcd
+  
   - platform: touchscreen
     page_id: lights_page
     id: lights1
@@ -1474,7 +1534,6 @@ binary_sensor:
     #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
             # - display.page.show: lights_page 
             # - component.update: s3_box_lcd
-
 
   - platform: touchscreen
     page_id: lights_page
@@ -1524,7 +1583,6 @@ binary_sensor:
             # - display.page.show: lights_page 
             # - component.update: s3_box_lcd
 
-
   - platform: touchscreen
     page_id: lights_page
     id: lights5
@@ -1540,8 +1598,6 @@ binary_sensor:
         #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
             # - display.page.show: lights_page 
             # - component.update: s3_box_lcd
-
-
 
   - platform: touchscreen
     page_id: lights_page
@@ -1559,106 +1615,64 @@ binary_sensor:
             # - display.page.show: lights_page 
             # - component.update: s3_box_lcd
 
-
-    #### climate page ###
+###### media player ######
   - platform: touchscreen
-    page_id: climate_page
-    id: climate1
-    internal: true
+    page_id: media_page
+    name: Volume Minus
     x_min: 5
     x_max: 105
     y_min: 90
     y_max: 170
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd
-
-#### Climate page buttons ####
-  - platform: touchscreen
-    page_id: climate_page
-    id: climate2
-    internal: true
-    x_min: 110
-    x_max: 210
-    y_min: 90
-    y_max: 170
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd   
-
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - logger.log: "Volume Minus pressed"
+        - lambda: |-
+            if (id(speaker_volume) > 0) {
+              id(speaker_volume) -= 1;
+            }
+        - component.update: s3_box_lcd
+        - script.execute: set_volume
 
   - platform: touchscreen
-    page_id: climate_page
-    id: climate3
-    internal: true
+    page_id: media_page
+    name: Volume Plus
     x_min: 215
     x_max: 315
     y_min: 90
     y_max: 170
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - logger.log: "Volume Plus pressed"
+        - lambda: |-
+            if (id(speaker_volume) < 10) {
+              id(speaker_volume) += 1;
+            }
+        - component.update: s3_box_lcd
+        - script.execute: set_volume
 
   - platform: touchscreen
-    page_id: climate_page
-    id: climate4
-    internal: true
-    x_min: 5
-    x_max: 105
-    y_min: 175
-    y_max: 240
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd
-
-
-  - platform: touchscreen
-    page_id: climate_page
-    id: climate5
-    internal: true
+    page_id: media_page
+    name: Play Pause
     x_min: 110
     x_max: 210
-    y_min: 175
-    y_max: 240
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd
-
-  - platform: touchscreen
-    page_id: climate_page
-    id: climate6
-    internal: true
-    x_min: 215
-    x_max: 315
-    y_min: 175
-    y_max: 240
-    # on_click:
-    #   min_length: 10ms
-    #   max_length: 500ms
-    
-        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
-            # - display.page.show: climate_page 
-            # - component.update: s3_box_lcd
+    y_min: 90
+    y_max: 170
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - if:
+            condition:
+              media_player.is_idle:
+            then:
+              - media_player.play
+            else:
+              - media_player.stop
+        - logger.log: "Play Paused pressed"
 
     #### scenes page ###
   - platform: touchscreen
@@ -1765,15 +1779,31 @@ binary_sensor:
     page_id: info_page
     id: ss_toggle
     internal: true
-    x_min: 255
+    x_min: 250
     x_max: 315
-    y_min: 165
-    y_max: 205
+    y_min: 155
+    y_max: 190
     on_click:
       min_length: 10ms
       max_length: 500ms
       then:
         - switch.toggle: s_saver
+        - component.update: s3_box_lcd
+        - script.execute: saver_enabled
+        
+  - platform: touchscreen
+    page_id: info_page
+    id: ss_toggle_blank
+    internal: true
+    x_min: 250
+    x_max: 315
+    y_min: 195
+    y_max: 235
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - switch.toggle: s_saver_mode
         - component.update: s3_box_lcd
         - script.execute: saver_enabled
     
@@ -1782,7 +1812,7 @@ binary_sensor:
     page_id: info_page
     id: ww_chang_hass
     internal: true
-    x_min: 160
+    x_min: 10
     x_max: 315
     y_min: 115
     y_max: 155
@@ -1814,5 +1844,6 @@ binary_sensor:
         #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
             # - display.page.show: scenes_page 
             # - component.update: s3_box_lcd
+
 
 ################## config end ############################
