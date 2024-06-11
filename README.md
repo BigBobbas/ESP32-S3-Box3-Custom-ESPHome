@@ -1,5 +1,7 @@
 # ESP32-S3-Box3-Custom-ESPHome
  Custom ESPHome config for ESP32-S3-Box-3 with sensors and touchscreen<br><br>
+[installation instructions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>)<br>
+[How to customise after install](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/f70ec539-1d08-4ba2-84ad-684866000986)
 
