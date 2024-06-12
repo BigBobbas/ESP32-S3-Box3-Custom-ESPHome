@@ -125,6 +125,9 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
+  - interval: 20s
+    then:
+      - component.update: s3_box_lcd
 
 select:
   - platform: template
@@ -439,60 +442,60 @@ voice_assistant:
           - voice_assistant.start_continuous:      
 
 image:
-  - file: images/error.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
     id: error_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/idle.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/idle.png"
     id: idle_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/listening.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/listening.png"
     id: listening_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/thinking.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/thinking.png"
     id: thinking_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/replying.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/replying.png"
     id: replying_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: images/loading.png
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/loading.png"
     id: loading_img
     resize: 320x240
     type: RGB24
     use_transparency: true
  
 font:
-  - file: "fonts/consola.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
     size: 14
 
-  - file: "fonts/consola.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font2
     size: 72
 
-  - file: "fonts/consola.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font3
     size: 28
 
-  - file: "fonts/consola.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font4
     size: 40
     
-  - file: "fonts/consola.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font5
     size: 22
 
 
-  - file: "fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_55
     size: 45
     glyphs: [
@@ -527,7 +530,7 @@ font:
       "\U000F0521",#toggle on
       ]
 
-  - file: "fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_80
     size: 75
     glyphs: [
@@ -578,11 +581,11 @@ font:
 
       ]
 
-  - file: "fonts/DSEG14Classic-Regular.ttf"    
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG14Classic-Regular.ttf"    
     id: my_fontseg
     size: 72
 
-  - file: "fonts/DSEG7Classic-Regular.ttf"
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg2
     size: 72
 
