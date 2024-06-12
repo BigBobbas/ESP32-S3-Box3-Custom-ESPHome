@@ -1,7 +1,10 @@
 # ESP32-S3-Box3-Custom-ESPHome
  Custom ESPHome config for ESP32-S3-Box-3 with sensors and touchscreen<br><br>
-[installation instructions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>)<br>
-[How to customise after install](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
+ To go straight to the config to use with the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>)<br>
+ To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
+ 
+To go straight to Installation Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>)<br>
+To go straight to the 'how to customise' Guide[click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/f70ec539-1d08-4ba2-84ad-684866000986)
 
@@ -31,7 +34,7 @@ Thanks to [gnumpi](<https://github.com/gnumpi/esphome_audio>) 'ESPHome audio' ha
 * Voice assistant with switchable on Device wake word or Home Assistant wakeword engine eg. Openwakeword
 
  ## Requirements
- * ESP32 S3 Box 3 (This config is only applicable to the version with the sensor dock)
+ * ESP32 S3 Box 3
  * 18650 Battery - not essential, but it helps to give the device constant power which will prevent Voice Assistant losing its functionality.
  * ESPHome installation, either Home Assistant add-on, Local Cli install or docker.
    Please note that the compile of the config is fairly resource hungry and may fail on older devices with low ram and low processing power. However running ESPHome from a local machine with more power, will make this much faster and less likelihood of encountering errors.
