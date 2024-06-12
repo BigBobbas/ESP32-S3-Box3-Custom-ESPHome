@@ -863,7 +863,7 @@ display:
           } else {   
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
           }         
-          it.printf(10, 175, id(my_font5), yellow, "wake on presecence :");          
+          it.printf(10, 175, id(my_font5), yellow, "wake on presence :");          
           if(id(s_saver_presc).state) {
                  it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
           } else {   
