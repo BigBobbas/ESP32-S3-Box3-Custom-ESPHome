@@ -70,10 +70,10 @@ ota:
 logger:
   hardware_uart: USB_SERIAL_JTAG
 
-
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  
   ap:
     ssid: ${name}
     password: s3box123
@@ -267,7 +267,15 @@ switch:
     on_turn_off:
       - script.execute: saver_enabled    
 
-      
+  - platform: template
+    name: Screensaver_mode
+    id: s_saver_presc
+    optimistic: true    
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - script.execute: saver_enabled
+    on_turn_off:
+      - script.execute: saver_enabled      
 
 output:
   - platform: ledc
@@ -841,22 +849,27 @@ display:
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
           it.printf(160, 66, id(my_font5), yellow, TextAlign::CENTER, "IP: %s", id(ip_addr).state.c_str());
-          it.printf(155, 105, id(my_font5), lime, TextAlign::CENTER, "tap to change");
-          it.printf(20, 120, id(my_font5), yellow, "WakeWord: ");
-          it.printf(220, 130, id(my_font5), light_blue, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
-          it.printf(90, 175, id(my_font5), yellow, "screensaver :");
+          it.printf(155, 90, id(my_font5), lime, TextAlign::CENTER, "tap to change");
+          it.printf(20, 105, id(my_font5), yellow, "WakeWord: ");
+          it.printf(220, 115, id(my_font5), light_blue, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
+          it.printf(90, 145, id(my_font5), yellow, "screensaver :");
           if(id(s_saver).state) {
-                 it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
+                 it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
           } else {   
-                 it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
+                 it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
           it.printf(35, 205, id(my_font5), yellow, "Timeout to blank :");          
           if(id(s_saver_mode).state) {
                  it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
           } else {   
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
+          }         
+          it.printf(10, 175, id(my_font5), yellow, "wake on presecence :");          
+          if(id(s_saver_presc).state) {
+                 it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
+          } else {   
+                 it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
           }           
-                     
                     
       - id: climate_page
         lambda: |-
@@ -1239,6 +1252,34 @@ binary_sensor:
     name: "Presence detect"
     disabled_by_default: false
     device_class: "occupancy"
+    on_state:
+      if:
+        condition:
+          - switch.is_on: s_saver_presc 
+          - display.is_displaying_page: saver_page
+        then:
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd
+          - light.turn_on:
+              id: led
+              brightness: 100%
+        else:      
+          if:
+            condition:
+              not:
+                display.is_displaying_page: idle_page
+            then:
+              - component.update: s3_box_lcd
+              - light.turn_on: 
+                  id: led 
+                  brightness: 100%
+            else:
+              - display.page.show: idle_page
+              - component.update: s3_box_lcd
+              - light.turn_on: 
+                  id: led 
+                  brightness: 100%
+           
     
  ########## Top status bar buttons 1-5 ##########
   - platform: touchscreen
@@ -1784,13 +1825,29 @@ binary_sensor:
     internal: true
     x_min: 250
     x_max: 315
+    y_min: 105
+    y_max: 150
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - switch.toggle: s_saver
+        - component.update: s3_box_lcd
+        - script.execute: saver_enabled
+        
+  - platform: touchscreen
+    page_id: info_page
+    id: ss_wake_presc
+    internal: true
+    x_min: 250
+    x_max: 315
     y_min: 155
     y_max: 190
     on_click:
       min_length: 10ms
       max_length: 500ms
       then:
-        - switch.toggle: s_saver
+        - switch.toggle: s_saver_presc
         - component.update: s3_box_lcd
         - script.execute: saver_enabled
         
@@ -1809,6 +1866,8 @@ binary_sensor:
         - switch.toggle: s_saver_mode
         - component.update: s3_box_lcd
         - script.execute: saver_enabled
+        
+
     
 
   - platform: touchscreen
@@ -1817,8 +1876,8 @@ binary_sensor:
     internal: true
     x_min: 10
     x_max: 315
-    y_min: 115
-    y_max: 155
+    y_min: 100
+    y_max: 140
     on_click:
       min_length: 10ms
       max_length: 500ms
@@ -1849,4 +1908,7 @@ binary_sensor:
             # - component.update: s3_box_lcd
 
 
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+            # - display.page.show: scenes_page 
+            # - component.update: s3_box_lcd
 ################## config end ############################
