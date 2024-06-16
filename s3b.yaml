@@ -449,7 +449,7 @@ voice_assistant:
           - lambda: id(va).set_use_wake_word(false);
           - voice_assistant.stop:    
           - delay: 100ms
-          - lambda: id(va).set_use_wake_word(false);
+          - lambda: id(va).set_use_wake_word(true);
           - voice_assistant.start_continuous: 
 
   on_client_connected:
