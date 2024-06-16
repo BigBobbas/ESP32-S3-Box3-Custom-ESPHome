@@ -401,7 +401,19 @@ voice_assistant:
         condition:
           lambda: return id(wake_word_engine_location).state == "On device";
         then:
+          - wait_until:
+              not:
+                voice_assistant.is_running:
           - micro_wake_word.start
+        else:
+          - wait_until:
+              not:
+                voice_assistant.is_running:
+          - lambda: id(va).set_use_wake_word(false);
+          - voice_assistant.stop:    
+          - delay: 100ms
+          - lambda: id(va).set_use_wake_word(false);
+          - voice_assistant.start_continuous: 
 
   on_client_connected:
     - if:
