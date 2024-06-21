@@ -3,7 +3,7 @@ I have noticed during testing that whenever the device is flashed or reboots. yo
 # Installation
 What you will need.
 * Esp32-S3-Box-3 with sensor dock
-* 18650 battery
+* ** no longer required - but nice to have ;) 18650 battery
 * USB C cable
 * Home Assistant 
 * ESPHome Add-on Dashboard
