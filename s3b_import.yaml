@@ -1247,7 +1247,6 @@ display:
          const char *months[] {"{${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
          it.printf(220, 10, id(my_font3), light_blue, TextAlign::LEFT, months[id(ha_time).now().month - 1]);
          
-         
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
          it.printf(160, 180, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state);
 
