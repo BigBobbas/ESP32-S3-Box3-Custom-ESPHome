@@ -38,6 +38,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
+  min_version: 2024.6.0
   platformio_options:
     board_build.flash_mode: dio
   on_boot:
@@ -91,6 +92,8 @@ api:
         id(api_connection) = false;
 
 ota:
+  - platform: esphome
+  
 logger:
   hardware_uart: USB_SERIAL_JTAG
 
@@ -1231,8 +1234,7 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.printf(160, 120, id(my_font4), yellow, TextAlign::CENTER, "Mic & Speaker - Muted");
-      - id: saver_page
-        lambda: |-
+
       - id: saver_page
         lambda: |-
          it.fill(Color::BLACK);
