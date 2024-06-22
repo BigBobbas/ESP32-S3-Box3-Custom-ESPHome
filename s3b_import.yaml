@@ -437,8 +437,20 @@ voice_assistant:
         condition:
           lambda: return id(wake_word_engine_location).state == "On device";
         then:
+          - wait_until:
+              not:
+                voice_assistant.is_running:
           - micro_wake_word.start
-
+        else:
+          - wait_until:
+              not:
+                voice_assistant.is_running:
+          - lambda: id(va).set_use_wake_word(false);
+          - voice_assistant.stop:    
+          - delay: 100ms
+          - lambda: id(va).set_use_wake_word(true);
+          - delay: 100ms
+          - voice_assistant.start_continuous: 
   on_client_connected:
     - if:
         condition:
@@ -863,7 +875,7 @@ display:
           } else {   
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
           }         
-          it.printf(10, 175, id(my_font5), yellow, "wake on presecence :");          
+          it.printf(10, 175, id(my_font5), yellow, "wake on presence :");          
           if(id(s_saver_presc).state) {
                  it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
           } else {   
