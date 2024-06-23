@@ -221,6 +221,24 @@ script:
             - delay: 180s
             - light.turn_off: led
     mode: restart 
+  - id: saver_enabled_manual
+    then:
+      - if:
+          condition: 
+            switch.is_on: s_saver 
+          then:
+            - light.turn_on: 
+                id: led
+                brightness: 30%
+            - display.page.show: saver_page
+            - component.update: s3_box_lcd
+      - if:
+          condition:
+            - switch.is_on: s_saver_mode            
+          then:
+            - delay: 180s
+            - light.turn_off: led
+    mode: restart 
     
 globals:
   - id: wifi_connection
@@ -992,12 +1010,17 @@ binary_sensor:
     name: "Home"
     index: 0
     on_press:
-      - light.turn_on: 
-          id: led
-          brightness: 100%
-      - display.page.show: idle_page
-      - component.update: s3_box_lcd
-      - script.execute: saver_enabled
+      if:
+        condition:
+          - display.is_displaying_page: idle_page  
+        then:
+          - script.execute: saver_enabled_manual
+        else:
+          - light.turn_on:
+              id: led
+              brightness: 100%  
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd
          
     
  ########## Top status bar buttons 1-5 ##########
