@@ -1239,12 +1239,12 @@ display:
         lambda: |-
          it.fill(Color::BLACK);
          
-         const char *days[] {"{${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
+         const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
          it.printf(165, 10, id(my_font3), light_blue, TextAlign::RIGHT, days[id(ha_time).now().day_of_week - 1]);
          
          it.strftime(180, 10, id(my_font3), light_blue, "%d", id(ha_time).now());
          
-         const char *months[] {"{${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
+         const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
          it.printf(220, 10, id(my_font3), light_blue, TextAlign::LEFT, months[id(ha_time).now().month - 1]);
          
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
