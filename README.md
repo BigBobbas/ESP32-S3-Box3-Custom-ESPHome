@@ -1,5 +1,8 @@
 # ESP32-S3-Box3-Custom-ESPHome
  Custom ESPHome config for ESP32-S3-Box-3 with sensors and touchscreen<br><br>
+ 
+ To go straight to the web installer [click here](<https://support.bbdl.co.uk>)<br>
+ 
  To go straight to the config to use with the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>)<br>
  To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
  
