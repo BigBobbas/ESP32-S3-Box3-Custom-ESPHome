@@ -38,7 +38,6 @@ Thanks to [gnumpi](<https://github.com/gnumpi/esphome_audio>) 'ESPHome audio' ha
 
  ## Requirements
  * ESP32 S3 Box 3
- * ** no longer required 18650 Battery - not essential, but it helps to give the device constant power which will prevent Voice Assistant losing its functionality.
  * ESPHome installation, either Home Assistant add-on, Local Cli install or docker.
    Please note that the compile of the config is fairly resource hungry and may fail on older devices with low ram and low processing power. However running ESPHome from a local machine with more power, will make this much faster and less likelihood of encountering errors.
    Details of how to run ESPHome in different ways, can be found [here](<https://esphome.io/guides/installing_esphome.html>) for OS installs or Docker [here](<https://esphome.io/guides/getting_started_command_line.html>) 
