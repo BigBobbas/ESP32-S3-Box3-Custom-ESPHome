@@ -473,9 +473,6 @@ voice_assistant:
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
-    - delay: 5s 
-    - display.page.show: idle_page
-    - component.update: s3_box_lcd
   on_end:
     - if:
         condition:
@@ -484,6 +481,8 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd
           - micro_wake_word.start
         else:
           - wait_until:
