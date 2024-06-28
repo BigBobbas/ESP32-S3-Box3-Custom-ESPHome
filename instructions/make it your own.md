@@ -20,18 +20,23 @@ The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will 
 ## Customising Voice Assistant.
 ### Changing displayed images
 in order to do this you will need to access your Home Assistant config/esphome/images folder. (Samba share add-on makes this very easy)
-You can use any image including transparencies and they should be named to match the device configuration to avoid changing any code. The files need to be 320 x 240 pixels and should be named as followed.
+You can use any image including transparencies. The files need to be 320 x 240 pixels and should be named as followed.
+
 * error.png
 * loading.png
 * thinking.png
 * replying.png
 * listening.png
   <br><br>
-Once you have your set of 5 images, you need to copy them into the config/esphome/images folder from your local computer, using Samba share. You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
-Now that the images are copied over you will need to install the device config from the ESPHome dashboard (add-on) You do not to change or save anything in the config as the code pointing to the images will already in place and the images just need to be compiled into a new firmware .bin file so that they are present on the device.<br><br>
-As always, I recommend rebooting the device after the firmware has been installed, to do this press the reboot button on the bottom left side of the device.<br><br>
+Once you have your set of 5 images, you need to copy them into the config/esphome/images folder from your local computer, using Samba share (if the folder doesn't exist, you will need to create it). You can either delete or simply overwrite the existing images in the images folder.(making sure not to delete any images that are for other ESPHome projects if there are any)<br><br>
+Now that the images are copied over you will need to install the device config from the ESPHome dashboard (add-on) You will need to change the path in the config to your new images. <br>
+Locate the image: secion in the config, and you will need to change the path to the file.<br>
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/88512211-f0f9-4149-b16d-c3fad900089c)<br>
+change everything including the quotes to images/filename.png so it looks like below
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/eaf38960-ff31-47e8-b34c-76f283de12e7)<br>
+Once you have made the changes you can go ahead and click save followed by install and 'wirelessly'
   
-After rebooting , test the Voice Assistant and you should now see your new images displayed.<br><br>
+After installing, test the Voice Assistant and you should now see your new images displayed.<br><br>
 ### Changing wake word
 * on device - Micro Wake Word
 There are currently 3 available wake words that can be used with micro wake word and these are.
@@ -44,7 +49,7 @@ Once you are in the editor near the top of the config you will see this section<
 it is as simple as changing the name circled in red <br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5e8899d3-7c6e-4c4d-be83-fc39876d6210)<br>
 make sure you type it exactly the same as it is shown in the comments above the line you edit.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a1825d9a-706a-43e2-81d4-d9a82b2a7f4b)<br>
-Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading reboot the device with the bottom left button. Once the device has restarted go ahead and test out the wake word.<br><br>
+Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading go ahead and test out the wake word.<br><br>
 You can switch between on-device wakeword and Home Assistant wake word from the info page on the s3Box or from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5d5265fe-7692-4419-a636-6248c371cc1e)
 <br><br><br>
@@ -72,7 +77,7 @@ if you only want the sound output on the external device and not on the s3box yo
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d72e1bc8-6100-4d8e-ae1c-9cf630c785c4)<br><br>
 
 Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' by clicking on the 3 dot menu of the device card in the dashboard. 
-Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After the firmware has uploaded, reboot the device and your new config should be working, with audio outputting to your external speaker.<br><br>
+Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After the firmware has uploaded, your new config should be working, with audio outputting to your external speaker.<br><br>
 if you have no audio after the above steps , make sure that the s3box is allowed to make services calls. To do this open the ESPhome integration in HA next to the device there will be a configure button, click this and then tick the box as shown below.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e4999c-54ba-482f-897d-505828dfe71a)
 <br><br>
@@ -109,7 +114,7 @@ If your light is controlled by a relay , or you want to control a smartplug / so
 the changed config should be similar to this <br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/b459b975-c7af-41ba-b998-c4fe191bb057)<br>
 
-After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' and yes... after install is complete, reboot the device (hopefully you are getting the routine at this stage). Now go ahead and test that tapping the button toggles your light or switch on or off.<br><br>
+After changing the config, you can go ahead and click 'save' followed by 'install' and 'wirelessly' . Now go ahead and test that tapping the button toggles your light or switch on or off.<br><br>
 this method can be applied to any of the buttons.<br><br>
 I will now go into a little more detail, to hopefully give you the information to create your own touch buttons.<br><br>
 Each button consists of 2 parts.<br>
@@ -162,7 +167,7 @@ The source I use for obtaining the icons is [here](<https://pictogrammers.com/li
 In this example I will show how to add an icon that can be used in your config. The first part of the config we need to look at for this is the font: section<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/c159cf5e-e05c-4d6e-a633-c51258f01e45)<br>
 Here we can define a liste of icons to be used throughout the config.<br>
-all of the mdi-icons are defined in the same manner "\U000" and then after the thress 0's we add the code from the site i posted above. I will show how to add a switch icon. Firstly search for the icon you want in this case i will type "switch" <br>
+all of the mdi-icons are defined in the same manner "\U000" and then after the three 0's we add the code from the site i posted above. I will show how to add a switch icon. Firstly search for the icon you want in this case i will type "switch" <br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a05ce114-dcb1-4ec2-8957-fb58ffd48265)<br>
 I will use the light-switch for this example. If you click on the icon you want to use you will now see a box with the relavant code required in order to use that icon.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/2fea9c65-563f-40df-81f4-76ca550c0048)<br>
@@ -258,7 +263,7 @@ this section displays the 3 icons in the middle row on the display.<br>
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ec41b7e1-f217-4e9f-9df7-5fa0bd1b8c26)
 
 <br>
-Now that you have changed the config, you can go ahead and save and install, and as always after the device has the updated firmware go ahead and reboot it and test. Hopefully everything should now be working with a device being toggled on and off when the touch button is tapped and the icon and colour should change to refelect the state.<br>
+Now that you have changed the config, you can go ahead and save and install, and test. Hopefully everything should now be working with a device being toggled on and off when the touch button is tapped and the icon and colour should change to refelect the state.<br>
 The steps above are exactly the same for all on/off devices that you want to control from HomeAssistant. You should now be able to configure the other buttons in this example config to control the devices that you want.<br><br>
 
 #### Adding pages.<br><br>
@@ -366,7 +371,7 @@ To add the touch controls for this page, you can copy and paste to duplicate the
             data:
               entity_id: switch.sitting_room_s3
 ```
-Once you have made the changes above, you can now save and install, I may have mentioned previously ;) restart the device after the firmware has uploaded.<br><br>
+Once you have made the changes above, you can now save, install and test.<br><br>
 #### Extra buttons and prescence 
 We are left with just 3 more components that you can customise and they are the top lefthand side button, the front red circle button, and the radar sensor. with these you can use the instructions above to add service call or an on device automation to these. all three are buttons(binary sensors) and are customised in the same way. The 3 blocks that we need to edit are :-
 <br>
