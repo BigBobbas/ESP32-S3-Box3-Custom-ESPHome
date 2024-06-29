@@ -464,7 +464,6 @@ voice_assistant:
   auto_gain: 31dBFS
   volume_multiplier: 4.0
   on_listening:
-    - script.execute: saver_enabled
     - display.page.show: listening_page
     - component.update: s3_box_lcd
   on_stt_vad_end: 
@@ -481,6 +480,7 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
+          - script.execute: saver_enabled
           - display.page.show: idle_page
           - component.update: s3_box_lcd
           - micro_wake_word.start
