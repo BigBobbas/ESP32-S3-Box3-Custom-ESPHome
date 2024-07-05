@@ -73,8 +73,12 @@ to make it easier here is the code that you can copy and paste.<br>
               media_content_type: music
               announce: "true"
 ```
-if you only want the sound output on the external device and not on the s3box you can remove or comment out the following lines.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d72e1bc8-6100-4d8e-ae1c-9cf630c785c4)<br><br>
+if you only want the sound output on the external device and not on the s3box you can remove or comment out the following line. from the `voice_assistant:` block<br>
+```yaml
+media_player: adf_media_player
+```
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ec4c4831-a966-4081-b13e-b80a2141ad54)
+
 
 Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' by clicking on the 3 dot menu of the device card in the dashboard. 
 Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After the firmware has uploaded, your new config should be working, with audio outputting to your external speaker.<br><br>
