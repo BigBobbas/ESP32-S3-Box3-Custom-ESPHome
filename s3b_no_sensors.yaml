@@ -337,7 +337,7 @@ light:
     default_transition_length: 500ms
     
 sensor:
- 
+
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -729,14 +729,10 @@ display:
           } else {
                  it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
-
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
-
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F06E8");
-
-
           it.printf(20, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F06E8");
@@ -808,13 +804,9 @@ display:
           }
 
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
-
-
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F050F");
-
-
           it.printf(20, 155, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F050F");
@@ -844,12 +836,9 @@ display:
                  it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
-
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F0335");
-
-
           it.printf(20, 155, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0335");
@@ -951,19 +940,12 @@ display:
       - id: saver_page
        lambda: |-
          it.fill(Color::BLACK);
-         
          const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
          it.printf(165, 10, id(my_font3), light_blue, TextAlign::RIGHT, days[id(ha_time).now().day_of_week - 1]);
-         
          it.strftime(180, 10, id(my_font3), light_blue, "%d", id(ha_time).now());
-         
          const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
          it.printf(220, 10, id(my_font3), light_blue, TextAlign::LEFT, months[id(ha_time).now().month - 1]);
-         
-         
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
-         it.printf(160, 180, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state);
-
 i2c:
   - id: bus_a
     sda: GPIO08
