@@ -34,7 +34,10 @@ substitutions:
   oct: October
   nov: November
   dec: December
-  
+ 
+  timer_finished_illustration_file: https://github.com/esphome/firmware/raw/main/voice-assistant/casita/timer_finished_320_240.png
+  voice_assist_timer_finished_phase_id: "20"
+ 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -44,14 +47,18 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - light.turn_on: 
-          id: led
-          brightness: 100%
-      - display.page.show: loading_page
-      - component.update: s3_box_lcd
+      - script.execute: draw_display
+      - delay: 30s
+      - if:
+          condition:
+            lambda: return id(init_in_progress);
+          then:
+            - lambda: id(init_in_progress) = false;
+            - script.execute: draw_display
   project:
-    name: "BigBobbas.s3box"
-    version: "2024.06.01"
+    name: esphome.voice-assistant
+    version: "2.0"
+
 esp32:
   board: esp32s3box
   flash_size: 16MB
@@ -80,7 +87,8 @@ external_components:
       ref: dev-next
     components: [ adf_pipeline, i2s_audio ]
     refresh: 0s  
-
+  - source: github://jesserockz/esphome-components
+    components: [file]
 api:
   on_client_connected:
     - lambda: |-
@@ -93,10 +101,7 @@ api:
 
 ota:
   - platform: esphome
-    on_begin:
-      - lambda: id(led).turn_on().set_brightness(1.0).perform();
-      - display.page.show: ota_page
-      - component.update: s3_box_lcd   
+  
 logger:
   hardware_uart: USB_SERIAL_JTAG
 
@@ -105,6 +110,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   use_address: 192.168.1.228
+
   ap:
     ssid: ${name}
     password: s3box123
@@ -157,10 +163,9 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
-      
-  # - interval: 60s
-    # then:
-      # - script.execute: return_home
+  - interval: 20s
+    then:
+      - component.update: s3_box_lcd
 
 select:
   - platform: template
@@ -198,7 +203,7 @@ select:
             - delay: 500ms
             - micro_wake_word.start
             - component.update: s3_box_lcd
-script:           
+script:
   - id: set_volume
     then:
       - media_player.volume_set:
@@ -245,21 +250,96 @@ script:
             - delay: 180s
             - light.turn_off: led
     mode: restart 
- 
-  - id: timer_started
+  - id: fetch_first_active_timer
     then:
-      while:
-        condition:
-         switch.is_on: timer_ringing
-        then:
-          - homeassistant.service:
-              service: media_player.play_media
-              data:
-                entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                media_content_id: media-source://media_source/local/timer_finished.mp3
-                media_content_type: music
-          - delay: 1s   
-          
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          auto output_timer = timers.begin()->second;
+          for (auto &iterable_timer : timers) {
+            if (iterable_timer.second.is_active && iterable_timer.second.seconds_left <= output_timer.seconds_left) {
+              output_timer = iterable_timer.second;
+            }
+          }
+          id(global_first_active_timer) = output_timer;
+  - id: check_if_timers_active
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            for (auto &iterable_timer : timers) {
+              if(iterable_timer.second.is_active) {
+                output = true;
+              }
+            }
+          }
+          id(global_is_timer_active) = output;
+  - id: fetch_first_timer
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          auto output_timer = timers.begin()->second;
+          for (auto &iterable_timer : timers) {
+            if (iterable_timer.second.seconds_left <= output_timer.seconds_left) {
+              output_timer = iterable_timer.second;
+            }
+          }
+          id(global_first_timer) = output_timer;
+  - id: check_if_timers
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            output = true;
+          }
+          id(global_is_timer) = output;
+
+  - id: draw_timer_timeline
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          id(check_if_timers).execute();
+          if (id(global_is_timer_active)){
+            id(fetch_first_active_timer).execute();
+            int active_pixels = round( 320 * id(global_first_active_timer).seconds_left / max(id(global_first_active_timer).total_seconds , static_cast<uint32_t>(1)) );
+            if (active_pixels > 0){
+              id(s3_box_lcd).filled_rectangle(0 , 225 , 320 , 15 , Color::WHITE );
+              id(s3_box_lcd).filled_rectangle(0 , 226 , active_pixels , 13 , id(active_timer_color) );
+            }
+          } else if (id(global_is_timer)){
+            id(fetch_first_timer).execute();
+            int active_pixels = round( 320 * id(global_first_timer).seconds_left / max(id(global_first_timer).total_seconds , static_cast<uint32_t>(1)));
+            if (active_pixels > 0){
+              id(s3_box_lcd).filled_rectangle(0 , 225 , 320 , 15 , Color::WHITE );
+              id(s3_box_lcd).filled_rectangle(0 , 226 , active_pixels , 13 , id(paused_timer_color) );
+            }
+          }
+  - id: draw_active_timer_widget
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          if (id(global_is_timer_active)){
+            id(s3_box_lcd).filled_rectangle(80 , 40 , 160 , 50 , Color::WHITE );
+            id(s3_box_lcd).rectangle(80 , 40 , 160 , 50 , Color::BLACK );
+
+            id(fetch_first_active_timer).execute();
+            int hours_left = floor(id(global_first_active_timer).seconds_left / 3600);
+            int minutes_left = floor((id(global_first_active_timer).seconds_left - hours_left * 3600) / 60);
+            int seconds_left = id(global_first_active_timer).seconds_left - hours_left * 3600 - minutes_left * 60 ;
+            auto display_hours = (hours_left < 10 ? "0" : "") + std::to_string(hours_left);
+            auto display_minute = (minutes_left < 10 ? "0" : "") + std::to_string(minutes_left);
+            auto display_seconds = (seconds_left  < 10 ? "0" : "") + std::to_string(seconds_left) ;
+
+            std::string display_string = "";
+            if (hours_left > 0) {
+              display_string = display_hours + ":" + display_minute;
+            } else {
+              display_string = display_minute + ":" + display_seconds;
+            }
+            id(s3_box_lcd).printf(120, 47, id(font_timer), Color::BLACK, "%s", display_string.c_str());
+          }    
+    
 globals:
   - id: wifi_connection
     type: bool
@@ -296,7 +376,6 @@ globals:
     
 number:
   - platform: template
-    name: screensaver timeout
     id: ss_timeout
     optimistic: true
     restore_value: true
@@ -306,6 +385,7 @@ number:
     on_value:
       then:
         lambda: 'ESP_LOGI("number", "value: %f", x);'
+
 button:
   - platform: restart
     id: reboot
@@ -315,83 +395,73 @@ switch:
   - platform: template
     name: Mute
     id: mute_switch
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-    on_turn_on:
-      then:
-        - lambda: id(va).set_use_wake_word(false);
-        - voice_assistant.stop
-        - micro_wake_word.stop
-        - component.update: s3_box_lcd   
-    
+    optimistic: True
+    on_turn_on:   
+      - lambda: id(va).set_use_wake_word(false);
+      - delay: 100ms
+      - voice_assistant.stop
+      - delay: 100ms
+      - micro_wake_word.stop
     on_turn_off:
       - if:
           condition:
-            not:
-              - voice_assistant.is_running
+            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
           then:
-            - if:
-               condition:
-                 lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-               then:
-                 - lambda: id(va).set_use_wake_word(true);
-                 - voice_assistant.start
-            - if:
-               condition:
-                 lambda: return id(wake_word_engine_location).state == "On device";
-               then:
-                 - micro_wake_word.start
-            - component.update: s3_box_lcd
+            - lambda: id(va).set_use_wake_word(true);
+            - delay: 50ms
+            - voice_assistant.start_continuous: 
+          else:
+            - delay: 50ms
+            - micro_wake_word.start     
+    restore_mode: RESTORE_DEFAULT_OFF 
   
-    
   - platform: template
     name: Media Player Mute
     id: media_mute
     optimistic: True
     on_turn_on:   
-      - media_player.volume_set: 0%   
+      - media_player.volume_set: 0%
+      
     on_turn_off:
       - media_player.volume_set: 100%
-
+    
+    restore_mode: RESTORE_DEFAULT_OFF 
+    
   - platform: template
     name: Screensaver
     id: s_saver
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
-     
+  
+      
   - platform: template
     name: Screensaver_mode
     id: s_saver_mode
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
-  
+   
 
   - platform: template
     name: Screensaver_mode
     id: s_saver_presc
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
-     
+    
+  - platform: template
+    name: ss_night_mode
+    id: ss_night_mode
+    optimistic: true    
+    restore_mode: RESTORE_DEFAULT_OFF
+    
   - platform: template
     id: timer_ringing
     optimistic: true
     internal: true
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - lambda: id(led).turn_on().set_brightness(1.0).perform();
-      - script.execute: timer_started
       - delay: 15min
-      - switch.turn_off: timer_ringing 
-    on_turn_off:
-      - media_player.stop
-      # - script.execute: saver_enabled
-      
-  - platform: template
-    id: wake_sound
-    optimistic: true
-    internal: true
-    restore_mode: RESTORE_DEFAULT_OFF
+      - switch.turn_off: timer_ringing  
+
 output:
   - platform: ledc
     pin: GPIO47
@@ -445,15 +515,19 @@ sensor:
       - clamp:
           min_value: 0
           max_value: 100
+          
   - platform: uptime
     id: up_sens
+
 text_sensor:
   - platform: wifi_info
     ip_address:
-      name: ESP IP Address
-      address_0:
-        name: ESP IP Address 0
       id: ip_addr
+    ssid:
+      id: wifi_ssid
+    mac_address:
+      id: wifi_mac
+ 
       
   - platform: template
     id: wakeword_location
@@ -509,9 +583,17 @@ media_player:
       - self
       - resampler
       - adf_i2s_out
-    # on_idle:
-      # - media_player.stop
+    on_play:
+      - lambda: |-
+          id(media_state) = true;
+      - display.page.show: media_page
+      - component.update: s3_box_lcd
 
+    on_idle:
+      - lambda: |-
+          id(media_state) = false;
+      - component.update: s3_box_lcd
+      - script.execute: saver_enabled
 microphone:
   - platform: adf_pipeline
     id: box_mic
@@ -524,35 +606,8 @@ microphone:
 micro_wake_word:
   model: ${micro_wake_word_model}
   on_wake_word_detected:
-    - if:
-        condition:    
-          - switch.is_on: wake_sound
-        then:
-          - display.page.show: listening_page
-          - component.update: s3_box_lcd
-          - homeassistant.service:
-              service: media_player.play_media
-              data:
-                entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                media_content_id: media-source://media_source/local/awake.mp3
-                media_content_type: music
-          - delay: 200ms
-          - lambda: id(va).set_use_wake_word(false);
-          - delay: 100ms
-          - voice_assistant.start:
-              wake_word: !lambda return wake_word;
-        else:
-          - if:
-              condition:
-                - switch.is_off: wake_sound
-              then:
-                - display.page.show: listening_page
-                - component.update: s3_box_lcd
-                - delay: 200ms
-                - lambda: id(va).set_use_wake_word(false);
-                - delay: 100ms
-                - voice_assistant.start:         
-                    wake_word: !lambda return wake_word;
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
@@ -562,20 +617,6 @@ voice_assistant:
   noise_suppression_level: 2
   auto_gain: 31dBFS
   volume_multiplier: 4.0
-  on_wake_word_detected:
-    - if:
-        condition:    
-          - switch.is_on: wake_sound
-        then:
-          - display.page.show: listening_page
-          - component.update: s3_box_lcd
-          - homeassistant.service:
-              service: media_player.play_media
-              data:
-                entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                media_content_id: media-source://media_source/local/awake.mp3
-                media_content_type: music 
-          - media_player.stop
   on_listening:
     - script.execute: saver_enabled
     - display.page.show: listening_page
@@ -586,10 +627,9 @@ voice_assistant:
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
-    - delay: 3s
+    - delay: 2s 
     - display.page.show: idle_page
     - component.update: s3_box_lcd
-  on_end:
     - if:
         condition:
           lambda: return id(wake_word_engine_location).state == "On device";
@@ -597,8 +637,6 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
-          - display.page.show: idle_page
-          - component.update: s3_box_lcd
           - micro_wake_word.start
         else:
           - wait_until:
@@ -610,15 +648,7 @@ voice_assistant:
           - lambda: id(va).set_use_wake_word(true);
           - delay: 100ms
           - voice_assistant.start_continuous: 
-  on_client_connected:
-    - if:
-        condition:
-          lambda: return id(wake_word_engine_location).state == "On device";
-        then:
-          - micro_wake_word.start 
-        else:
-          - lambda: id(va).set_use_wake_word(true);
-          - voice_assistant.start_continuous:      
+
   on_timer_started:
     - component.update: s3_box_lcd
   on_timer_cancelled:
@@ -628,9 +658,46 @@ voice_assistant:
   on_timer_tick:
     - component.update: s3_box_lcd
   on_timer_finished:
-    - display.page.show: timer_finished_page
+    - voice_assistant.stop
+    - lambda: id(global_is_timer_active) = false;
     - switch.turn_on: timer_ringing
     - component.update: s3_box_lcd
+    - wait_until:
+        not:
+          microphone.is_capturing:
+    - while:
+        condition:
+          switch.is_on: timer_ringing
+        then:
+          - homeassistant.service:
+              service: media_player.play_media
+              data:
+                entity_id: media_player.esp32_s3box_3_s3_box_media_player
+                media_content_id: media-source://media_source/local/beep.mp3
+                media_content_type: music
+          - delay: 1s
+    - wait_until:
+        not:
+          media_player.is_playing:
+    - switch.turn_off: timer_ringing          
+
+  on_client_connected:
+    - if:
+        condition:
+          - lambda: return id(wake_word_engine_location).state == "On device";
+          - switch.is_off: mute_switch
+        then:
+          - micro_wake_word.start 
+        else:
+          - if:
+              condition:
+                - switch.is_off: mute_switch
+              then:
+                - lambda: id(va).set_use_wake_word(true);
+                - voice_assistant.start_continuous:   
+              
+ 
+
 image:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
     id: error_img
@@ -662,7 +729,16 @@ image:
     resize: 320x240
     type: RGB24
     use_transparency: true
- 
+  - file: "https://github.com/esphome/firmware/raw/main/voice-assistant/casita/timer_finished_320_240.png"
+    id: timer_finish_img
+    resize: 320x240
+    type: RGB24
+  - file: ${timer_finished_illustration_file}
+    id: casita_timer_finished
+    resize: 320x240
+    type: RGB24
+    use_transparency: true
+    
 font:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
@@ -741,13 +817,8 @@ font:
       "\U000F036F",#voice settings
       "\U000F0502",#screen settings
       "\U000F08D6",#settings
-      "\U000F0D90",#screen off
-      "\U000F1C3B",#battery charging/usb powered
       ]
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
-    id: icon_font_180
-    size: 180
-    glyphs: ["\U000F009E"]#alarm bell
+
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_80
     size: 75
@@ -798,8 +869,6 @@ font:
       "\U000F075E",#vol minus
       "\U000F075D",#vol plus
       "\U000F040E",#play/pause
-      "\U000F08D6",#settings
-      "\U000F036D",#microphone off
 
       ]
 
@@ -809,7 +878,6 @@ font:
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg2
-    glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
     size: 72
 
 color:
@@ -837,7 +905,10 @@ color:
     hex: '73264D'
   - id: light_blue
     hex: 'CFE2F3'
-
+  - id: active_timer_color
+    hex: "26ed3a"
+  - id: paused_timer_color
+    hex: "3b89e3"
 spi:
   clk_pin: 7
   mosi_pin: 6
@@ -909,9 +980,9 @@ display:
               }
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
 
@@ -924,7 +995,7 @@ display:
 
           it.printf(20, 155, id(icon_font_80), red,"\U000F075A");
           it.printf(120, 155, id(icon_font_80), blue,"\U000F0FCE");
-          it.printf(220, 155, id(icon_font_80), lime,"\U000F08D6");
+          it.printf(220, 155, id(icon_font_80), lime,"\U000F05CB");
 
 
 
@@ -981,14 +1052,14 @@ display:
 
 
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
 
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
@@ -1065,17 +1136,29 @@ display:
           it.printf(160, 66, id(my_font5), yellow, TextAlign::CENTER, "IP: %s", id(ip_addr).state.c_str());
           it.printf(160, 91, id(my_font5), yellow, TextAlign::CENTER, "Host: ${name}.local");
           it.printf(160, 116, id(my_font5), yellow, TextAlign::CENTER, "Uptime:%.fsecs", id(up_sens).state);
-       
+          it.printf(160, 140, id(my_font5), light_blue, TextAlign::CENTER, "settings");
+          it.line(10, 155, 310, 155);
+          it.printf(20, 160, id(icon_font_55), light_blue,"\U000F036F");
+          it.printf(140, 160, id(icon_font_55), light_blue,"\U000F0502");
+          it.printf(255, 160, id(icon_font_55), light_blue, "\U000F08D6");  
+          it.printf(15, 210, id(my_font5), light_blue,"Voice");
+          it.printf(135, 210, id(my_font5), light_blue,"Saver");
+          it.printf(255, 210, id(my_font5), light_blue, "misc");            
           
           
       - id: ss_set_page
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screensaver Settings");
           
-          it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Enable screensaver :");
+          it.printf(250, 115, id(my_font5), light_blue, TextAlign::RIGHT, "Enable screensaver :");
           if(id(s_saver).state) {
+                 it.printf(255, 105, id(icon_font_55), lime, "\U000F0521");
+          } else {   
+                 it.printf(255, 105, id(icon_font_55), blue_drk, "\U000F0A19");
+          } 
+          it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Night Mode :");
+          if(id(ss_night_mode).state) {
                  it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
           } else {   
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
@@ -1096,23 +1179,15 @@ display:
       - id: ww_set_page
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Voice Settings");
-          it.printf(155, 120, id(my_font5), light_blue, TextAlign::CENTER, "tap to change");
-          it.printf(135, 135, id(my_font5), light_blue, TextAlign:: RIGHT, "WakeWord :");
-          it.printf(310, 135, id(my_font5), lime, TextAlign::RIGHT, "%s", id(wakeword_location).state.c_str());
-          it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake up sound :");          
-          if(id(wake_sound).state) {
-                 it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
-          } else {   
-                 it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
-          } 
-          
+          it.printf(155, 90, id(my_font5), lime, TextAlign::CENTER, "tap to change");
+          it.printf(20, 105, id(my_font5), yellow, "WakeWord: ");
+          it.printf(220, 115, id(my_font5), light_blue, TextAlign::CENTER, "%s", id(wakeword_location).state.c_str());
+
       - id: other_set_page
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Settings");          
-                    
+          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Settings");
       - id: climate_page
         lambda: |-
           it.fill(id(black));
@@ -1165,14 +1240,14 @@ display:
 
 
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
 
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
@@ -1239,14 +1314,14 @@ display:
 
 
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
 
@@ -1336,7 +1411,6 @@ display:
           } else {        
                   it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
           }
-
       - id: scenes_page
         lambda: |-
           it.fill(id(black));
@@ -1389,14 +1463,14 @@ display:
 
 
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");   
 
@@ -1433,14 +1507,6 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(error_img), ImageAlign::CENTER);
-          
-      - id: timer_finished_page
-        lambda: |-
-          it.fill(id(black));
-          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Timer Finished");
-          it.printf(160, 120, id(icon_font_180), light_blue, TextAlign::CENTER, "\U000F009E");
-          it.printf(160, 215, id(my_font5), light_blue, TextAlign::CENTER, "tap screen to dismiss");
-
       - id: muted_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1460,88 +1526,11 @@ display:
          
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
          it.printf(160, 180, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state);
-      - id: ota_page
+
+      - id: timer_finished_page
         lambda: |-
           it.fill(Color::BLACK);
-          it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");  
-          it.printf((it.get_width() / 2), (it.get_height() / 2), id(my_font3), red, TextAlign::CENTER, "FIRMWARE UPDATING");
-          it.printf(160,190, id(my_font3), red, TextAlign::CENTER, "won't be long....");
-      -  id: settings_page
-         lambda: |-
-          it.fill(id(black));
-          if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
-          } else {
-                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
-          }
-          if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
-          } else {
-                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
-          }
-          if(id(battery_voltage).has_state ()) {
-              if(id(battery_voltage).state <= 2.7) {
-                  // Replace battery, less than 10% 420, 558 / 87
-                  it.printf(135, 5, id(icon_font_55), "\U000F10CD");
-              } else if (id(battery_percent).state >= 98) {
-                  // "\U000F0079" # mdi-battery
-                  it.printf(135, 5, id(icon_font_55), green, "\U000F0079");
-              } else if (id(battery_percent).state >= 90) {
-                  // "\U000F0082" # mdi-battery-90
-                  it.printf(135, 5, id(icon_font_55), green, "\U000F0082");
-              } else if (id(battery_percent).state >= 80) {
-                  // "\U000F0081" # mdi-battery-80
-                  it.printf(135, 5, id(icon_font_55), green, "\U000F0081");
-              } else if (id(battery_percent).state >= 70) {
-                  // "\U000F0080" # mdi-battery-70
-                  it.printf(135, 5, id(icon_font_55), green, "\U000F0080");
-              } else if (id(battery_percent).state >= 60) {
-                  // "\U000F007F" # mdi-battery-60
-                  it.printf(135, 5, id(icon_font_55), green, "\U000F007F");
-              } else if (id(battery_percent).state >= 50) {
-                  // "\U000F007E" # mdi-battery-50
-                  it.printf(135, 5, id(icon_font_55), amber, "\U000F007E");
-              } else if (id(battery_percent).state >= 40) {
-                  // "\U000F007D" # mdi-battery-40
-                  it.printf(135, 5, id(icon_font_55), amber, "\U000F007D");
-              } else if (id(battery_percent).state >= 30) {
-                  // "\U000F007C" # mdi-battery-30
-                  it.printf(135, 5, id(icon_font_55), red, "\U000F007C");
-              } else if (id(battery_percent).state >= 20) {
-                  // "\U000F007B" # mdi-battery-20
-                  it.printf(135, 5, id(icon_font_55), red, "\U000F007B");
-              } else if (id(battery_percent).state >= 10) {
-                  // "\U000F007A" # mdi-battery-10
-                  it.printf(135, 5, id(icon_font_55), red, "\U000F007A");
-              }
-          }
-          if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
-          } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
-          }
-          if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
-          } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
-          }
-          it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");
-          it.printf(160, 140, id(my_font5), light_blue, TextAlign::CENTER, "settings");
-          it.line(10, 155, 310, 155);
-          it.printf(20, 160, id(icon_font_55), light_blue,"\U000F036F");
-          it.printf(140, 160, id(icon_font_55), light_blue,"\U000F0502");
-          it.printf(255, 160, id(icon_font_55), light_blue, "\U000F08D6");  
-          it.printf(15, 210, id(my_font5), light_blue,"Voice");
-          it.printf(135, 210, id(my_font5), light_blue,"Saver");
-          it.printf(255, 210, id(my_font5), light_blue, "misc");            
-
-      - id: dnd_page
-        lambda: |-
-          it.fill(id(black));
-          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Do not disturb active");
-          it.printf(160, 45, id(my_font5), light_blue, TextAlign::CENTER, "screen will switch off in 10s");
-          it.printf(160, 120, id(icon_font_80), red, TextAlign::CENTER, "\U000F0D90\U000F036D\U000F0581");
-          it.printf(160, 215, id(my_font5), light_blue, TextAlign::CENTER, "tap screen to disable");
+          it.image((it.get_width() / 2), (it.get_height() / 2), id(casita_timer_finished), ImageAlign::CENTER);
 
 i2c:
   - id: bus_a
@@ -1566,8 +1555,7 @@ touchscreen:
   i2c_id: bus_a
   id: gt911_touchscreen
   interrupt_pin: GPIO3
-  on_touch:
-    - lambda: id(led).turn_on().set_brightness(1.0).perform();
+  on_update:
     - script.execute: saver_enabled
     
 binary_sensor:
@@ -1582,7 +1570,8 @@ binary_sensor:
     name: Top Left Button
     entity_category: diagnostic
     on_press:
-      - light.toggle: led
+      then:
+        media_player.play_media: http://homeassistant.local:8123/local/api.mp3
 
 
 #######     red circle home button   #####################
@@ -1601,7 +1590,6 @@ binary_sensor:
               brightness: 100%  
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          - script.execute: saver_enabled
 
 ###### radar sensor ########
   - platform: gpio
@@ -1621,7 +1609,7 @@ binary_sensor:
           - light.turn_on:
               id: led
               brightness: 100%
-          # - script.execute: saver_enabled
+          - script.execute: saver_enabled
              
  ########## Top status bar buttons 1-5 ##########
   - platform: touchscreen
@@ -1693,10 +1681,12 @@ binary_sensor:
       then:
         - display.page.show: info_page
         - component.update: s3_box_lcd
+        
 #########################################
-#####          info page             ####
+##########      info page        ########
+
   - platform: touchscreen
-    page_id: settings_page
+    page_id: info_page
     id: voice_set
     internal: true
     x_min: 5
@@ -1711,7 +1701,7 @@ binary_sensor:
         - component.update: s3_box_lcd
 
   - platform: touchscreen
-    page_id: settings_page
+    page_id: info_page
     id: ss_set
     internal: true
     x_min: 110
@@ -1726,7 +1716,7 @@ binary_sensor:
         - component.update: s3_box_lcd
 
   - platform: touchscreen
-    page_id: settings_page
+    page_id: info_page
     id: misc_set 
     internal: true
     x_min: 215
@@ -1739,6 +1729,7 @@ binary_sensor:
       then:
         - display.page.show: other_set_page
         - component.update: s3_box_lcd
+        
 #########################################
 ########## control buttons 1 -6 ########
   - platform: touchscreen
@@ -1825,11 +1816,24 @@ binary_sensor:
     y_min: 175
     y_max: 240
     on_press:
-      then:
-        - display.page.show: settings_page
+       if:
+        condition:
+          - micro_wake_word.is_running
+        then:
+          - micro_wake_word.stop
+          - delay: 100ms
+          - voice_assistant.start     
+        else: 
+        - lambda: id(va).set_use_wake_word(false);
+        - delay: 100ms
+        - voice_assistant.stop
+        - delay: 200ms 
+        - voice_assistant.start
+        - delay: 100ms 
+        - display.page.show: listening_page
         - component.update: s3_box_lcd
     on_release:
-      - delay: 200ms
+      - delay: 100ms
       - if:
           condition:
             lambda: return id(wake_word_engine_location).state == "In Home Assistant";
@@ -1837,7 +1841,7 @@ binary_sensor:
             - voice_assistant.stop: 
             - lambda: id(va).set_use_wake_word(true);
             - delay: 10ms
-            - voice_assistant.start 
+            - voice_assistant.start_continuous: 
           else:
             - voice_assistant.stop: 
             - delay: 100ms            
@@ -2100,7 +2104,7 @@ binary_sensor:
         
   - platform: touchscreen
     page_id: media_page
-    name: Mute Media
+    name: Play Pause
     x_min: 110
     x_max: 210
     y_min: 180
@@ -2110,7 +2114,6 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.toggle: media_mute
-        - component.update: s3_box_lcd
 
     #### scenes page ###
   - platform: touchscreen
@@ -2219,15 +2222,31 @@ binary_sensor:
     internal: true
     x_min: 250
     x_max: 315
-    y_min: 150
-    y_max: 175
+    y_min: 105
+    y_max: 130
     on_click:
       min_length: 10ms
       max_length: 500ms
       then:
         - switch.toggle: s_saver
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
+        - script.execute: saver_enabled
+        
+  - platform: touchscreen
+    page_id: ss_set_page
+    id: ss_toggle_night
+    internal: true
+    x_min: 250
+    x_max: 315
+    y_min: 135
+    y_max: 160
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - switch.toggle: ss_night_mode
+        - component.update: s3_box_lcd
+        - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: ss_set_page
@@ -2235,15 +2254,15 @@ binary_sensor:
     internal: true
     x_min: 250
     x_max: 315
-    y_min: 180
-    y_max: 205
+    y_min: 165
+    y_max: 190
     on_click:
       min_length: 10ms
       max_length: 500ms
       then:
         - switch.toggle: s_saver_presc
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
+        - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: ss_set_page
@@ -2251,17 +2270,16 @@ binary_sensor:
     internal: true
     x_min: 250
     x_max: 315
-    y_min: 210
-    y_max: 235
+    y_min: 195
+    y_max: 220
     on_click:
       min_length: 10ms
       max_length: 500ms
       then:
         - switch.toggle: s_saver_mode
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled    
-        
-#### voice settings page #####
+        - script.execute: saver_enabled    
+
   - platform: touchscreen
     page_id: ww_set_page
     id: ww_chang_hass
@@ -2279,24 +2297,7 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
-        
-  - platform: touchscreen
-    page_id: ww_set_page
-    id: ww_wake_sound
-    internal: true
-    x_min: 250
-    x_max: 315
-    y_min: 180
-    y_max: 205
-    on_click:
-      min_length: 10ms
-      max_length: 500ms
-      then:
-        - switch.toggle: wake_sound
-        - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
-        
+
 ##### touch to wake screen #####
   - platform: touchscreen
     page_id: saver_page
@@ -2312,43 +2313,9 @@ binary_sensor:
       then:
         - display.page.show: idle_page
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
-        
-  - platform: touchscreen
-    page_id: dnd_page
-    id: dnd_wake
-    internal: true
-    x_min: 0
-    x_max: 320
-    y_min: 0
-    y_max: 240
-    on_click:
-      min_length: 10ms
-      max_length: 500ms
-      then:
-        - lambda: id(led).turn_on().set_brightness(1.0).perform();
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
-        - switch.turn_off: mute_switch
-        - switch.turn_off: media_mute
-        - switch.turn_on: s_saver
+        - script.execute: saver_enabled
+        #### make sure that the following 2 lines are uncommented and sit at the bottom of this block after your action ###
+       # - display.page.show: scenes_page 
+       # - component.update: s3_box_lcd
 
-##### Timer finished page ####
-  - platform: touchscreen
-    page_id: timer_finished_page
-    id: timer_dismiss
-    internal: true
-    x_min: 0
-    x_max: 320
-    y_min: 0
-    y_max: 240
-    on_click:
-      min_length: 10ms
-      max_length: 500ms
-      then:
-        - switch.turn_off: timer_ringing
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
-################## config end ############################
+################# config end ############################
