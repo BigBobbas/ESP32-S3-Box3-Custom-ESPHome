@@ -158,9 +158,9 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
       
-  # - interval: 60s
-    # then:
-      # - script.execute: return_home
+  - interval: 10s
+    then:
+      - component.update: s3_box_lcd
 
 select:
   - platform: template
