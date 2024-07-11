@@ -10,7 +10,7 @@ substitutions:
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
 ####################################################################
-  micro_wake_word_model: okay_nabu
+  micro_wake_word_model: alexa
 ####################################################################
 ####  Days and months ####
 ## Change the values on the right to match your locale ##
@@ -104,7 +104,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
+  use_address: 192.168.1.228
   ap:
     ssid: ${name}
     password: s3box123
@@ -158,9 +158,15 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
       
-  - interval: 10s
+  - interval: 1s
     then:
-      - component.update: s3_box_lcd
+      if:
+        condition:
+          not: 
+            - display.is_displaying_page: saver_page
+        then:
+          - component.update: s3_box_lcd
+          - lambda: id(led).turn_on().set_brightness(1.0).perform();
 
 select:
   - platform: template
@@ -597,8 +603,6 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
-          - display.page.show: idle_page
-          - component.update: s3_box_lcd
           - micro_wake_word.start
         else:
           - wait_until:
@@ -1596,12 +1600,12 @@ binary_sensor:
         then:
           - script.execute: saver_enabled_manual
         else:
-          - light.turn_on:
-              id: led
-              brightness: 100%  
+          # - light.turn_on:
+              # id: led
+              # brightness: 100%  
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          - script.execute: saver_enabled
+          # - script.execute: saver_enabled
 
 ###### radar sensor ########
   - platform: gpio
