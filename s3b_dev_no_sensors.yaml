@@ -10,7 +10,7 @@ substitutions:
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
 ####################################################################
-  micro_wake_word_model: okay_nabu
+  micro_wake_word_model: alexa
 ####################################################################
 ####  Days and months ####
 ## Change the values on the right to match your locale ##
@@ -158,10 +158,16 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
       
-  - interval: 10s
+  - interval: 1s
     then:
-      - component.update: s3_box_lcd
-
+      if:
+        condition:
+          not: 
+            - display.is_displaying_page: saver_page
+        then:
+          - lambda: id(led).turn_on().set_brightness(1.0).perform();
+        else:
+          - component.update: s3_box_lcd
 select:
   - platform: template
     entity_category: config
@@ -296,7 +302,7 @@ globals:
     
 number:
   - platform: template
-    name: screensaver timeout
+    name: screensaver timeout (not active)
     id: ss_timeout
     optimistic: true
     restore_value: true
@@ -406,10 +412,9 @@ light:
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 500ms
     
-sensor:
+sensor:         
   - platform: uptime
     id: up_sens
-    
 text_sensor:
   - platform: wifi_info
     ip_address:
@@ -417,7 +422,7 @@ text_sensor:
       address_0:
         name: ESP IP Address 0
       id: ip_addr
-      
+     
   - platform: template
     id: wakeword_location
 
@@ -560,8 +565,6 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
-          - display.page.show: idle_page
-          - component.update: s3_box_lcd
           - micro_wake_word.start
         else:
           - wait_until:
@@ -835,6 +838,7 @@ display:
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
+
           if(id(mute_switch).state) {
                  it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
@@ -852,6 +856,9 @@ display:
           it.printf(120, 155, id(icon_font_80), blue,"\U000F0FCE");
           it.printf(220, 155, id(icon_font_80), lime,"\U000F08D6");
 
+
+
+
       - id: template_page
         lambda: |-
           it.fill(id(black));
@@ -865,6 +872,8 @@ display:
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
+
+
 
           if(id(mute_switch).state) {
                  it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
@@ -901,6 +910,7 @@ display:
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
+
           if(id(mute_switch).state) {
                  it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
@@ -962,7 +972,7 @@ display:
         lambda: |-
           it.fill(id(black));
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Settings");          
-                    
+          it.printf(160, 100, id(my_font5), light_blue, TextAlign::CENTER, "Coming Soon");           
       - id: climate_page
         lambda: |-
           it.fill(id(black));
@@ -976,6 +986,7 @@ display:
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
+
           if(id(mute_switch).state) {
                  it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
@@ -1160,6 +1171,7 @@ display:
          it.printf(220, 10, id(my_font3), light_blue, TextAlign::LEFT, months[id(ha_time).now().month - 1]);
          
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
+
       - id: ota_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1179,7 +1191,7 @@ display:
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
-          
+
           if(id(mute_switch).state) {
                  it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
           } else {
@@ -1261,12 +1273,12 @@ binary_sensor:
         then:
           - script.execute: saver_enabled_manual
         else:
-          - light.turn_on:
-              id: led
-              brightness: 100%  
+          # - light.turn_on:
+              # id: led
+              # brightness: 100%  
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          - script.execute: saver_enabled
+          # - script.execute: saver_enabled
 
 ###### radar sensor ########
   - platform: gpio
@@ -1278,15 +1290,14 @@ binary_sensor:
     on_state:
       if:
         condition:
-          - switch.is_on: s_saver_presc 
-          - display.is_displaying_page: saver_page
+          and:
+            - switch.is_on: s_saver
+            - switch.is_on: s_saver_presc 
+            - display.is_displaying_page: saver_page
         then:
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          - light.turn_on:
-              id: led
-              brightness: 100%
-          # - script.execute: saver_enabled
+          - script.execute: saver_enabled
              
  ########## Top status bar buttons 1-5 ##########
   - platform: touchscreen
