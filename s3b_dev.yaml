@@ -460,7 +460,7 @@ text_sensor:
       address_0:
         name: ESP IP Address 0
       id: ip_addr
-      
+     
   - platform: template
     id: wakeword_location
 
@@ -1617,15 +1617,14 @@ binary_sensor:
     on_state:
       if:
         condition:
-          - switch.is_on: s_saver_presc 
-          - display.is_displaying_page: saver_page
+          and:
+            - switch.is_on: s_saver
+            - switch.is_on: s_saver_presc 
+            - display.is_displaying_page: saver_page
         then:
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          - light.turn_on:
-              id: led
-              brightness: 100%
-          # - script.execute: saver_enabled
+          - script.execute: saver_enabled
              
  ########## Top status bar buttons 1-5 ##########
   - platform: touchscreen
