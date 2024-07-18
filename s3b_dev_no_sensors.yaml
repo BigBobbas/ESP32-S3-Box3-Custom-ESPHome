@@ -1060,7 +1060,7 @@ display:
           } else {   
                  it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
-          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Display Conversation :");          
+          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Show Conversation :");          
           if(id(display_conversation).state) {
                  it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
           } else {  
