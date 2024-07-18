@@ -105,6 +105,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
   ap:
     ssid: ${name}
     password: s3box123
@@ -308,7 +309,7 @@ globals:
 number:
   - id: mem_settings_sleep_delay
     platform: template
-    name: "Sleep Delay"
+    # name: "Sleep Delay"
     icon: 'mdi:sleep'
     entity_category: config
     unit_of_measurement: 'secs'
@@ -325,6 +326,14 @@ button:
     name: "Reboot"
 
 switch:
+
+  - platform: template
+    name: Display conversation
+    id: display_conversation
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+
   - platform: template
     name: Mute
     id: mute_switch
@@ -359,7 +368,6 @@ switch:
   
     
   - platform: template
-    name: Media Player Mute
     id: media_mute
     optimistic: True
     on_turn_on:   
@@ -374,14 +382,12 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
      
   - platform: template
-    name: Screensaver_mode
     id: s_saver_mode
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
   
 
   - platform: template
-    name: Screensaver_mode
     id: s_saver_presc
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
@@ -433,7 +439,6 @@ sensor:
 
   - platform: adc
     pin: GPIO10
-    name: "Battery voltage"
     id: battery_voltage
     unit_of_measurement: "V"
     accuracy_decimals: 1
@@ -462,13 +467,13 @@ sensor:
     id: up_sens
     
   - platform: wifi_signal
-    name: "WiFi Signal Sensor"
+    name: "WiFi db"
     id: wifi_signal_db
     update_interval: 30s
     
   - platform: copy # Reports the WiFi signal strength in %
     source_id: wifi_signal_db
-    name: "WiFi Signal Percent"
+    name: "WiFi Signal"
     id: wifi_percent
     filters:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
@@ -476,33 +481,53 @@ sensor:
     entity_category: "diagnostic"
     device_class: ""    
 text_sensor:
+  - id: text_request
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_request).state.length()>32) {
+          std::string name = id(text_request).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_request).state = (truncated+"...").c_str();
+        }
+
+  - id: text_response
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_response).state.length()>32) {
+          std::string name = id(text_response).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_response).state = (truncated+"...").c_str();
+        }
   - platform: wifi_info
     ip_address:
-      name: ESP IP Address
-      address_0:
-        name: ESP IP Address 0
+      name: IP Address
       id: ip_addr
+      entity_category: "diagnostic"
     ssid:
       id: connected_ssid
-      name: ESP Connected SSID
+      name: SSID
+      entity_category: "diagnostic"
     bssid:
       id: connected_bssid
-      name: ESP Connected BSSID
+      name: BSSID
+      entity_category: "diagnostic"
     mac_address:
       id: device_mac
-      name: ESP Mac Wifi Address
+
      
   - platform: template
     id: wakeword_location
 
   - platform: template
     id: time_remaining_0
-    name: Timer 1
+    name: Timer 
          
         
   - platform: template
     id: time_remaining_1
-    name: Timer 2
+
  
 i2s_audio:
   - id: i2s_shared
@@ -625,12 +650,26 @@ voice_assistant:
                 media_content_type: music 
           - media_player.stop
   on_listening:
+    - text_sensor.template.publish:
+        id: text_request
+        state: "..."
+    - text_sensor.template.publish:
+        id: text_response
+        state: "..."
     - script.execute: saver_enabled
     - display.page.show: listening_page
     - component.update: s3_box_lcd
+  on_stt_end:
+    - text_sensor.template.publish:
+        id: text_request
+        state: !lambda return x;
   on_stt_vad_end: 
     - display.page.show: thinking_page
     - component.update: s3_box_lcd
+  on_tts_start:
+    - text_sensor.template.publish:
+        id: text_response
+        state: !lambda return x;
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
@@ -720,6 +759,12 @@ font:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
     size: 14
+    glyphs:
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
+
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+    id: my_font18
+    size: 18
     glyphs:
       '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
       
@@ -1059,7 +1104,12 @@ display:
           } else {   
                  it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
-          
+          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Display Conversation :");          
+          if(id(display_conversation).state) {
+                 it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
+          } else {   
+                 it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
+          }           
       - id: other_set_page
         lambda: |-
           it.fill(id(black));
@@ -1215,11 +1265,23 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(thinking_img), ImageAlign::CENTER);
-          
+          if (id(display_conversation).state) {
+            it.filled_rectangle(20 , 20 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 20 , 280 , 30 , Color::BLACK );
+            it.printf(30, 25, id(my_font18), Color::BLACK, "%s", id(text_request).state.c_str());
+          }          
       - id: replying_page
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(replying_img), ImageAlign::CENTER);
+          if (id(display_conversation).state) {
+            it.filled_rectangle(20 , 20 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 20 , 280 , 30 , Color::BLACK );
+            it.filled_rectangle(20 , 190 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 190 , 280 , 30 , Color::BLACK );
+            it.printf(30, 25, id(my_font18), Color::BLACK, "%s", id(text_request).state.c_str());
+            it.printf(30, 195, id(my_font18), Color::BLACK, "%s", id(text_response).state.c_str());
+          }
       - id: error_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1370,19 +1432,18 @@ binary_sensor:
 ###### top left hand physical button #######
 
   - platform: gpio
+    id: top_left_button
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
       inverted: true
-    name: Top Left Button
-    entity_category: diagnostic
     on_press:
       - light.toggle: led
 
 
 #######     red circle home button   #####################
   - platform: gt911
-    name: "Home"
+    id: home_button
     index: 0
     on_press:
       if:
@@ -1837,6 +1898,7 @@ binary_sensor:
   - platform: touchscreen
     page_id: media_page
     name: Volume Minus
+    internal: true
     x_min: 5
     x_max: 105
     y_min: 90
@@ -1856,6 +1918,7 @@ binary_sensor:
   - platform: touchscreen
     page_id: media_page
     name: Volume Plus
+    internal: true
     x_min: 215
     x_max: 315
     y_min: 90
@@ -1875,6 +1938,7 @@ binary_sensor:
   - platform: touchscreen
     page_id: media_page
     name: Play Pause
+    internal: true
     x_min: 110
     x_max: 210
     y_min: 90
@@ -1895,6 +1959,7 @@ binary_sensor:
   - platform: touchscreen
     page_id: media_page
     name: Mute Media
+    internal: true
     x_min: 110
     x_max: 210
     y_min: 180
@@ -2087,7 +2152,16 @@ binary_sensor:
       min_length: 10ms
       max_length: 500ms
       then:
-        - switch.toggle: wake_sound
+  - platform: touchscreen
+    page_id: ww_set_page
+    id: ww_toggle_conv
+    internal: true
+    x_min: 250
+    x_max: 315
+    y_min: 210
+    y_max: 235
+    on_click:
+        - switch.toggle: display_conversation
         - component.update: s3_box_lcd
         # - script.execute: saver_enabled
         
