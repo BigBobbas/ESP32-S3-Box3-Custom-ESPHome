@@ -2126,8 +2126,8 @@ binary_sensor:
     id: ww_chang_hass
     internal: true
     x_min: 10
-    x_max: 315
-    y_min: 180
+    x_max: 320
+    y_min: 100
     y_max: 160
     on_click:
       min_length: 10ms
@@ -2138,7 +2138,6 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: ww_set_page
