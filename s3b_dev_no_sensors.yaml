@@ -2077,7 +2077,7 @@ binary_sensor:
     x_min: 10
     x_max: 315
     y_min: 100
-    y_max: 140
+    y_max: 160
     on_click:
       min_length: 10ms
       max_length: 500ms
