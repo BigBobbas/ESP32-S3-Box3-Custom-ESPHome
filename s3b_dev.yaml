@@ -481,7 +481,7 @@ sensor:
     id: wifi_percent
     filters:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: "Signal %"
+    unit_of_measurement: "%"
     entity_category: "diagnostic"
     device_class: ""    
 text_sensor:
@@ -1065,7 +1065,7 @@ display:
           it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "Host Name");
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime");
-          it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%.fsecs", id(up_sens).state);
+          it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%.f secs", id(up_sens).state);
           it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level");
           it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state);          
           
@@ -1401,7 +1401,7 @@ display:
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device MAC");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(device_mac).state.c_str());
           it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Signal Strength");
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(wifi_percent).state);  
+          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f %%", id(wifi_percent).state);  
           
           
 i2c:
