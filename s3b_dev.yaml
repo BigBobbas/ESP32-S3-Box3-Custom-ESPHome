@@ -382,12 +382,14 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
      
   - platform: template
+    name: Timeout to blank
     id: s_saver_mode
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
   
 
   - platform: template
+    name: Wake on Presence
     id: s_saver_presc
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
@@ -407,10 +409,12 @@ switch:
       # - script.execute: saver_enabled
       
   - platform: template
+    name: Wake Sound
     id: wake_sound
     optimistic: true
     internal: true
     restore_mode: RESTORE_DEFAULT_OFF
+    
 output:
   - platform: ledc
     pin: GPIO47
