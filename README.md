@@ -1,6 +1,6 @@
 # ESP32-S3-Box3-Custom Firmware
 # The S3 BOX 3  is not just a voice assistant... it can do so much more!! 
-
+Video demo available [HERE](<https://youtu.be/5W52TOQU_oM>)
 > ### Please have a read through this page and also the instruction pages to see what this config does and what is involved to set it up.
 > Also check out the [Discussions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/discussions>) section, for latest updates, new features, and to ask questions or make suggestions 👍
 
