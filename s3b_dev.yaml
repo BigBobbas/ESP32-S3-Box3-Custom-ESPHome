@@ -1400,8 +1400,8 @@ display:
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "%s", id(connected_bssid).state.c_str());
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device MAC");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(device_mac).state.c_str());
-          it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Signal Strength");
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, " %.f%%", id(wifi_percent).state);  
+          it.printf(25, 210, id(my_font5), light_blue, TextAlign::LEFT, "Signal Strength ");
+          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f %%", id(wifi_percent).state); 
           
           
 i2c:
