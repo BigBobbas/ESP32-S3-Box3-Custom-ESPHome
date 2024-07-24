@@ -1,15 +1,25 @@
 # Installation
+## NOTE:<br>
+> The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues, it all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words ;) ) <br>
+EDIT:
+> adding the line below to the `esphome:` component at the top of the config can help to compile on machines with lower available resources.. however this may increase the compile time further. But worth trying for sure.
+```yaml
+esphome:
+  compile_process_limit: 1
+```
+
 What you will need.
-* Esp32-S3-Box-3 with sensor dock
+* Esp32-S3-Box-3 
 * USB C data cable
-* Home Assistant 
-* ESPHome Add-on Dashboard
+* Home Assistant - configured for voice assistant.
+* ESPHome Add-on Dashboard or CLI
   
-What will happen?
+What will happen - whne using the web installer ?
 * an initial firmware will be loaded to the device
 * you configure your wifi
 * you connect to your network and add the device to Home Assistant
 * you import the full working config into the ESPHome dashboard and finally upload this to the device.
+* Alternatively, if you are familiar with ESPHome and its yaml, you can manually copy and paste the relevent config file into an ESPHome device card and install without the webinstaller.
   
 How do I do it?
 #### If you have set your device up previously in Home Assistant and ESPHome dashboard then it is best to remove these as they can cause the installation not to go as described. Make sure to delete any related devices from the ESPHome integration in Home Assistant>> Devices & Services >> ESPHome. Also delete any entries in the ESPHome dashboard, by clicking on the 3 dot menu on the device card followed by delete.
@@ -35,14 +45,7 @@ You should have a link on your computer screen. If this doesn't appear, you can 
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/c7ae7cb1-f59d-4964-a971-edcd785051d9)<br>
 
 Click Adopt, followed by install. To avoid any complications at this point do not change the name of the device, you can always change the name once you know everything is working.<br>If you do not have a new card in the dashboard then try restarting your ESPHome add-on. If that fails, you can manually create a new card and copy in the config from [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>) you can select any board it doesn't matter as you are going to overwrite everything in a few clicks. DO NOT click INSTALL when the API Key is shown, CLICK SKIP. Then in the new card copy and paste the full config from the link above. Click Save then Install.
-## NOTE:<br>
-> The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues, it all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words ;) ) <br>
-EDIT:
-> adding the line below to the `esphome:` component at the top of the config can help to compile on machines with lower available resources.. however this may increase the compile time further. But worth trying for sure.
-```yaml
-esphome:
-  compile_process_limit: 1
-```
+
 
 Hopefully you now have the S3box configured with the template firmware. For a guide on how to personalise the device to suit you. [Click Here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)
 
