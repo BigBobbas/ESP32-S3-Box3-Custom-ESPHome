@@ -535,7 +535,9 @@ text_sensor:
  
 i2s_audio:
   - id: i2s_shared
-    i2s_lrclk_pin: GPIO45
+    i2s_lrclk_pin:
+      number: GPIO45
+      ignore_strapping_warning: true
     i2s_bclk_pin: GPIO17
     i2s_mclk_pin: GPIO2
     access_mode: duplex
@@ -551,7 +553,9 @@ adf_pipeline:
       i2c_id: bus_a
       model: es8311
       address: 0x18
-      enable_pin: GPIO46
+      enable_pin:
+        number: GPIO46
+        ignore_strapping_warning: true
     sample_rate: 16000
     bits_per_sample: 16bit
     fixed_settings: true
@@ -1426,7 +1430,9 @@ touchscreen:
   platform: gt911
   i2c_id: bus_a
   id: gt911_touchscreen
-  interrupt_pin: GPIO3
+  interrupt_pin:
+    number: GPIO3
+    ignore_strapping_warning: true
   on_touch:
     - lambda: id(led).turn_on().set_brightness(1.0).perform();
     - script.execute: saver_enabled
@@ -1440,6 +1446,7 @@ binary_sensor:
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
+      ignore_strapping_warning: true
       inverted: true
     on_press:
       - light.toggle: led
