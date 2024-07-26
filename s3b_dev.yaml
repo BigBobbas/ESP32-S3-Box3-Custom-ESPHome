@@ -10,8 +10,13 @@ substitutions:
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
 ####################################################################
-  micro_wake_word_model: alexa
+  micro_wake_word_model_1: alexa
+  micro_wake_word_model_2: hey_jarvis
+  micro_wake_word_model_3: okay_nabu
+  micro_wake_word_model_4: hey_mycroft
 ####################################################################
+  external_media_player: s3_player
+
 ####  Days and months ####
 ## Change the values on the right to match your locale ##
   monday: Monday
@@ -163,10 +168,13 @@ interval:
     then:
       if:
         condition:
-          not: 
-            - display.is_displaying_page: saver_page
+          and:
+            - not: 
+                - display.is_displaying_page: saver_page
+            - lambda: return id(led).remote_values.get_brightness() < 1;
+              
         then:
-          - lambda: id(led).turn_on().set_brightness(1.0).perform();
+          - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
         else:
           - component.update: s3_box_lcd
 select:
@@ -205,6 +213,7 @@ select:
             - delay: 500ms
             - micro_wake_word.start
             - component.update: s3_box_lcd
+            
 script:           
   - id: set_volume
     then:
@@ -217,20 +226,16 @@ script:
           condition: 
             switch.is_on: s_saver 
           then:
-            - light.turn_on: 
-                id: led
-                brightness: 100%
-            - delay: 30s
-            - light.turn_on: 
-                id: led
-                brightness: 30%
+            - lambda: id(led).turn_on().set_brightness(1.0).perform();
+            - delay: !lambda return id(s_saver_delay).state * 1000;
+            - lambda: id(led).turn_on().set_brightness(.3).perform();
             - display.page.show: saver_page
             - component.update: s3_box_lcd
       - if:
           condition:
             - switch.is_on: s_saver_mode            
           then:
-            - delay: 180s
+            - delay: !lambda return id(s_saver_blank_delay).state * 1000;
             - light.turn_off: led
     mode: restart
 
@@ -240,16 +245,14 @@ script:
           condition: 
             switch.is_on: s_saver 
           then:
-            - light.turn_on: 
-                id: led
-                brightness: 30%
+            - lambda: id(led).turn_on().set_brightness(0.3).perform();
             - display.page.show: saver_page
             - component.update: s3_box_lcd
       - if:
           condition:
             - switch.is_on: s_saver_mode            
           then:
-            - delay: 180s
+            - delay: !lambda return id(s_saver_blank_delay).state * 1000;
             - light.turn_off: led
     mode: restart 
  
@@ -306,37 +309,71 @@ globals:
     type: bool
     restore_value: false
     
+
 number:
-  - id: mem_settings_sleep_delay
+  - id: s_saver_delay
     platform: template
-    # name: "Sleep Delay"
+    name: "Scr/save delay"
     icon: 'mdi:sleep'
     entity_category: config
     unit_of_measurement: 'secs'
     optimistic: true
     restore_value: true
     initial_value: 30
-    step: 1
-    min_value: 1
+    step: 5
+    min_value: 10
     max_value: 999999
+    on_value:
+      - component.update: s_saver_delay
+      - script.execute: saver_enabled
+      
+  - id: s_saver_blank_delay
+    platform: template
+    name: "Scr/off delay"
+    icon: 'mdi:monitor-off'
+    entity_category: config
+    unit_of_measurement: 'secs'
+    optimistic: true
+    restore_value: true
+    initial_value: 30
+    step: 5
+    min_value: 10
+    max_value: 999999
+    on_value:
+      - component.update: s_saver_delay
+      - script.execute: saver_enabled
     
 button:
   - platform: restart
     id: reboot
     name: "Reboot"
-
+    entity_category: diagnostic
+    
 switch:
-
   - platform: template
     name: Display conversation
     id: display_conversation
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
     entity_category: config
+    icon: 'mdi:chat'
 
+  - platform: template
+    name: Output audio externally
+    id: output_audio
+    icon: 'mdi:volume-off'
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config  
+    on_turn_on: 
+      switch.turn_on: media_mute    
+    on_turn_off: 
+      switch.turn_off: media_mute
+      
   - platform: template
     name: Mute
     id: mute_switch
+    icon: 'mdi:volume-off'
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
@@ -369,30 +406,41 @@ switch:
     
   - platform: template
     id: media_mute
-    optimistic: True
+    optimistic: true
     on_turn_on:   
       - media_player.volume_set: 0%   
     on_turn_off:
       - media_player.volume_set: 100%
 
   - platform: template
-    name: Screensaver
     id: s_saver
+    name: Scr/save enable
+    icon: mdi:sleep
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
      
   - platform: template
-    name: Timeout to blank
     id: s_saver_mode
+    name: Scr/off enable
+    icon: 'mdi:monitor-off'
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    # on_turn_on:
+      # - switch.turn_on: s_saver
+    # on_turn_off:
+      # - switch.turn_off: s_saver
   
 
   - platform: template
-    name: Wake on Presence
     id: s_saver_presc
+    name: Screen wake on motion
+    icon: 'mdi:motion-sensor'
+    entity_category: config
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
+    
      
   - platform: template
     id: timer_ringing
@@ -406,15 +454,12 @@ switch:
       - switch.turn_off: timer_ringing 
     on_turn_off:
       - media_player.stop
-      # - script.execute: saver_enabled
       
   - platform: template
-    name: Wake Sound
     id: wake_sound
     optimistic: true
     internal: true
     restore_mode: RESTORE_DEFAULT_OFF
-    
 output:
   - platform: ledc
     pin: GPIO47
@@ -427,17 +472,17 @@ light:
     entity_category: config
     output: backlight_output
     restore_mode: RESTORE_DEFAULT_ON
-    default_transition_length: 500ms
+    default_transition_length: 150ms
     
 sensor:
   - platform: aht10 
     i2c_id: bus_b
     variant: AHT20
     temperature:
-      name: "Temperature"
+      name: "S3 Temperature"
       id: s3temp
     humidity:
-      name: "Humidity"
+      name: "S3 Humidity"
     update_interval: 60s
 
 
@@ -467,15 +512,24 @@ sensor:
       - clamp:
           min_value: 0
           max_value: 100
+          
   - platform: uptime
     id: up_sens
-    
+    on_value:
+      - lambda: |-
+          int seconds = id(up_sens).state;
+          int days = seconds / 86400;
+          int hours = seconds / 3600;
+          int minutes = (seconds % 3600) / 60;
+          seconds %= 60;
+          id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds)); 
+    update_interval: 1s
   - platform: wifi_signal
     name: "WiFi db"
     id: wifi_signal_db
     update_interval: 30s
     
-  - platform: copy # Reports the WiFi signal strength in %
+  - platform: copy 
     source_id: wifi_signal_db
     name: "WiFi Signal"
     id: wifi_percent
@@ -483,7 +537,8 @@ sensor:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
     unit_of_measurement: "%"
     entity_category: "diagnostic"
-    device_class: ""    
+    device_class: ""   
+    
 text_sensor:
   - id: text_request
     platform: template
@@ -520,13 +575,18 @@ text_sensor:
     mac_address:
       id: device_mac
 
-     
+  - platform: template
+    id: up_sens_text
+    name: Device uptime
+    entity_category: "diagnostic"
+    icon: mdi:clock
   - platform: template
     id: wakeword_location
 
   - platform: template
     id: time_remaining_0
     name: Timer 
+    icon: mdi:clock
          
         
   - platform: template
@@ -535,9 +595,7 @@ text_sensor:
  
 i2s_audio:
   - id: i2s_shared
-    i2s_lrclk_pin:
-      number: GPIO45
-      ignore_strapping_warning: true
+    i2s_lrclk_pin: GPIO45
     i2s_bclk_pin: GPIO17
     i2s_mclk_pin: GPIO2
     access_mode: duplex
@@ -553,9 +611,7 @@ adf_pipeline:
       i2c_id: bus_a
       model: es8311
       address: 0x18
-      enable_pin:
-        number: GPIO46
-        ignore_strapping_warning: true
+      enable_pin: GPIO46
     sample_rate: 16000
     bits_per_sample: 16bit
     fixed_settings: true
@@ -588,8 +644,6 @@ media_player:
       - self
       - resampler
       - adf_i2s_out
-    # on_idle:
-      # - media_player.stop
 
 microphone:
   - platform: adf_pipeline
@@ -603,7 +657,10 @@ microphone:
 micro_wake_word:
   vad:
   models: 
-    - model: ${micro_wake_word_model}
+    - model: ${micro_wake_word_model_1}
+    - model: ${micro_wake_word_model_2}
+    - model: ${micro_wake_word_model_3}
+    - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
     - if:
         condition:    
@@ -648,8 +705,6 @@ voice_assistant:
         condition:    
           - switch.is_on: wake_sound
         then:
-          - display.page.show: listening_page
-          - component.update: s3_box_lcd
           - homeassistant.service:
               service: media_player.play_media
               data:
@@ -657,6 +712,8 @@ voice_assistant:
                 media_content_id: media-source://media_source/local/awake.mp3
                 media_content_type: music 
           - media_player.stop
+          - display.page.show: listening_page
+          - component.update: s3_box_lcd
   on_listening:
     - text_sensor.template.publish:
         id: text_request
@@ -681,9 +738,21 @@ voice_assistant:
   on_tts_end: 
     - display.page.show: replying_page
     - component.update: s3_box_lcd
+    - if:
+        condition:
+          - switch.is_on: output_audio
+        then:
+          - homeassistant.service:
+              service: media_player.play_media
+              data:
+                entity_id: media_player.${external_media_player}
+                media_content_id: !lambda 'return x;'
+                media_content_type: music
+                announce: "true"
     - delay: 3s
     - display.page.show: idle_page
     - component.update: s3_box_lcd
+    
   on_end:
     - if:
         condition:
@@ -809,6 +878,8 @@ font:
     id: icon_font_55
     size: 45
     glyphs: [
+      "\U000F0B2C",#up
+      "\U000F0B26",#down
       "\U000F009E",#bell
       "\U000F0150",#clock
       "\U000F0079",#battery 100%
@@ -1006,7 +1077,7 @@ display:
           it.printf(120, 155, id(icon_font_80), blue,"\U000F0FCE");
           it.printf(220, 155, id(icon_font_80), lime,"\U000F08D6");
 
-      - id: template_page
+      - id: template_page ##### template page ##]##
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1040,7 +1111,7 @@ display:
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F06E8");
           
-      - id: info_page
+      - id: info_page ##### info page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1068,17 +1139,19 @@ display:
           it.printf(160, 95, id(my_font5), yellow, TextAlign::CENTER, "%s", id(ip_addr).state.c_str());
           it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "Host Name");
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
-          it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime");
-          it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%.f secs", id(up_sens).state);
+          it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
+          it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
           it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level");
           it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state);          
           
           
-      - id: ss_set_page
+      - id: ss_set_page ##### screen saver settings page #####
         lambda: |-
           it.fill(id(black));
           it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screensaver Settings");
+          it.printf(250, 115, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout Settings :");
+          it.printf(255, 95, id(icon_font_55), lime, "\U000F08D6");
           it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Enable screensaver :");
           if(id(s_saver).state) {
                  it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
@@ -1098,7 +1171,7 @@ display:
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
           }         
           
-      - id: ww_set_page
+      - id: ww_set_page ##### voice settings page #####
         lambda: |-
           it.fill(id(black));
           it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
@@ -1118,7 +1191,7 @@ display:
           } else {   
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
           }           
-      - id: other_set_page
+      - id: other_set_page ##### other settings page #####
         lambda: |-
           it.fill(id(black));
           it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6"); 
@@ -1127,7 +1200,7 @@ display:
           it.printf(160, 140, id(my_font), light_blue, TextAlign::CENTER, "This page is reserved");           
           it.printf(160, 155, id(my_font), light_blue, TextAlign::CENTER, "for future development"); 
           
-      - id: climate_page
+      - id: climate_page ##### climate page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1158,7 +1231,7 @@ display:
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F050F");
 
-      - id: lights_page
+      - id: lights_page ##### lights page ####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1189,7 +1262,7 @@ display:
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0335");
 
-      - id: media_page
+      - id: media_page ##### media player page #####
         lambda: |-  
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1227,7 +1300,7 @@ display:
                   it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
           }
 
-      - id: scenes_page
+      - id: scenes_page ##### scenes page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1259,7 +1332,7 @@ display:
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0FCE");
 
 
-      - id: loading_page
+      - id: loading_page ### loading page #####
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(loading_img), ImageAlign::CENTER);
@@ -1307,7 +1380,7 @@ display:
           it.fill(Color::BLACK);
           it.printf(160, 120, id(my_font4), yellow, TextAlign::CENTER, "Mic & Speaker - Muted");
 
-      - id: saver_page
+      - id: saver_page ##### screen saver display page #####
         lambda: |-
          it.fill(Color::BLACK);
          
@@ -1321,13 +1394,15 @@ display:
          
          it.strftime(160, 85, id(my_fontseg2), TextAlign::CENTER, "%H :%M", id(ha_time).now());
          it.printf(160, 180, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state);
-      - id: ota_page
+         
+      - id: ota_page ##### firmware uploading page #####
         lambda: |-
           it.fill(Color::BLACK);
           it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");  
           it.printf((it.get_width() / 2), (it.get_height() / 2), id(my_font3), red, TextAlign::CENTER, "FIRMWARE UPDATING");
           it.printf(160,190, id(my_font3), red, TextAlign::CENTER, "won't be long....");
-      - id: settings_page
+          
+      - id: settings_page ##### settings parent page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1358,9 +1433,25 @@ display:
           it.printf(255, 160, id(icon_font_55), light_blue, "\U000F08D6");  
           it.printf(15, 210, id(my_font5), light_blue,"Voice");
           it.printf(135, 210, id(my_font5), light_blue,"Saver");
-          it.printf(255, 210, id(my_font5), light_blue, "misc");            
+          it.printf(255, 210, id(my_font5), light_blue, "misc");     
 
-      - id: dnd_page
+      - id: timeout_settings_page ##### Timeout Settings page #####
+        lambda: |-
+          it.fill(id(black));
+          it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F0150"); 
+          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Timeout Settings");  
+          it.printf(160, 85, id(my_font5), light_blue, TextAlign::CENTER, "Screen Saver");  
+          it.printf(190, 100, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(130, 100, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(140 , 105 , 40 , 40 , lime);
+          it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_delay).state);
+          it.printf(160, 160, id(my_font5), light_blue, TextAlign::CENTER, "Screen off"); 
+          it.printf(190, 180, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(130, 180, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(140 , 180 , 40 , 40 , lime);
+          it.printf(160, 200, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_blank_delay).state);
+                    
+      - id: dnd_page ##### dnd page - not in action currently ###
         lambda: |-
           it.fill(id(black));
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Do not disturb active");
@@ -1368,13 +1459,14 @@ display:
           it.printf(160, 120, id(icon_font_80), red, TextAlign::CENTER, "\U000F0D90\U000F036D\U000F0581");
           it.printf(160, 215, id(my_font5), light_blue, TextAlign::CENTER, "tap screen to disable");
 
-      - id: time_remaining_page
+      - id: time_remaining_page ##### timer countdown page #####
         lambda: |-
           it.fill(id(black));
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Active Timers");
           it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F0150"); 
-          it.printf(160, 155, id(my_font6), light_blue, TextAlign::CENTER, "%s", id(time_remaining_0).state.c_str());  
-      - id: wifi_page
+          it.printf(160, 155, id(my_font6), light_blue, TextAlign::CENTER, "%s", id(time_remaining_0).state.c_str()); 
+          
+      - id: wifi_page ##### wifi info page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
@@ -1405,7 +1497,7 @@ display:
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device MAC");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(device_mac).state.c_str());
           it.printf(25, 210, id(my_font5), light_blue, TextAlign::LEFT, "Signal Strength ");
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f %%", id(wifi_percent).state); 
+          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f %%", id(wifi_percent).state);  
           
           
 i2c:
@@ -1430,11 +1522,10 @@ touchscreen:
   platform: gt911
   i2c_id: bus_a
   id: gt911_touchscreen
-  interrupt_pin:
-    number: GPIO3
-    ignore_strapping_warning: true
+  interrupt_pin: GPIO3
   on_touch:
     - lambda: id(led).turn_on().set_brightness(1.0).perform();
+  on_release:
     - script.execute: saver_enabled
     
 binary_sensor:
@@ -1446,7 +1537,6 @@ binary_sensor:
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
-      ignore_strapping_warning: true
       inverted: true
     on_press:
       - light.toggle: led
@@ -1462,13 +1552,9 @@ binary_sensor:
           - display.is_displaying_page: idle_page  
         then:
           - script.execute: saver_enabled_manual
-        else:
-          # - light.turn_on:
-              # id: led
-              # brightness: 100%  
+        else: 
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-          # - script.execute: saver_enabled
 
 ###### radar sensor ########
   - platform: gpio
@@ -1690,24 +1776,12 @@ binary_sensor:
     x_max: 315
     y_min: 175
     y_max: 240
-    on_press:
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
       then:
         - display.page.show: settings_page
-        - component.update: s3_box_lcd
-    on_release:
-      - delay: 200ms
-      - if:
-          condition:
-            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-          then:
-            - voice_assistant.stop: 
-            - lambda: id(va).set_use_wake_word(true);
-            - delay: 10ms
-            - voice_assistant.start 
-          else:
-            - voice_assistant.stop: 
-            - delay: 100ms            
-            - micro_wake_word.start         
+        - component.update: s3_box_lcd   
             
             
 ########### end of control buttons #######################
@@ -2083,6 +2157,22 @@ binary_sensor:
             # - display.page.show: scenes_page 
             # - component.update: s3_box_lcd
             
+##### Screensaver Settings ####            
+  - platform: touchscreen
+    page_id: ss_set_page
+    id: ss_timeout
+    internal: true
+    x_min: 250
+    x_max: 315
+    y_min: 115
+    y_max: 145
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - display.page.show: timeout_settings_page
+        - component.update: s3_box_lcd
+ 
   - platform: touchscreen
     page_id: ss_set_page
     id: ss_toggle
@@ -2097,7 +2187,7 @@ binary_sensor:
       then:
         - switch.toggle: s_saver
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
+
         
   - platform: touchscreen
     page_id: ss_set_page
@@ -2137,9 +2227,9 @@ binary_sensor:
     id: ww_chang_hass
     internal: true
     x_min: 10
-    x_max: 320
-    y_min: 100
-    y_max: 160
+    x_max: 315
+    y_min: 80
+    y_max: 170
     on_click:
       min_length: 10ms
       max_length: 500ms
@@ -2149,6 +2239,7 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
+        # - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: ww_set_page
@@ -2164,6 +2255,7 @@ binary_sensor:
       then:
         - switch.toggle: wake_sound
         - component.update: s3_box_lcd
+      
   - platform: touchscreen
     page_id: ww_set_page
     id: ww_toggle_conv
@@ -2209,7 +2301,6 @@ binary_sensor:
         - lambda: id(led).turn_on().set_brightness(1.0).perform();
         - display.page.show: idle_page
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
         - switch.turn_off: mute_switch
         - switch.turn_off: media_mute
         - switch.turn_on: s_saver
@@ -2230,5 +2321,79 @@ binary_sensor:
         - switch.turn_off: timer_ringing
         - display.page.show: idle_page
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
+
+##### Timeout settings buttons #####
+  - id: ss_sleep_down
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 80
+    x_max: 150
+    y_min: 95
+    y_max: 140
+    on_press:
+      then:
+        - lambda: |-
+            int sleep = id(s_saver_delay).state - 5;
+            if (sleep < 1) {
+              sleep = 1;
+            }
+            auto call = id(s_saver_delay).make_call();
+            call.set_value(sleep);
+            call.perform();
+        - component.update: s3_box_lcd
+
+  - id: ss_sleep_up
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 180
+    x_max: 260
+    y_min: 95
+    y_max: 140
+    on_press:
+      then:
+        - lambda: |-
+            int sleep = id(s_saver_delay).state + 5;
+            auto call = id(s_saver_delay).make_call();
+            call.set_value(sleep);
+            call.perform();
+        - component.update: s3_box_lcd
+        
+  - id: ss_blank_down
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 80
+    x_max: 150
+    y_min: 180
+    y_max: 220
+    on_press:
+      then:
+        - lambda: |-
+            int sleep = id(s_saver_blank_delay).state - 5;
+            if (sleep < 1) {
+              sleep = 1;
+            }
+            auto call = id(s_saver_blank_delay).make_call();
+            call.set_value(sleep);
+            call.perform();
+        - component.update: s3_box_lcd
+
+  - id: ss_blank_up
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 180
+    x_max: 260
+    y_min: 180
+    y_max: 220
+    on_press:
+      then:
+        - lambda: |-
+            int sleep = id(s_saver_blank_delay).state + 5;
+            auto call = id(s_saver_blank_delay).make_call();
+            call.set_value(sleep);
+            call.perform();
+        - component.update: s3_box_lcd
 ################## config end ############################
