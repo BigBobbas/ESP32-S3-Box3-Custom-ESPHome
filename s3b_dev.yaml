@@ -6,7 +6,6 @@
 substitutions:
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
-  font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
 ####################################################################
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
@@ -56,13 +55,6 @@ esphome:
       - display.page.show: loading_page
       - component.update: s3_box_lcd
       - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
-      - if:
-          condition:
-            switch.is_on: output_audio
-          then:
-            media_player.volume_set:    
-              id: adf_media_player
-              volume: 0 
   project:
     name: "BigBobbas.s3box"
     version: "2024.06.01"
@@ -108,9 +100,7 @@ api:
 ota:
   - platform: esphome
     on_begin:
-      - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
-                id(led).loop();
-      
+      - lambda: id(led).turn_on().set_brightness(1.0).perform();
       - display.page.show: ota_page
       - component.update: s3_box_lcd   
 logger:
@@ -120,7 +110,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  use_address: 192.168.1.138
+
   
   ap:
     ssid: ${name}
@@ -377,25 +367,24 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config  
     on_turn_on: 
-      media_player.volume_set:    
-        id: adf_media_player
-        volume: 0    
+      media_player.volume_set: 0%     
     on_turn_off: 
-      media_player.volume_set:    
-        id: adf_media_player
-        volume: 1.0 
+      - media_player.volume_set: 100%   
       
   - platform: template
     name: Mute
     id: mute_switch
-    icon: "mdi:microphone-off"
+    icon: 'mdi:volume-off'
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
     on_turn_on:
       then:
+        - lambda: id(va).set_use_wake_word(false);
         - voice_assistant.stop
         - micro_wake_word.stop
+        - component.update: s3_box_lcd   
+    
     on_turn_off:
       - if:
           condition:
@@ -403,31 +392,26 @@ switch:
               - voice_assistant.is_running
           then:
             - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-                then:
-                  - lambda: id(va).set_use_wake_word(true);
-                  - delay: 50ms
-                  - voice_assistant.start_continuous
+               condition:
+                 lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+               then:
+                 - lambda: id(va).set_use_wake_word(true);
+                 - voice_assistant.start
             - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
-                then:
-                  - lambda: id(va).set_use_wake_word(false);
-                  - micro_wake_word.start
+               condition:
+                 lambda: return id(wake_word_engine_location).state == "On device";
+               then:
+                 - micro_wake_word.start
             - component.update: s3_box_lcd
-
+  
+    
   - platform: template
     id: media_mute
     optimistic: true
     on_turn_on:   
-      media_player.volume_set:    
-        id: adf_media_player
-        volume: 0
+      - media_player.volume_set: 0%   
     on_turn_off:
-      media_player.volume_set: 
-        id: adf_media_player
-        volume: 1.0
+      - media_player.volume_set: 100%
 
   - platform: template
     id: s_saver
@@ -444,6 +428,11 @@ switch:
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
+    # on_turn_on:
+      # - switch.turn_on: s_saver
+    # on_turn_off:
+      # - switch.turn_off: s_saver
+  
 
   - platform: template
     id: s_saver_presc
@@ -469,10 +458,8 @@ switch:
       
   - platform: template
     id: wake_sound
-    name: Play wake sound
-    icon: mdi:music
-    entity_category: config
     optimistic: true
+    internal: true
     restore_mode: RESTORE_DEFAULT_OFF
 output:
   - platform: ledc
@@ -486,7 +473,7 @@ light:
     entity_category: config
     output: backlight_output
     restore_mode: RESTORE_DEFAULT_ON
-    default_transition_length: 0ms
+    default_transition_length: 150ms
     
 sensor:
   - platform: aht10 
@@ -609,9 +596,7 @@ text_sensor:
  
 i2s_audio:
   - id: i2s_shared
-    i2s_lrclk_pin:
-      number: GPIO45
-      ignore_strapping_warning: true
+    i2s_lrclk_pin: GPIO45
     i2s_bclk_pin: GPIO17
     i2s_mclk_pin: GPIO2
     access_mode: duplex
@@ -627,9 +612,7 @@ adf_pipeline:
       i2c_id: bus_a
       model: es8311
       address: 0x18
-      enable_pin:
-        number: GPIO46
-        ignore_strapping_warning: true
+      enable_pin: GPIO46
     sample_rate: 16000
     bits_per_sample: 16bit
     fixed_settings: true
@@ -680,42 +663,23 @@ micro_wake_word:
     - model: ${micro_wake_word_model_3}
     - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
-    - voice_assistant.stop
-    - wait_until:
-        not:
-          voice_assistant.is_running:
-    - delay: 50ms
     - if:
         condition:    
           - switch.is_on: wake_sound
         then:
           - display.page.show: listening_page
           - component.update: s3_box_lcd
-          - if:
-              condition:
-                - switch.is_on: output_audio
-              then:
-                - homeassistant.service:
-                    service: media_player.play_media
-                    data:
-                      entity_id: media_player.${external_media_player}
-                      media_content_id: media-source://media_source/local/awake.mp3'
-                - media_player.stop
-                      
-              else:
-                - homeassistant.service:
-                    service: media_player.play_media
-                    data:
-                      entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                      media_content_id: media-source://media_source/local/awake.mp3
-                      media_content_type: music
-                - media_player.stop
-                - delay: 200ms
-                - lambda: id(va).set_use_wake_word(false);
-                - delay: 100ms
-                - voice_assistant.start:
-                    wake_word: !lambda return wake_word;
-                  
+          - homeassistant.service:
+              service: media_player.play_media
+              data:
+                entity_id: media_player.esp32_s3box_3_s3_box_media_player
+                media_content_id: media-source://media_source/local/awake.mp3
+                media_content_type: music
+          - delay: 200ms
+          - lambda: id(va).set_use_wake_word(false);
+          - delay: 100ms
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
         else:
           - if:
               condition:
@@ -739,35 +703,18 @@ voice_assistant:
   volume_multiplier: 4.0
   on_wake_word_detected:
     - if:
-        condition:
-          and:
-          - switch.is_off: output_audio          
+        condition:    
           - switch.is_on: wake_sound
         then:
           - homeassistant.service:
               service: media_player.play_media
               data:
                 entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                media_content_id: media-source://media_source/local/awake.mp3  
-                media_content_type: music                
+                media_content_id: media-source://media_source/local/awake.mp3
+                media_content_type: music 
           - media_player.stop
           - display.page.show: listening_page
           - component.update: s3_box_lcd
-        else:
-          if:
-            condition:
-              and:
-                - switch.is_on: wake_sound
-                - switch.is_on: output_audio
-            then:
-    - homeassistant.service:
-        service: media_player.play_media
-        data:
-          entity_id: media_player.${external_media_player}
-          media_content_id: media-source://media_source/local/awake.mp3'
-          media_content_type: music
-    - media_player.stop
-                
   on_listening:
     - text_sensor.template.publish:
         id: text_request
@@ -803,19 +750,18 @@ voice_assistant:
                 media_content_id: !lambda 'return x;'
                 media_content_type: music
                 announce: "true"
-    - delay: 5s
+    - delay: 3s
     - display.page.show: idle_page
     - component.update: s3_box_lcd
-  on_error:
+    
+  on_end:
     - if:
         condition:
           lambda: return id(wake_word_engine_location).state == "On device";
         then:
-          - voice_assistant.stop
           - wait_until:
               not:
                 voice_assistant.is_running:
-          - delay: 100ms
           - micro_wake_word.start
         else:
           - wait_until:
@@ -827,57 +773,21 @@ voice_assistant:
           - lambda: id(va).set_use_wake_word(true);
           - delay: 100ms
           - voice_assistant.start_continuous: 
-  on_end:
-    - if:
-        condition:
-          and:
-            - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
-        then:
-          - voice_assistant.stop
-          - wait_until:
-              not:
-                voice_assistant.is_running:
-          - delay: 100ms
-          - micro_wake_word.start
-        
-        else:
-          if:
-            condition: 
-              - switch.is_off: mute_switch  
-            then:              
-              - wait_until:
-                  not:
-                    voice_assistant.is_running:
-              - lambda: id(va).set_use_wake_word(false);
-              - voice_assistant.stop:    
-              - delay: 100ms
-              - lambda: id(va).set_use_wake_word(true);
-              - delay: 100ms
-              - voice_assistant.start 
   on_client_connected:
     - if:
         condition:
-          and:
-            - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
+          lambda: return id(wake_word_engine_location).state == "On device";
         then:
           - micro_wake_word.start 
         else:
-          - if:
-              condition: 
-                - switch.is_off: mute_switch          
-              then:
-                - lambda: id(va).set_use_wake_word(true);
-                - voice_assistant.start      
+          - lambda: id(va).set_use_wake_word(true);
+          - voice_assistant.start_continuous:      
   on_timer_started:
     - script.execute: timer_ending
     - component.update: s3_box_lcd
   on_timer_cancelled:
-    - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
     - component.update: s3_box_lcd
   on_timer_updated:
-
     - component.update: s3_box_lcd
   on_timer_tick:
     - lambda: |-
@@ -928,42 +838,42 @@ font:
     id: my_font
     size: 14
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
-    id: my_font16
-    size: 16
+    id: my_font18
+    size: 18
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
       
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font2
     size: 72
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font3
     size: 28
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font4
     size: 40
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
       
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font5
     size: 22
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font6
     size: 50
     glyphs:
-      '${font_glyphs}'
+      '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
      
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_55
@@ -1004,8 +914,6 @@ font:
       "\U000F0521",#toggle on
       "\U000F036C",#microphone on 
       "\U000F036D",#microphone off
-      "\U000F05CB",#voice
-      "\U000F0ED4",#voice off
       "\U000F036F",#voice settings
       "\U000F0502",#screen settings
       "\U000F08D6",#settings
@@ -1061,7 +969,6 @@ font:
       "\U000F0769",#ceiling
       "\U000F075A",#music 
       "\U000F05CB",#voice
-      "\U000F0ED4",#voice off
       "\U000F0FCE",#scene
       "\U000F040A",#play
       "\U000F03E4",#pause
@@ -1082,9 +989,16 @@ font:
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg2
-    glyphs: '${font_glyphs}'
+    glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
     size: 72
-
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+    id: font_icon_tiny
+    size: 30
+    glyphs: [
+      "\U000F00AD",#block-helper
+      "\U000F0375",#minus-box
+      "\U000F0416",#plus-box
+    ]
 color:
   - id: green
     hex: '75D15F'
@@ -1151,9 +1065,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");       
           it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
@@ -1183,9 +1097,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
 
@@ -1217,9 +1131,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           it.printf(160, 75, id(my_font5), light_blue, TextAlign::CENTER, "IP Address");
@@ -1261,17 +1175,11 @@ display:
       - id: ww_set_page ##### voice settings page #####
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F08D6");  
+          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Voice Settings");
-          it.printf(155, 85, id(my_font5), light_blue, TextAlign::CENTER, "tap to change");
-          it.printf(135, 115, id(my_font5), light_blue, TextAlign:: RIGHT, "WakeWord :");
-          it.printf(310, 115, id(my_font5), lime, TextAlign::RIGHT, "%s", id(wakeword_location).state.c_str());
-          it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Ext. media player :"); 
-          if(id(output_audio).state) {
-                 it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
-          } else {   
-                 it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
-          }          
+          it.printf(155, 120, id(my_font5), light_blue, TextAlign::CENTER, "tap to change");
+          it.printf(135, 135, id(my_font5), light_blue, TextAlign:: RIGHT, "WakeWord :");
+          it.printf(310, 135, id(my_font5), lime, TextAlign::RIGHT, "%s", id(wakeword_location).state.c_str());
           it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake up sound :");          
           if(id(wake_sound).state) {
                  it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
@@ -1312,9 +1220,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F050F");
@@ -1343,9 +1251,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0335");
@@ -1374,9 +1282,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           if(id(media_state) == true) {
@@ -1392,46 +1300,7 @@ display:
           } else {        
                   it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
           }
-      - id: ext_media_page ##### media player page #####
-        lambda: |-  
-          it.fill(id(black));
-          if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
-          } else {
-                  it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
-          }
-          if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
-          } else {
-                  it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
-          }
-          if(id(time_remaining_0).state == "0:00:00"){
-          it.printf(135, 5, id(icon_font_55), red, "\U000F0150");
-          } else {
-          it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
-          }
-          if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
-          } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
-          }
-          it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
-          if(id(media_state) == true) {
-                 it.printf(160, 80, id(my_font5), lime, TextAlign::CENTER, "Playing");
-          } else {
-                 it.printf(160, 80, id(my_font5), light_blue, TextAlign::CENTER, "Nothing Playing");
-          }
-          it.printf(20, 100, id(icon_font_80), blue,"\U000F075E");
-          it.printf(120, 100, id(icon_font_80), blue,"\U000F040E");
-          it.printf(220, 100, id(icon_font_80), blue,"\U000F075D");
-          if(id(media_mute).state) {          
-                  it.printf(120, 165, id(icon_font_80), red,"\U000F0581");
-          } else {        
-                  it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
-          }
-          it.printf(20, 165, id(icon_font_80), blue,"\U000F04AE");
-          it.printf(220, 165, id(icon_font_80), blue,"\U000F04AD");
-          
+
       - id: scenes_page ##### scenes page #####
         lambda: |-
           it.fill(id(black));
@@ -1451,9 +1320,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");   
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0FCE");
@@ -1479,18 +1348,21 @@ display:
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(thinking_img), ImageAlign::CENTER);
           if (id(display_conversation).state) {
-            it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
-            it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
+            it.filled_rectangle(20 , 20 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 20 , 280 , 30 , Color::BLACK );
+            it.printf(30, 25, id(my_font18), Color::BLACK, "%s", id(text_request).state.c_str());
           }          
       - id: replying_page
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(replying_img), ImageAlign::CENTER);
           if (id(display_conversation).state) {
-            it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
-            it.filled_rectangle(0 , 210 , 320 , 30 , Color::WHITE );
-            it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
-            it.printf(10, 220, id(my_font16), Color::BLACK, "%s", id(text_response).state.c_str());
+            it.filled_rectangle(20 , 20 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 20 , 280 , 30 , Color::BLACK );
+            it.filled_rectangle(20 , 190 , 280 , 30 , Color::WHITE );
+            it.rectangle(20 , 190 , 280 , 30 , Color::BLACK );
+            it.printf(30, 25, id(my_font18), Color::BLACK, "%s", id(text_request).state.c_str());
+            it.printf(30, 195, id(my_font18), Color::BLACK, "%s", id(text_response).state.c_str());
           }
       - id: error_page
         lambda: |-
@@ -1550,9 +1422,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           it.printf(160, 140, id(my_font5), light_blue, TextAlign::CENTER, "settings");
@@ -1585,7 +1457,7 @@ display:
           it.fill(id(black));
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Do not disturb active");
           it.printf(160, 45, id(my_font5), light_blue, TextAlign::CENTER, "screen will switch off in 10s");
-          it.printf(160, 120, id(icon_font_80), red, TextAlign::CENTER, "\U000F0D90\U000F036D\U000F036D");
+          it.printf(160, 120, id(icon_font_80), red, TextAlign::CENTER, "\U000F0D90\U000F036D\U000F0581");
           it.printf(160, 215, id(my_font5), light_blue, TextAlign::CENTER, "tap screen to disable");
 
       - id: time_remaining_page ##### timer countdown page #####
@@ -1614,9 +1486,9 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F0581"); 
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F057E"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
           it.printf(160, 75, id(my_font5), light_blue, TextAlign::CENTER, "ssid");
@@ -1651,9 +1523,7 @@ touchscreen:
   platform: gt911
   i2c_id: bus_a
   id: gt911_touchscreen
-  interrupt_pin:
-    number: GPIO3
-    ignore_strapping_warning: true
+  interrupt_pin: GPIO3
   on_touch:
     - lambda: id(led).turn_on().set_brightness(1.0).perform();
   on_release:
@@ -1669,7 +1539,6 @@ binary_sensor:
       number: GPIO0
       mode: INPUT_PULLUP
       inverted: true
-      ignore_strapping_warning: true
     on_press:
       - light.toggle: led
 
@@ -1882,15 +1751,8 @@ binary_sensor:
       min_length: 10ms
       max_length: 500ms
       then:
-        if:
-          condition:
-            switch.is_off: output_audio
-          then:
-            - display.page.show: media_page
-            - component.update: s3_box_lcd
-          else:
-            - display.page.show: ext_media_page
-            - component.update: s3_box_lcd
+        - display.page.show: media_page
+        - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: idle_page
@@ -2194,83 +2056,6 @@ binary_sensor:
       then:
         - switch.toggle: media_mute
         - component.update: s3_box_lcd
-#### external media ####        
-  - platform: touchscreen
-    page_id: ext_media_page
-    name: Volume Minus
-    internal: true
-    x_min: 5
-    x_max: 105
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - logger.log: "Volume Minus pressed"
-        - lambda: |-
-            if (id(speaker_volume) > 0) {
-              id(speaker_volume) -= 1;
-            }
-        - component.update: s3_box_lcd
-        - script.execute: set_volume
-
-  - platform: touchscreen
-    page_id: ext_media_page
-    name: Volume Plus
-    internal: true
-    x_min: 215
-    x_max: 315
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - logger.log: "Volume Plus pressed"
-        - lambda: |-
-            if (id(speaker_volume) < 10) {
-              id(speaker_volume) += 1;
-            }
-        - component.update: s3_box_lcd
-        - script.execute: set_volume
-
-  - platform: touchscreen
-    page_id: ext_media_page
-    name: Play Pause
-    internal: true
-    x_min: 110
-    x_max: 210
-    y_min: 90
-    y_max: 170
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - if:
-            condition:
-              media_player.is_idle:
-            then:
-              - media_player.play
-            else:
-              - media_player.stop
-        - logger.log: "Play Paused pressed"
-        
-  - platform: touchscreen
-    page_id: ext_media_page
-    name: Mute Media
-    internal: true
-    x_min: 110
-    x_max: 210
-    y_min: 180
-    y_max: 260
-    on_click:
-      min_length: 0ms
-      max_length: 500ms
-      then:
-        - switch.toggle: media_mute
-        - component.update: s3_box_lcd
-
 
     #### scenes page ###
   - platform: touchscreen
@@ -2444,8 +2229,8 @@ binary_sensor:
     internal: true
     x_min: 10
     x_max: 315
-    y_min: 100
-    y_max: 135
+    y_min: 80
+    y_max: 170
     on_click:
       min_length: 10ms
       max_length: 500ms
@@ -2455,23 +2240,7 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
-
-        
-  - platform: touchscreen
-    page_id: ww_set_page
-    id: ww_ext_audio
-    internal: true
-    x_min: 250
-    x_max: 315
-    y_min: 145
-    y_max: 170
-    on_click:
-      min_length: 10ms
-      max_length: 500ms
-      then:
-        - switch.toggle: output_audio  
-        - component.update: s3_box_lcd
-
+        # - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: ww_set_page
@@ -2499,7 +2268,7 @@ binary_sensor:
     on_click:
         - switch.toggle: display_conversation
         - component.update: s3_box_lcd
-
+        # - script.execute: saver_enabled
         
 ##### touch to wake screen #####
   - platform: touchscreen
