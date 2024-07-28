@@ -16,7 +16,7 @@ substitutions:
   micro_wake_word_model_3: okay_nabu
   micro_wake_word_model_4: hey_mycroft
 ####################################################################
-  external_media_player: s3_player
+  external_media_player: s3_player  ##change this to your external media player enity_id: do not include media_player.
 
 ####  Days and months ####
 ## Change the values on the right to match your locale ##
