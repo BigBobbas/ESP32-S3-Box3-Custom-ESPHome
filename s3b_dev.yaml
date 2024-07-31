@@ -4,6 +4,8 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
+  project_name: "BigBobbas.s3box"
+  project_version: "2024.06.01"
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
   font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
@@ -64,8 +66,8 @@ esphome:
               id: adf_media_player
               volume: 0 
   project:
-    name: "BigBobbas.s3box"
-    version: "2024.06.01"
+    name: $project_name
+    version: $project_version
 esp32:
   board: esp32s3box
   flash_size: 16MB
