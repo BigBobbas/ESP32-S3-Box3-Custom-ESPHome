@@ -139,6 +139,7 @@ time:
 interval:
   - interval: 10s
     then:
+      - component.update: s3_box_lcd
       - if:
           condition:
             - lambda: 'return { (id(api_connection) != true) };'
