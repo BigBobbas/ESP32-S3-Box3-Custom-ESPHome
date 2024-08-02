@@ -1514,7 +1514,7 @@ display:
 
       - id: saver_page ##### screen saver display page #####
         lambda: |-
-          it.fill(Color::BLACK)
+          it.fill(Color::BLACK);
            
           const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
           const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
