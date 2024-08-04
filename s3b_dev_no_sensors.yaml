@@ -574,7 +574,7 @@ text_sensor:
 
   - platform: homeassistant
     id: external_media_player_state  
-    entity_id: media_payer.${external_media_player}
+    entity_id: media_player.${external_media_player}
     attribute: volume_level
     internal: true
 
