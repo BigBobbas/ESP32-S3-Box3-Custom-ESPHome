@@ -6,51 +6,17 @@
 substitutions:
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
-  
-  external_media_player: s3_player  ##change this to your external media player enity_id: do not include media_player.
-  ##### sensor only ####
-  # climate1:
-  # climate2:
-  # climate3:
-  # climate4:
-  # climate5:
-  # climate6:
-  # ##### end of sensors #####
-  
-  # light1:
-  # light2:
-  # light3:
-  # light4:
-  # light5:
-  # light6:
-  
-  # spare1:
-  # spare2:
-  # spare3:
-  # spare4:
-  # spare5:
-  # spare6:
-  
-  # scene1:
-  # scene2:
-  # scene3:
-  # scene4:
-  # scene5:
-  # scene6:
-  
-#################### ON DEVICE WAKE WORDS ##########################
+  font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
+####################################################################
 #### change the micro wake word to be used on the line below   #####
 ####      options are okay_nabu, hey_jarvis, alexa             #####
 ####################################################################
-
   micro_wake_word_model_1: alexa
   micro_wake_word_model_2: hey_jarvis
   micro_wake_word_model_3: okay_nabu
   micro_wake_word_model_4: hey_mycroft
-  
-# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM LINE 694 TO 697 IN THE CONFIG BELOW # 
 ####################################################################
-
+  external_media_player: s3_player  ##change this to your external media player enity_id: do not include media_player.
 
 ####  Days and months ####
 ## Change the values on the right to match your locale ##
@@ -74,13 +40,7 @@ substitutions:
   oct: October
   nov: November
   dec: December
-#####################################################################
-
-##### DO NOT CHANGE SUBSTITUTIONS BELOW THIS LINE ######
-#####      UNLESS YOU KNOW WHAT YOU ARE DOING     ######  
-  font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'  
-
-############# END OF SUBSTITUTIONS #################
+  
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -163,7 +123,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  use_address: 192.168.1.131
+
   
   ap:
     ssid: ${name}
@@ -218,19 +178,19 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
       
-  # - interval: 1s
-    # then:
-      # if:
-        # condition:
-          # and:
-            # - not: 
-                # - display.is_displaying_page: saver_page
-            # - lambda: return id(led).remote_values.get_brightness() < 1;
+  - interval: 1s
+    then:
+      if:
+        condition:
+          and:
+            - not: 
+                - display.is_displaying_page: saver_page
+            - lambda: return id(led).remote_values.get_brightness() < 1;
               
-        # then:
-          # - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
-        # else:
-          # - component.update: s3_box_lcd
+        then:
+          - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
+        else:
+          - component.update: s3_box_lcd
 select:
   - platform: template
     entity_category: config
@@ -297,7 +257,7 @@ script:
     then:
       - if:
           condition: 
-            - switch.is_on: s_saver 
+            switch.is_on: s_saver 
           then:
             - lambda: id(led).turn_on().set_brightness(0.3).perform();
             - display.page.show: saver_page
@@ -308,7 +268,6 @@ script:
           then:
             - delay: !lambda return id(s_saver_blank_delay).state * 1000;
             - light.turn_off: led
-            - component.update: s3_box_lcd
     mode: restart 
  
   - id: timer_started
@@ -405,7 +364,6 @@ button:
     entity_category: diagnostic
     
 switch:
-               
   - platform: template
     name: Display conversation
     id: display_conversation
@@ -725,41 +683,54 @@ micro_wake_word:
     - model: ${micro_wake_word_model_3}
     - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
+    - voice_assistant.stop
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - delay: 50ms
     - if:
-        condition:
-          and:
-            - switch.is_off: output_audio          
-            - switch.is_on: wake_sound
+        condition:    
+          - switch.is_on: wake_sound
         then:
-          - media_player.play_media:
-              id: adf_media_player
-              media_url: 'http://homeassistant.local:8123/local/sounds/awake.mp3'
-          - delay: 500ms
-          - media_player.stop
-          - voice_assistant.start
-        else:
-          if:
-            condition:
-              and:
+          - display.page.show: listening_page
+          - component.update: s3_box_lcd
+          - if:
+              condition:
                 - switch.is_on: output_audio
-                - switch.is_on: wake_sound
-            then:
-              - homeassistant.service:
-                  service: media_player.play_media
-                  data:
-                    entity_id: media_player.${external_media_player}
-                    media_content_id: 'http://homeassistant.local:8123/local/sounds/awake.mp3'
-                    media_content_type: music
-              - media_player.stop
-              - voice_assistant.start
-            else:
-              if:
-                condition:
-                  - switch.is_off: wake_sound
-                then:
-                  - media_player.stop
-                  - voice_assistant.start
-
+              then:
+                - homeassistant.service:
+                    service: media_player.play_media
+                    data:
+                      entity_id: media_player.${external_media_player}
+                      media_content_id: media-source://media_source/local/awake.mp3'
+                - media_player.stop
+                      
+              else:
+                - homeassistant.service:
+                    service: media_player.play_media
+                    data:
+                      entity_id: media_player.esp32_s3box_3_s3_box_media_player
+                      media_content_id: media-source://media_source/local/awake.mp3
+                      media_content_type: music
+                - media_player.stop
+                - delay: 200ms
+                - lambda: id(va).set_use_wake_word(false);
+                - delay: 100ms
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
+                  
+        else:
+          - if:
+              condition:
+                - switch.is_off: wake_sound
+              then:
+                - display.page.show: listening_page
+                - component.update: s3_box_lcd
+                - delay: 200ms
+                - lambda: id(va).set_use_wake_word(false);
+                - delay: 100ms
+                - voice_assistant.start:         
+                    wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
@@ -773,12 +744,15 @@ voice_assistant:
     - if:
         condition:
           and:
-            - switch.is_off: output_audio          
-            - switch.is_on: wake_sound
-        then:    
-          - media_player.play_media:
-              media_url: 'http://homeassistant.local:8123/local/sounds/awake.mp3'
-          - delay: 500ms
+          - switch.is_off: output_audio          
+          - switch.is_on: wake_sound
+        then:
+          - homeassistant.service:
+              service: media_player.play_media
+              data:
+                entity_id: media_player.esp32_s3box_3_s3_box_media_player
+                media_content_id: media-source://media_source/local/awake.mp3  
+                media_content_type: music                
           - media_player.stop
           - display.page.show: listening_page
           - component.update: s3_box_lcd
@@ -789,21 +763,14 @@ voice_assistant:
                 - switch.is_on: wake_sound
                 - switch.is_on: output_audio
             then:
-              - homeassistant.service:
-                  service: media_player.play_media
-                  data:
-                    entity_id: media_player.${external_media_player}
-                    media_content_id: 'http://homeassistant.local:8123/local/sounds/awake.mp3'
-                    media_content_type: music
+    - homeassistant.service:
+        service: media_player.play_media
+        data:
+          entity_id: media_player.${external_media_player}
+          media_content_id: media-source://media_source/local/awake.mp3'
+          media_content_type: music
     - media_player.stop
-  on_start:    
-    if: 
-      condition:
-        - display.is_displaying_page: listening_page
-        - display.is_displaying_page: thinking_page
-      then:
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
+                
   on_listening:
     - text_sensor.template.publish:
         id: text_request
@@ -876,7 +843,7 @@ voice_assistant:
                 voice_assistant.is_running:
           - delay: 100ms
           - micro_wake_word.start
-
+        
         else:
           if:
             condition: 
@@ -891,8 +858,6 @@ voice_assistant:
               - lambda: id(va).set_use_wake_word(true);
               - delay: 100ms
               - voice_assistant.start 
-
-          
   on_client_connected:
     - if:
         condition:
@@ -1549,7 +1514,7 @@ display:
 
       - id: saver_page ##### screen saver display page #####
         lambda: |-
-          it.fill(id(black));
+          it.fill(Color::BLACK);
            
           const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
           const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
@@ -1720,7 +1685,6 @@ binary_sensor:
         then:
           - script.execute: saver_enabled_manual
         else: 
-          - lambda: id(led).turn_on().set_brightness(1.0).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
 
