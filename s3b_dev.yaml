@@ -8,6 +8,8 @@ substitutions:
   friendly_name: ESP32-S3-Box-3
   
   external_media_player: s3_player  ##change this to your external media player enity_id: do not include media_player.
+  
+  ######## HA device entities - coming soon ####### 
   ##### sensor only ####
   # climate1:
   # climate2:
@@ -37,18 +39,19 @@ substitutions:
   # scene4:
   # scene5:
   # scene6:
+############ end of entity substitutions ##########
   
-#################### ON DEVICE WAKE WORDS ##########################
-#### change the micro wake word to be used on the line below   #####
-####      options are okay_nabu, hey_jarvis, alexa             #####
-####################################################################
+#################### ON DEVICE WAKE WORDS #######################################
+####          all of the below wakewords are installed on the device        #####
+####      you can use any of these without re-compiling - just say them!    #####
+#################################################################################
+# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM LINE 730 TO 733 IN THE CONFIG BELOW # 
 
   micro_wake_word_model_1: alexa
   micro_wake_word_model_2: hey_jarvis
   micro_wake_word_model_3: okay_nabu
   micro_wake_word_model_4: hey_mycroft
   
-# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM LINE 694 TO 697 IN THE CONFIG BELOW # 
 ####################################################################
 
 
@@ -81,6 +84,8 @@ substitutions:
   font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'  
 
 ############# END OF SUBSTITUTIONS #################
+####################################################
+
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -163,8 +168,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  use_address: 192.168.1.131
-  
+ 
   ap:
     ssid: ${name}
     password: s3box123
@@ -176,11 +180,15 @@ wifi:
   on_disconnect:
     - lambda: |-
         id(wifi_connection) = false;
+        
 time:
   - platform: homeassistant
     id: ha_time
     
 interval:
+  - interval: 30s
+    then:
+      - component.update: s3_box_lcd
   - interval: 10s
     then:
       - if:
@@ -218,19 +226,6 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
       
-  # - interval: 1s
-    # then:
-      # if:
-        # condition:
-          # and:
-            # - not: 
-                # - display.is_displaying_page: saver_page
-            # - lambda: return id(led).remote_values.get_brightness() < 1;
-              
-        # then:
-          # - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
-        # else:
-          # - component.update: s3_box_lcd
 select:
   - platform: template
     entity_category: config
@@ -312,24 +307,38 @@ script:
     mode: restart 
  
   - id: timer_started
+    then:      
+      while:
+        condition:
+          switch.is_on: timer_ringing
+        then:    
+          - media_player.play_media:
+              media_url: 'http://homeassistant.local:8123/local/sounds/timer_finished.mp3'
+          - delay: 1s   
+        
+  - id : timer_started_external
     then:
       while:
         condition:
-         switch.is_on: timer_ringing
+          switch.is_on: timer_ringing
         then:
           - homeassistant.service:
               service: media_player.play_media
               data:
-                entity_id: media_player.esp32_s3box_3_s3_box_media_player
-                media_content_id: media-source://media_source/local/timer_finished.mp3
+                entity_id: media_player.${external_media_player}
+                media_content_id: 'http://homeassistant.local:8123/local/sounds/timer_finished.mp3'
                 media_content_type: music
-          - delay: 1s   
+          - delay: 1700ms
+        
+        
   - id: timer_ending
     then:
       - wait_until: 
             - lambda: return (id(time_remaining_0).state == "0:00:10");
       - display.page.show: time_remaining_page
-      - component.update: s3_box_lcd          
+      - component.update: s3_box_lcd         
+
+      
 globals:
   - id: wifi_connection
     type: bool
@@ -363,7 +372,6 @@ globals:
   - id: global_is_timer
     type: bool
     restore_value: false
-    
 
 number:
   - id: s_saver_delay
@@ -490,7 +498,7 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
 
-  - platform: template
+  - platform: template # remove for no sensor version
     id: s_saver_presc
     name: Screen wake on motion
     icon: 'mdi:motion-sensor'
@@ -506,7 +514,6 @@ switch:
     restore_mode: ALWAYS_OFF
     on_turn_on:
       - lambda: id(led).turn_on().set_brightness(1.0).perform();
-      - script.execute: timer_started
       - delay: 15min
       - switch.turn_off: timer_ringing 
     on_turn_off:
@@ -534,7 +541,7 @@ light:
     default_transition_length: 0ms
     
 sensor:
-  - platform: aht10 
+  - platform: aht10 # remove for no sensor version
     i2c_id: bus_b
     variant: AHT20
     temperature:
@@ -545,7 +552,7 @@ sensor:
     update_interval: 60s
 
 
-  - platform: adc
+  - platform: adc # remove for no sensor version
     pin: GPIO10
     id: battery_voltage
     unit_of_measurement: "V"
@@ -558,7 +565,7 @@ sensor:
     filters:
         - multiply: 4.11
 
-  - platform: copy
+  - platform: copy # remove for no sensor version
     id: battery_percent
     source_id: battery_voltage
     name: "Battery level"
@@ -582,7 +589,7 @@ sensor:
           int minutes = (seconds % 3600) / 60;
           seconds %= 60;
           id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds)); 
-    update_interval: 1s
+    update_interval: 30s
   - platform: wifi_signal
     name: "WiFi db"
     id: wifi_signal_db
@@ -760,7 +767,6 @@ micro_wake_word:
                   - media_player.stop
                   - voice_assistant.start
 
-
 voice_assistant:
   id: va
   microphone: box_mic
@@ -842,27 +848,23 @@ voice_assistant:
     - delay: 5s
     - display.page.show: idle_page
     - component.update: s3_box_lcd
+   
   on_error:
     - if:
         condition:
-          lambda: return id(wake_word_engine_location).state == "On device";
+          not:
+            - voice_assistant.is_running
         then:
-          - voice_assistant.stop
-          - wait_until:
-              not:
-                voice_assistant.is_running:
-          - delay: 100ms
-          - micro_wake_word.start
-        else:
-          - wait_until:
-              not:
-                voice_assistant.is_running:
-          - lambda: id(va).set_use_wake_word(false);
-          - voice_assistant.stop:    
-          - delay: 100ms
-          - lambda: id(va).set_use_wake_word(true);
-          - delay: 100ms
-          - voice_assistant.start_continuous: 
+          - display.page.show: error_page
+          - component.update: s3_box_lcd
+          - delay: 4s
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd
+
+  on_idle:
+    - display.page.show: idle_page
+    - component.update: s3_box_lcd 
+    
   on_end:
     - if:
         condition:
@@ -926,9 +928,24 @@ voice_assistant:
         id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds)); 
     - component.update: s3_box_lcd
   on_timer_finished:
-    - display.page.show: timer_finished_page
-    - switch.turn_on: timer_ringing
-    - component.update: s3_box_lcd
+    if: 
+      condition:
+        - switch.is_on: output_audio
+      then:
+        - switch.turn_on: timer_ringing
+        - script.execute: timer_started_external
+        - display.page.show: timer_finished_page
+        - component.update: s3_box_lcd
+      else:
+        - if:
+            condition:
+              - switch.is_off: output_audio
+            then:
+              - switch.turn_on: timer_ringing
+              - script.execute: timer_started
+              - display.page.show: timer_finished_page
+              - component.update: s3_box_lcd
+    
 image:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
     id: error_img
@@ -1195,7 +1212,7 @@ display:
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F");       
           it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
-          it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state);
+          it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state); // remove for no sensor version
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8" );
           it.printf(220, 75, id(icon_font_80), purple,"\U000F0210");
           it.printf(20, 155, id(icon_font_80), red,"\U000F075A");
@@ -1266,8 +1283,8 @@ display:
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
-          it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level");
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state);          
+          it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level"); // remove for no sensor version
+          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
           
           
       - id: ss_set_page ##### screen saver settings page #####
@@ -1283,7 +1300,7 @@ display:
           } else {   
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
-          it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake on presence :");          
+          it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake on presence :"); // remove for no sensor version 6 lines          
           if(id(s_saver_presc).state) {
                  it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
           } else {   
@@ -1557,7 +1574,7 @@ display:
           it.printf(160, 28, id(my_font3), light_blue, TextAlign::CENTER, "%s %d %s", days[id(ha_time).now().day_of_week - 1], id(ha_time).now().day_of_month, months[id(ha_time).now().month - 1]);
          
           it.strftime(160, 88, id(my_fontseg2), TextAlign::CENTER, "%H:%M", id(ha_time).now());
-          it.printf(160, 181, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state);
+          it.printf(160, 181, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state); // remove for no sensor version
          
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
@@ -1724,7 +1741,7 @@ binary_sensor:
           - display.page.show: idle_page
           - component.update: s3_box_lcd
 
-###### radar sensor ########
+###### radar sensor ########   # remove for no sensor version
   - platform: gpio
     pin:
       number: GPIO21
@@ -1783,8 +1800,15 @@ binary_sensor:
       min_length: 10ms
       max_length: 500ms
       then:
-        - display.page.show: time_remaining_page
-        - component.update: s3_box_lcd
+        if:
+          condition:
+            - switch.is_on: timer_ringing
+          then:
+            - display.page.show: timer_finished_page
+            - component.update: s3_box_lcd
+          else:
+            - display.page.show: time_remaining_page
+            - component.update: s3_box_lcd
 
   - platform: touchscreen
     id: status_bar_4
@@ -2441,7 +2465,7 @@ binary_sensor:
         - component.update: s3_box_lcd
 
         
-  - platform: touchscreen
+  - platform: touchscreen # remove for no sensor version
     page_id: ss_set_page
     id: ss_wake_presc
     internal: true
@@ -2455,7 +2479,7 @@ binary_sensor:
       then:
         - switch.toggle: s_saver_presc
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled
+
         
   - platform: touchscreen
     page_id: ss_set_page
