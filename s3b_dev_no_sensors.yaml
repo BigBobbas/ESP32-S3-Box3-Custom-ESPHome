@@ -657,7 +657,12 @@ text_sensor:
         
   - platform: template
     id: time_remaining_1
-
+    
+  - platform: homeassistant
+    entity_id: media_player.${external_media_player}
+    id: ha_media_status
+    on_value:
+      component.update: s3_box_lcd
  
 i2s_audio:
   - id: i2s_shared
@@ -1284,7 +1289,7 @@ display:
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
           //it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level"); // remove for no sensor version
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
+          //it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
           
           
       - id: ss_set_page ##### screen saver settings page #####
@@ -1465,11 +1470,7 @@ display:
                  it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
           }
           it.printf(250, 5, id(icon_font_55), pink, "\U000F1C6F"); 
-          if(id(media_state) == true) {
-                 it.printf(160, 80, id(my_font5), lime, TextAlign::CENTER, "Playing");
-          } else {
-                 it.printf(160, 80, id(my_font5), light_blue, TextAlign::CENTER, "Nothing Playing");
-          }
+          it.printf(160, 80, id(my_font5), lime, TextAlign::CENTER, id(ha_media_status).state.c_str());
           it.printf(20, 100, id(icon_font_80), blue,"\U000F075E");
           it.printf(120, 100, id(icon_font_80), blue,"\U000F040E");
           it.printf(220, 100, id(icon_font_80), blue,"\U000F075D");
@@ -2261,11 +2262,10 @@ binary_sensor:
       min_length: 0ms
       max_length: 500ms
       then:
-        - logger.log: "Volume Minus pressed"
-        - lambda: |-
-            if (id(speaker_volume) > 0) {
-              id(speaker_volume) -= 1;
-            }
+        - homeassistant.service:
+            service: media_player.volume_down
+            data:
+              entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
         - script.execute: set_volume
 
@@ -2281,13 +2281,12 @@ binary_sensor:
       min_length: 0ms
       max_length: 500ms
       then:
-        - logger.log: "Volume Plus pressed"
-        - lambda: |-
-            if (id(speaker_volume) < 10) {
-              id(speaker_volume) += 1;
-            }
+        - homeassistant.service:
+            service: media_player.volume_up
+            data:
+              entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
-        - script.execute: set_volume
+
 
   - platform: touchscreen
     page_id: ext_media_page
@@ -2301,14 +2300,12 @@ binary_sensor:
       min_length: 0ms
       max_length: 500ms
       then:
-        - if:
-            condition:
-              media_player.is_idle:
-            then:
-              - media_player.play
-            else:
-              - media_player.stop
-        - logger.log: "Play Paused pressed"
+        - homeassistant.service:
+            service: media_player.media_play_pause
+            data:
+              entity_id: media_player.${external_media_player}
+        - component.update: s3_box_lcd
+
         
   - platform: touchscreen
     page_id: ext_media_page
@@ -2322,7 +2319,47 @@ binary_sensor:
       min_length: 0ms
       max_length: 500ms
       then:
-        - switch.toggle: media_mute
+        - homeassistant.service:
+            service: media_player.volume_mute
+            data:
+              entity_id: media_player.${external_media_player}
+        - component.update: s3_box_lcd
+        
+  - platform: touchscreen
+    page_id: ext_media_page
+    name: Previous Track
+    internal: true
+    x_min: 5
+    x_max: 105
+    y_min: 180
+    y_max: 260
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: media_player.media_previous_track
+            data:
+              entity_id: media_player.${external_media_player}
+        - component.update: s3_box_lcd
+        - script.execute: set_volume
+
+  - platform: touchscreen
+    page_id: ext_media_page
+    name: Next Track
+    internal: true
+    x_min: 215
+    x_max: 315
+    y_min: 180
+    y_max: 260
+    on_click:
+      min_length: 0ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: media_player.media_next_track
+            data:
+              entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
 
 
