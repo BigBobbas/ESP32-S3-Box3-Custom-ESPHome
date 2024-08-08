@@ -1284,7 +1284,7 @@ display:
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
           //it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level"); // remove for no sensor version
-          it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
+          //it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
           
           
       - id: ss_set_page ##### screen saver settings page #####
