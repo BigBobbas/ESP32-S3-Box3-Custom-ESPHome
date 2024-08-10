@@ -694,6 +694,7 @@ text_sensor:
     id: ha_media_status
     on_value:
       component.update: s3_box_lcd
+      
 i2s_audio:
   - id: i2s_shared
     i2s_lrclk_pin:
@@ -1334,12 +1335,6 @@ display:
                  it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
           } else {   
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
-          } 
-          //it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake on presence :"); // remove for no sensor version 6 lines          
-          //if(id(s_saver_presc).state) {
-                 //it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
-          } else {   
-                 //it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
           it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout to blank :");          
           if(id(s_saver_mode).state) {
