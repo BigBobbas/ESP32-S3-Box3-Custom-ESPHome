@@ -63,10 +63,7 @@ esp32:
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
       CONFIG_AUDIO_BOARD_CUSTOM: "y"
       CONFIG_ESP32_S3_BOX_3_BOARD: "y"
-    components:
-      - name: esp32_s3_box_3_board
-        source: github://jesserockz/esp32-s3-box-3-board@main
-        refresh: 0s
+
 
     
 psram:
