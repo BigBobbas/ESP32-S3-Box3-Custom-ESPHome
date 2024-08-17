@@ -14,7 +14,7 @@ What you will need.
 * Home Assistant - configured for voice assistant.
 * ESPHome Add-on Dashboard or CLI
   
-What will happen - whne using the web installer ?
+What will happen - when using the web installer ?
 * an initial firmware will be loaded to the device
 * you configure your wifi
 * you connect to your network and add the device to Home Assistant
