@@ -169,10 +169,6 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-#  manual_ip:
-#    static_ip: 192.168.1.33
-#    gateway: 192.168.1.1
-#    subnet: 255.255.255.0
   
   ap:
     ssid: ${name}
@@ -764,10 +760,10 @@ microphone:
 micro_wake_word:
   vad:
   models: 
-  #  - model: ${micro_wake_word_model_1}
+    - model: ${micro_wake_word_model_1}
     - model: ${micro_wake_word_model_2}
-  #  - model: ${micro_wake_word_model_3}
-  #  - model: ${micro_wake_word_model_4}
+    - model: ${micro_wake_word_model_3}
+    - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
     - if:
         condition:
