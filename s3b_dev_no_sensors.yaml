@@ -7,7 +7,7 @@ substitutions:
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
   
-  external_media_player: s3_player  ##change this to your external media player enity_id: do not include media_player.
+  external_media_player: lenovo  ##change this to your external media player enity_id: do not include media_player.
   
   ######## HA device entities - coming soon ####### 
   ##### sensor only ####
@@ -45,13 +45,13 @@ substitutions:
 ####          all of the below wakewords are installed on the device        #####
 ####      you can use any of these without re-compiling - just say them!    #####
 #################################################################################
-# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM LINE 730 TO 733 IN THE CONFIG BELOW # 
+# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE THE CONFIG BELOW - CTRL + F to search for "models" 
+
   micro_wake_word_model_1: alexa
   micro_wake_word_model_2: hey_jarvis
   micro_wake_word_model_3: okay_nabu
   micro_wake_word_model_4: hey_mycroft
   
-
 ####################################################################
 
 
@@ -95,9 +95,7 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - light.turn_on: 
-          id: led
-          brightness: 100%
+      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
       - display.page.show: loading_page
       - component.update: s3_box_lcd
       - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
@@ -168,7 +166,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  
+
   ap:
     ssid: ${name}
     password: s3box123
@@ -275,9 +273,9 @@ script:
           condition: 
             switch.is_on: s_saver 
           then:
-            - lambda: id(led).turn_on().set_brightness(1.0).perform();
+            - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
             - delay: !lambda return id(s_saver_delay).state * 1000;
-            - lambda: id(led).turn_on().set_brightness(.3).perform();
+            - lambda: id(led).turn_on().set_brightness(id(s_saver_brightness).state /100).perform();
             - display.page.show: saver_page
             - component.update: s3_box_lcd
       - if:
@@ -294,7 +292,7 @@ script:
           condition: 
             - switch.is_on: s_saver 
           then:
-            - lambda: id(led).turn_on().set_brightness(0.3).perform();
+            - lambda: id(led).turn_on().set_brightness(id(s_saver_brightness).state /100).perform();
             - display.page.show: saver_page
             - component.update: s3_box_lcd
       - if:
@@ -403,7 +401,39 @@ number:
     min_value: 10
     max_value: 999999
     on_value:
-      - component.update: s_saver_delay
+      - component.update: s_saver_blank_delay
+      - script.execute: saver_enabled
+      
+  - id: s_saver_brightness
+    platform: template
+    name: "Scr/save Brightness"
+    icon: 'mdi:sleep'
+    entity_category: config
+    unit_of_measurement: '%'
+    optimistic: true
+    restore_value: true
+    initial_value: 30
+    step: 5
+    min_value: 20
+    max_value: 100
+    on_value:
+      - component.update: s_saver_brightness
+      - script.execute: saver_enabled
+      
+  - id: s_default_brightness
+    platform: template
+    name: "Default Brightness"
+    icon: 'mdi:monitor'
+    entity_category: config
+    unit_of_measurement: '%'
+    optimistic: true
+    restore_value: true
+    initial_value: 100
+    step: 5
+    min_value: 20
+    max_value: 100
+    on_value:
+      - component.update: s_default_brightness
       - script.execute: saver_enabled
     
 button:
@@ -498,13 +528,13 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
 
-  # - platform: template # remove for no sensor version
-    # id: s_saver_presc
-    # name: Screen wake on motion
-    # icon: 'mdi:motion-sensor'
-    # entity_category: config
-    # optimistic: true    
-    # restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template # remove for no sensor version
+    id: s_saver_presc
+    name: Screen wake on motion
+    icon: 'mdi:motion-sensor'
+    entity_category: config
+    optimistic: true    
+    restore_mode: RESTORE_DEFAULT_OFF
     
      
   - platform: template
@@ -646,6 +676,7 @@ text_sensor:
     name: Device uptime
     entity_category: "diagnostic"
     icon: mdi:clock
+
   - platform: template
     id: wakeword_location
 
@@ -657,13 +688,13 @@ text_sensor:
         
   - platform: template
     id: time_remaining_1
-    
+
   - platform: homeassistant
     entity_id: media_player.${external_media_player}
     id: ha_media_status
     on_value:
       component.update: s3_box_lcd
- 
+      
 i2s_audio:
   - id: i2s_shared
     i2s_lrclk_pin:
@@ -1614,18 +1645,34 @@ display:
       - id: timeout_settings_page ##### Timeout Settings page #####
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F0150"); 
-          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Timeout Settings");  
-          it.printf(160, 85, id(my_font5), light_blue, TextAlign::CENTER, "Screen Saver");  
-          it.printf(190, 100, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(130, 100, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
-          it.rectangle(140 , 105 , 40 , 40 , lime);
-          it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_delay).state);
-          it.printf(160, 160, id(my_font5), light_blue, TextAlign::CENTER, "Screen off"); 
-          it.printf(190, 180, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(130, 180, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
-          it.rectangle(140 , 180 , 40 , 40 , lime);
-          it.printf(160, 200, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_blank_delay).state);
+          //it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F0150"); 
+          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screen Settings");  
+          it.printf(160, 60, id(my_font5), light_blue, TextAlign::CENTER, "Screen Saver"); 
+          it.printf(50, 80, id(my_font), light_blue, "Delay secs");
+          it.printf(185, 80, id(my_font), light_blue, "Dim Brightness");
+          it.printf(105, 100, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(65, 100, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(65 , 105 , 40 , 40 , lime);
+          it.printf(85, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_delay).state);
+          it.printf(20, 160, id(my_font), light_blue, "Screen off delay"); 
+          it.printf(160, 160, id(my_font), light_blue, "Default Brightness");
+          it.printf(105, 180, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(65, 180, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(65 , 180 , 40 , 40 , lime);
+          it.printf(85, 200, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_blank_delay).state);
+          
+          it.printf(255, 100, id(icon_font_55), pink, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(215, 100, id(icon_font_55), pink, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(215 , 105 , 40 , 40 , pink);
+          it.printf(235, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_brightness).state);
+          it.printf(255, 180, id(icon_font_55), pink, TextAlign::LEFT, "\U000F0B2C");    
+          it.printf(215, 180, id(icon_font_55), pink, TextAlign::RIGHT, "\U000F0B26");          
+          it.rectangle(215 , 180 , 40 , 40 , pink);
+          it.printf(235, 200, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_default_brightness).state);          
+          
+          
+          
+          
                     
       - id: dnd_page ##### dnd page - not in action currently ###
         lambda: |-
@@ -1702,7 +1749,7 @@ touchscreen:
     number: GPIO3
     ignore_strapping_warning: true
   on_touch:
-    - lambda: id(led).turn_on().set_brightness(1.0).perform();
+    - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
   on_release:
     - script.execute: saver_enabled
     
@@ -1732,7 +1779,7 @@ binary_sensor:
         then:
           - script.execute: saver_enabled_manual
         else: 
-          - lambda: id(led).turn_on().set_brightness(1.0).perform();
+          - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
 
@@ -2526,7 +2573,7 @@ binary_sensor:
       then:
         - switch.toggle: s_saver_mode
         - component.update: s3_box_lcd
-        # - script.execute: saver_enabled    
+ 
         
 #### voice settings page #####
   - platform: touchscreen
@@ -2607,7 +2654,7 @@ binary_sensor:
       then:
         - display.page.show: idle_page
         - component.update: s3_box_lcd
-
+        # - script.execute: saver_enabled
         
   - platform: touchscreen
     page_id: dnd_page
@@ -2650,9 +2697,9 @@ binary_sensor:
     page_id: timeout_settings_page
     platform: touchscreen
     internal: true
-    x_min: 80
-    x_max: 150
-    y_min: 95
+    x_min: 25
+    x_max: 60
+    y_min: 105
     y_max: 140
     on_press:
       then:
@@ -2670,9 +2717,9 @@ binary_sensor:
     page_id: timeout_settings_page
     platform: touchscreen
     internal: true
-    x_min: 180
-    x_max: 260
-    y_min: 95
+    x_min: 110
+    x_max: 145
+    y_min: 105
     y_max: 140
     on_press:
       then:
@@ -2687,8 +2734,8 @@ binary_sensor:
     page_id: timeout_settings_page
     platform: touchscreen
     internal: true
-    x_min: 80
-    x_max: 150
+    x_min: 25
+    x_max: 60
     y_min: 180
     y_max: 220
     on_press:
@@ -2707,8 +2754,8 @@ binary_sensor:
     page_id: timeout_settings_page
     platform: touchscreen
     internal: true
-    x_min: 180
-    x_max: 260
+    x_min: 110
+    x_max: 145
     y_min: 180
     y_max: 220
     on_press:
@@ -2717,6 +2764,84 @@ binary_sensor:
             int sleep = id(s_saver_blank_delay).state + 5;
             auto call = id(s_saver_blank_delay).make_call();
             call.set_value(sleep);
+            call.perform();
+        - component.update: s3_box_lcd
+        
+        
+        
+        
+        
+  - id: ss_bright_down
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 165
+    x_max: 195
+    y_min: 105
+    y_max: 140
+    on_press:
+      then:
+        - lambda: |-
+            int bright = id(s_saver_brightness).state - 5;
+            if (bright < 1) {
+              bright = 1;
+            }
+            auto call = id(s_saver_brightness).make_call();
+            call.set_value(bright);
+            call.perform();
+        - component.update: s3_box_lcd
+
+  - id: ss_bright_up
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 260
+    x_max: 295
+    y_min: 105
+    y_max: 140
+    on_press:
+      then:
+        - lambda: |-
+            int bright = id(s_saver_brightness).state + 5;
+            auto call = id(s_saver_brightness).make_call();
+            call.set_value(bright);
+            call.perform();
+        - component.update: s3_box_lcd
+        
+  - id: s_default_bright_down
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 165
+    x_max: 195
+    y_min: 180
+    y_max: 220
+    on_press:
+      then:
+        - lambda: |-
+            int default_bright = id(s_default_brightness).state - 5;
+            if (default_bright < 1) {
+              default_bright = 1;
+            }
+            auto call = id(s_default_brightness).make_call();
+            call.set_value(default_bright);
+            call.perform();
+        - component.update: s3_box_lcd
+
+  - id: s_default_bright_up
+    page_id: timeout_settings_page
+    platform: touchscreen
+    internal: true
+    x_min: 260
+    x_max: 295
+    y_min: 180
+    y_max: 220
+    on_press:
+      then:
+        - lambda: |-
+            int default_bright = id(s_default_brightness).state + 5;
+            auto call = id(s_default_brightness).make_call();
+            call.set_value(default_bright);
             call.perform();
         - component.update: s3_box_lcd
 ################## config end ############################
