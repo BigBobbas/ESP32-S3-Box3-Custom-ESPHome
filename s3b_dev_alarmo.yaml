@@ -1979,13 +1979,27 @@ display:
           it.printf(10, 10, id(icon_font_180), green, "\U000F1828");
           it.printf(60, 200, id(my_font3), green, "Armed");
           }
+          if(id(alarm_status).state == "armed_home") {
+          it.printf(225, 5, id(icon_font_60), green, "\U000F068A");
+          it.printf(233, 60, id(my_font18), light_blue, "Home");
+          } else {
           it.printf(225, 5, id(icon_font_60), blue_drk, "\U000F068A");
           it.printf(233, 60, id(my_font18), light_blue, "Home");
+          }
+          if(id(alarm_status).state == "armed_away") {
+          it.printf(225, 80, id(icon_font_60), green, "\U000F099D");
+          it.printf(233, 135, id(my_font18), light_blue, "Away");
+          } else {          
           it.printf(225, 80, id(icon_font_60), blue_drk, "\U000F099D");
           it.printf(233, 135, id(my_font18), light_blue, "Away");
+          }
+          if(id(alarm_status).state == "armed_night") {
+          it.printf(225, 155, id(icon_font_60), green, "\U000F1828");         
+          it.printf(228, 215, id(my_font18), light_blue, "Night");
+          } else {
           it.printf(225, 155, id(icon_font_60), blue_drk, "\U000F1828");         
           it.printf(228, 215, id(my_font18), light_blue, "Night");
-          
+          }
       - id: alarm_home_activate_page ##### alarm activation page #####
         lambda: |-
           auto pin_state = id(current_pin).c_str();
