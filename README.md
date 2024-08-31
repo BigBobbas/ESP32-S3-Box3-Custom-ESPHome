@@ -56,4 +56,4 @@ Whisper, Piper & openwakeword
 
 
 Click [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) if you have everything ready and are ready to start the installation.<br><br>
-### You can sponsor this project by clicking the following link ☕ https://buymeacoffee.com/bigbobba
+### You can sponsor this project by clicking below<br><a href="https://www.buymeacoffee.com/BigBobba" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
