@@ -658,6 +658,9 @@ text_sensor:
   - platform: template
     id: time_remaining_1
 
+  - platform: template
+    id: time_display_format
+
  
 i2s_audio:
   - id: i2s_shared
@@ -1319,7 +1322,7 @@ display:
           it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F08D6");  
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Voice Settings");
           it.printf(155, 85, id(my_font5), light_blue, TextAlign::CENTER, "tap to change");
-          it.printf(135, 115, id(my_font5), light_blue, TextAlign:: RIGHT, "WakeWord :");
+          it.printf(135, 115, id(my_font5), light_blue, TextAlign::RIGHT, "WakeWord :");
           it.printf(310, 115, id(my_font5), lime, TextAlign::RIGHT, "%s", id(wakeword_location).state.c_str());
           it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Ext. media player :"); 
           if(id(output_audio).state) {
