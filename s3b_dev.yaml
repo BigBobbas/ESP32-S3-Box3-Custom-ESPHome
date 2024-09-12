@@ -8,7 +8,7 @@ substitutions:
   
   external_media_player: lenovo  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
-  tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44000" must include quotes
+  tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
   
   
 #################### ON DEVICE WAKE WORDS #######################################
