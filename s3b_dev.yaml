@@ -8,6 +8,7 @@ substitutions:
   
   external_media_player: lenovo  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
+  tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44000" must include quotes
   
   
 #################### ON DEVICE WAKE WORDS #######################################
@@ -232,8 +233,7 @@ select:
             - delay: 500ms
             - micro_wake_word.start
             - component.update: s3_box_lcd
-            
-  
+                
 script:           
   - id: set_volume
     then:
@@ -832,7 +832,7 @@ media_player:
     internal: false
     keep_pipeline_alive: true
     announcement_audio:
-      sample_rate: 16000
+      sample_rate: ${tts_voice_speed}
       bits_per_sample: 16
       num_channels: 1
     pipeline:
