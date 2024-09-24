@@ -233,7 +233,32 @@ select:
             - delay: 500ms
             - micro_wake_word.start
             - component.update: s3_box_lcd
-                
+
+  - platform: template
+    entity_category: config
+    name: Time Format
+    id: time_format
+    optimistic: true
+    restore_value: true
+    options:
+      - 12 Hr
+      - 24 Hr
+    initial_option: 24 Hr
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: return x == "24 Hr";
+            then:
+              - text_sensor.template.publish:
+                  id: time_display_format
+                  state: !lambda 'return "24 Hr";'
+            else:
+              - text_sensor.template.publish:
+                    id: time_display_format
+                    state: !lambda 'return "12 Hr";'
+        - component.update: s3_box_lcd
+
 script:           
   - id: set_volume
     then:
@@ -763,6 +788,7 @@ text_sensor:
 
   - platform: template
     id: time_display_format
+    update_interval: never
 
   - platform: homeassistant
     entity_id: media_player.${external_media_player}
@@ -1411,6 +1437,11 @@ font:
     size: 72
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
+    id: my_fontseg1
+    glyphs: '${font_glyphs}'
+    size: 50
+
+  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg2
     glyphs: '${font_glyphs}'
     size: 72
@@ -1930,7 +1961,11 @@ display:
 
           it.printf(160, 28, id(my_font3), light_blue, TextAlign::CENTER, "%s %d %s", days[id(ha_time).now().day_of_week - 1], id(ha_time).now().day_of_month, months[id(ha_time).now().month - 1]);
          
-          it.strftime(160, 88, id(my_fontseg2), TextAlign::CENTER, "%H:%M", id(ha_time).now());
+          if(id(time_display_format).state == "24 Hr") {
+            it.strftime(160, 88, id(my_fontseg2), TextAlign::CENTER, "%H:%M", id(ha_time).now());
+          } else {
+            it.strftime(160, 88, id(my_fontseg1), TextAlign::CENTER, "%l:%M %p", id(ha_time).now());
+          }
           it.printf(160, 181, id(my_fontseg2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state); // remove for no sensor version
          
       - id: ota_page ##### firmware uploading page #####
@@ -1974,7 +2009,7 @@ display:
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
           }          
-          it.printf(160, 65, id(my_font5), light_blue, TextAlign::CENTER, "settings");         
+          it.printf(160, 65, id(my_font5), light_blue, TextAlign::CENTER, "Settings");         
           it.printf(20, 80, id(icon_font_55), light_blue,"\U000F036F");
           it.printf(140, 80, id(icon_font_55), light_blue,"\U000F0502");
           it.printf(255, 80, id(icon_font_55), light_blue, "\U000F1C6F");  
@@ -2022,8 +2057,11 @@ display:
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
           }          
-          it.printf(160, 65, id(my_font5), light_blue, TextAlign::CENTER, "Preferences");
+          it.printf(160, 70, id(my_font5), light_blue, TextAlign::CENTER, "Preferences");
           it.printf(5, 190, id(icon_font_55), light_blue, "\U000F0B28");
+
+          it.printf(10, 90, id(my_font5), light_blue, "Time Format:");
+          it.printf(160, 90, id(my_font5), lime, "%s", id(time_display_format).state.c_str());
           
       - id: device_set_page ##### Device settings page #####
         lambda: |-
@@ -2613,6 +2651,25 @@ binary_sensor:
       then:
         - display.page.show: settings_page
         - component.update: s3_box_lcd
+
+##### preference page ####
+  - platform: touchscreen
+    page_id: prefs_page
+    id: chang_display_format
+    x_min: 160
+    x_max: 300
+    y_min: 90
+    y_max: 120
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - select.operation:
+            id: time_format
+            operation: Next
+            cycle: true   
+        - component.update: s3_box_lcd
+
 #########################################
 ##### idle / home page ####
   - platform: touchscreen
