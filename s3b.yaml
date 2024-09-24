@@ -706,6 +706,7 @@ display:
       number: 48
       inverted: true
     update_interval: never
+    invert_colors: false
     ##################################################################################################
     ################ The below section defines, what is displayed on the screen,        ##############
     ################ the colours and mdi icons are defined above under font: and Color: ##############
