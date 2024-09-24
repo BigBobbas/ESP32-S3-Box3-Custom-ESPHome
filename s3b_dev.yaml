@@ -1439,7 +1439,7 @@ font:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg1
     glyphs: '${font_glyphs}'
-    size: 50
+    size: 48
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/DSEG7Classic-Regular.ttf"
     id: my_fontseg2
