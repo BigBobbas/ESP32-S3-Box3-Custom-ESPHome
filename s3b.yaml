@@ -38,7 +38,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2024.6.0
+  min_version: 2024.7.0
   platformio_options:
     board_build.flash_mode: dio
   on_boot:
@@ -450,7 +450,8 @@ microphone:
       - self
 
 micro_wake_word:
-  model: ${micro_wake_word_model}
+  models: 
+    - model: ${micro_wake_word_model}
   on_wake_word_detected:
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
@@ -705,6 +706,7 @@ display:
       number: 48
       inverted: true
     update_interval: never
+    invert_colors: false
     ##################################################################################################
     ################ The below section defines, what is displayed on the screen,        ##############
     ################ the colours and mdi icons are defined above under font: and Color: ##############

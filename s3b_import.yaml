@@ -38,7 +38,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2024.6.0
+  min_version: 2024.7.0
   platformio_options:
     board_build.flash_mode: dio
   on_boot:
@@ -450,7 +450,9 @@ microphone:
       - self
 
 micro_wake_word:
-  model: ${micro_wake_word_model}
+  vad:
+  models: 
+    - model: ${micro_wake_word_model}
   on_wake_word_detected:
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
@@ -464,7 +466,6 @@ voice_assistant:
   auto_gain: 31dBFS
   volume_multiplier: 4.0
   on_listening:
-    - script.execute: saver_enabled
     - display.page.show: listening_page
     - component.update: s3_box_lcd
   on_stt_vad_end: 
@@ -481,6 +482,7 @@ voice_assistant:
           - wait_until:
               not:
                 voice_assistant.is_running:
+          - script.execute: saver_enabled
           - display.page.show: idle_page
           - component.update: s3_box_lcd
           - micro_wake_word.start

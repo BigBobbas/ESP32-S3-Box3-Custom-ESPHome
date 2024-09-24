@@ -1,10 +1,17 @@
-# ESP32-S3-Box3-Custom-ESPHome
- Custom ESPHome config for ESP32-S3-Box-3 with sensors and touchscreen<br><br>
+# ESP32-S3-Box3-Custom Firmware
+# The S3 BOX 3  is not just a voice assistant... it can do so much more!! 
+Video demo available [HERE](<https://youtu.be/5W52TOQU_oM>)
+> ### Please have a read through this page and also the instruction pages to see what this config does and what is involved to set it up.
+> Also check out the [Discussions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/discussions>) section, for latest updates, new features, and to ask questions or make suggestions 👍
+
+## This firmware will enable your S3 Box 3 to use the touch screen and home button, configure the box to act like a dashboard for Home Assistant. Giving you the power to control your entitities and display sensor information. 
+## The box will be configured as a media player, giving you volume control (also improves the overall volume of the speaker compared to the ESPHome stock config) and easily broadcast messages to  the device or stream media. Oh, and don't forget! it is also a Voice Assistan!!
+
+To go straight to the web installer [click here](<https://support.bbdl.co.uk>)<br>
  
- To go straight to the web installer [click here](<https://support.bbdl.co.uk>)<br>
- 
- To go straight to the config to use with the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>)<br>
- To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
+To go straight to the config to use with the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>)<br>
+To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
+Feel like trying out the latest experimental features then checkout [this link](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/discussions/37>) 
  
 To go straight to Installation Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>)<br>
 To go straight to the 'how to customise' Guide[click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
@@ -48,4 +55,5 @@ Whisper, Piper & openwakeword
 
 
 
-Click [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) if you have everything ready and are ready to start the installation.
+Click [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>) if you have everything ready and are ready to start the installation.<br><br>
+### You can sponsor this project by clicking below<br><a href="https://www.buymeacoffee.com/BigBobba" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
