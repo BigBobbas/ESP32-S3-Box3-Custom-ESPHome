@@ -8,6 +8,7 @@ Video demo available [HERE](<https://youtu.be/5W52TOQU_oM>)
 ## The box will also be configured as a media player, giving you volume control (also improves the overall volume of the internal speaker compared to the ESPHome stock config) and easily broadcast messages to the device or stream media. Oh, and don't forget! it is also a Voice Assistant!!
 The following features are now included with the latest version of this configuration and all accessible using the touchscreen or the HA ESPHome integration.
 - Alarmo integration
+- Timers
 - Output all audio to external HA media player with a tap of a switch
 - Advanced device information
   - WIFI connection info, Device uptime, ip address, hostname
