@@ -1,14 +1,12 @@
 # Making it your own.
 The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will detail how you can make it your own and customise the device, giving you control over your other Home Assistant devices and display sensor values and much more.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/d5268d37-94bf-4cad-87e4-c4360fa7c76b)
-<br><br>
-#### The following guide will cover these topics.<br>
+![device_img](https://github.com/user-attachments/assets/e8dc5fd4-21f5-40e1-bab1-5cecd87f487d)
 
+#### The following guide will cover these topics.<br>
+* Change Variables - Substitutions
 * Customise the voice assistant.
    * setting your own display images for the Voice Assistant process.
    * Changing the on-device (micro wake word) wake word.
-   * Divert audio responses to other media players.
-<br><br>
 * Add entities to the touch buttons
 * Add sensors to display the values on the screen
 * Change the displayed icons
@@ -16,6 +14,32 @@ The ESP32-S3-Box-3 is not just a voice assistant. In the following guide I will 
 * Add pages
 * Change background colour and or image
 * Change the function of the home button and the top left button<br><br><br>
+
+## Getting started 
+Firstly I will explain the difference between the ESPHome add-on and the ESPHome integration. The add-on is totaly separate to Home Assistant although it is accessible and installed via Home Assistant it isn't actually part of it and can be installed completly independantly on another machine (my preferred method) And is not required for an ESPHome flashed device to function in Home Assistant.. The sole purpose of the addon is to enable you to create firmware files to be flashed to devices from the configuration file, using yaml. The yaml file is a list of instructions and parameters and the real `code` lies beneath in the ESPHome codebase. The configuration simply tells ESPHome which components are required and any parameters that can be configured. Once the config is compiled then all of the relevant code, libraries and other dependencacies are pulled all together and bundled into one file, the .bin file and this is what gets flashed to the device. Without you needing to do all of the hard work of coding. Imagine having to do all of that too! writing a config is hard enough as it is!
+The add-on also alllows you to keep your config files in one place making them easily accessible. Home assistant does connect to the add-on dashboard to provide the online status of the device. This is not always reliable and require mDNS to be correctly configured on your network in order for it to talk to the dashboard. There is an option in the add-on configuration to enable 'ping for status' where it will use the IP addresses of devices to report back to the add-on.<br>
+
+The ESPHome integration is part of Home Assistant and like any other device it is how Home Assistant knows what to do with the device and what entities are available and what controls they have. In order for the device to function with Home Assistant the device needs to be added to the ESPHome integration, without this you will be unable to control devices or see values from sensors.
+ 
+in order to make any changes to the configuration file you will need to open the ESPHome add-on dashboard, there should be a button in the sidebar of your Home Assistant page. Once you have the dashboard open, locate the device card for the S3box and click 'edit' as shown below.
+![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/8ef00b76-0d09-4692-9005-75fefb9349e7)<br>
+After making your changes click on `save` in the top right corner, followed by `install` you will see a list of options, select `wirelessly`
+To enable the S3Box to send commands to Home Assistant to control your devices you need to allow the device to perform Home Assistant Actions (previously called services). To do this open the ESPhome integration in Home Assistant (this is found in settings>>devices and services>>ESPHome. Next to the device listing there will be a `configure` button, click this and then tick the box as shown below.<br>
+![image](https://github.com/user-attachments/assets/06e8b262-9ef1-40ac-8008-12227f9e1b00)<br>
+![image](https://github.com/user-attachments/assets/bbe3f106-489f-4175-95fe-0c70cc3afd1a)
+<br><br>
+## Substitions (variables).
+At the top of the config there are a number of variables that can be changed to configure your device to suit your setup and locale.
+![subs](https://github.com/user-attachments/assets/7345f7c7-1a81-405c-80d3-5615e74062a2)
+1. The friendly name is how your device will be displayed in Home Assistant, it is safe to change this to anything you wish. The name is how Home Assistant connects to your device on your network, changing this can result in connection errors if the device has already been added to the ESPHome integration.
+2. your_media_player is the entity id of an external Home Assistant media player for outputting the audio to an external device. only put the entity id after media_player. so media_player.sonos you would replace my_media_player with sonos. like so -> `external_media_player: sonos`
+3. you can change the url here to eather your Home Assistant instance name followed by the port or the ip address of the server eg. http://192.168.1.10:8123
+4. if you find that your tts responses are too slow sounding or too fast and sound like chipmunks then check the sample rate of the tts service you are using and change the number to match.
+5. This is the current list of available wake words for 'on device' wake word by default all of these are enabled. you can use one or all or any number of these. To remove a wake word from being active search the config using `ctrl + F` and search for `models:` you can then comment out the ones that you don't wish to use by prefixing the line with a # like the sample below where the first one has been commented out.<br>
+![image](https://github.com/user-attachments/assets/21681426-3301-4f10-83e0-1e8827d1d365)
+6. This is a not yet released version of the okay_nabu wake word that you can use (results so far are very positive and this works very well with fewer false triggers and a higher response rate) to use this model, simply copy and paste the url and replace the words `okay_nabu`
+
+Below the above substitutions there is a list of weekdays and months. You can change these to match your locale by changing the values on the right to the days and months in your preferred language.
 
 ## Customising Voice Assistant.
 ### Changing displayed images
@@ -36,55 +60,10 @@ change everything including the quotes to images/filename.png so it looks like b
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/eaf38960-ff31-47e8-b34c-76f283de12e7)<br>
 Once you have made the changes you can go ahead and click save followed by install and 'wirelessly'
   
-After installing, test the Voice Assistant and you should now see your new images displayed.<br><br>
-### Changing wake word
-* on device - Micro Wake Word
-There are currently 3 available wake words that can be used with micro wake word and these are.
-  * Alexa
-  * OK Nabu
-  * Hey Jarvis
-in order to change the wake word you will need to open the device card from the ESPHome dashboard by clicking 'EDIT'.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/8ef00b76-0d09-4692-9005-75fefb9349e7)<br>
-Once you are in the editor near the top of the config you will see this section<br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/0fe31a1e-093f-4b11-a651-5457a2f54b92)<br>
-it is as simple as changing the name circled in red <br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5e8899d3-7c6e-4c4d-be83-fc39876d6210)<br>
-make sure you type it exactly the same as it is shown in the comments above the line you edit.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/a1825d9a-706a-43e2-81d4-d9a82b2a7f4b)<br>
-Now you can go ahead and click 'save' then 'install' followed by wirelessly. after compiling and uploading go ahead and test out the wake word.<br><br>
-You can switch between on-device wakeword and Home Assistant wake word from the info page on the s3Box or from the ESPHome integration for the device as per the image below, this can be done on the fly and there is no need to reboot the device.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/5d5265fe-7692-4419-a636-6248c371cc1e)
-<br><br><br>
-### Outputting audio responses to another media player device
-as great as the S3 Box 3 is, the internal speaker is hardly earth shattering, so you may wish to output your audio to another device. Thats fine, due to the simplicity that ESPHome provides we can acomplish this with a few lines of code.<br><br>
-Firstly find the entity_id: of the media player you want to stream the audio to. You should be able to find this from the device in question in HomeAssistant Devices & Services. Open the device page and click on the media player entity then click on the clog icon at the top of the enity box. You should now see a page similar to below, you need to make a note or copy the 
-Entity ID <br>![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ff31a6ea-86f9-4483-a06e-c7b19ae64e77)<br>
-Now go to the ESPHome dashboard and click 'EDIT' on the device card. You now need to scroll down and find the voice_assistant: section.<br>
-Paste in the following lines, making sure to keep the on_tts inline with the other on_xxx lines.
-Don't forget to change the entity_id: to the one you copied earlier.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/27c16c06-304d-41a9-b9bb-945de94ed5cf)<br>
-to make it easier here is the code that you can copy and paste.<br>
-```yaml
-  on_tts_end:
-        then:
-        - homeassistant.service:
-            service: media_player.play_media
-            data:
-              entity_id: media_player.YOUR_MEDIA_PLAYER_ENTITY_ID
-              media_content_id: !lambda 'return x;'
-              media_content_type: music
-              announce: "true"
-```
-if you only want the sound output on the external device and not on the s3box you can remove or comment out the following line. from the `voice_assistant:` block<br>
-```yaml
-media_player: adf_media_player
-```
+
 ![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/ec4c4831-a966-4081-b13e-b80a2141ad54)
 
 
-Now you have edited the device config you can click save and install. NOTE:- if you have commented out or removed the speaker: lines in the screenshot above, this time before you install you will need to carry out a 'clean build files' by clicking on the 3 dot menu of the device card in the dashboard. 
-Once the clean is done you can then proceed to click 'install' followed by 'wirelessly'. After the firmware has uploaded, your new config should be working, with audio outputting to your external speaker.<br><br>
-if you have no audio after the above steps , make sure that the s3box is allowed to make services calls. To do this open the ESPhome integration in HA next to the device there will be a configure button, click this and then tick the box as shown below.<br>
-![image](https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/assets/150487209/18e4999c-54ba-482f-897d-505828dfe71a)
-<br><br>
 ### Adding entities to the touch buttons, so that you can 'tap' to toggle on or off an external device.
 in the example firmware it is possible to assign devices to the 6 buttons from the home screen (bottom 2 rows). this is a fairly straight forward process for on/off entities.<br><br>
 I would be looking at introducing more complex controls in the next release of this config. Such as sliders for brightness and the ability to change light colours etc. This can be done now using scenes. However I'm sure you will agree that having direct control from the screen would be much better!<br><br>
