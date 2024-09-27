@@ -1,0 +1,21 @@
+{
+  "name": "BigBobbas.s3box",
+  "version": "2024.06.01",
+  "home_assistant_domain": "esphome",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "firmware-factory.bin", "offset": 0 }
+     ]
+    }
+  ]
+}
+  
+   
+  
+   
+  
+   
+   
+  
