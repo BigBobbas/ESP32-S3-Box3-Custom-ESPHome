@@ -28,7 +28,7 @@ The following features are now included with the latest version of this configur
 There are also some settings that can be changed within the config and these can be found at the very top under the `substitutions:` section MOre details of these can be found in the 'how to customise' Guide[click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
 
-To go straight to the web installer [click here](<https://support.bbdl.co.uk>)<br>
+To go straight to the web installer page [click here](<https://support.bbdl.co.uk>)<br>
  
 To go straight to the config to use with the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b.yaml>)<br>
 To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
