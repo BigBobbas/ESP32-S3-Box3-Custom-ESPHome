@@ -1,6 +1,7 @@
 # Installation
-## NOTE:<br>
-> The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues, it all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words ;) ) <br>
+> [!CAUTION]
+>## NOTE:<br>
+> The final installation will take some time and ideally requires 8gb of ram to compile comfortably. It is a little hit and miss with lower resources if this will compile without issues and may cause your Home Assistant server to crash. This all depends on the hardware that you are running ESPHome on it's always worth a try ;). You will need the resources to compile and install the full config at least once. Subsequent compiles shouldn't require a full compile unless changes are made to components: in the config, adding entities and display changes shouldn't require a full compile so in theory, compile will be much faster, and requires less resource. (famous last words)<br>
 EDIT:
 > adding the line below to the `esphome:` component at the top of the config can help to compile on machines with lower available resources.. however this may increase the compile time further. But worth trying for sure.
 ```yaml
