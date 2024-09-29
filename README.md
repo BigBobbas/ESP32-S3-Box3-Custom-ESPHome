@@ -23,7 +23,7 @@ The following features are now included with the latest version of this configur
 - Top lefthand side hardware button
 - Temp and Humidity Sensor
 - Push to talk voice assistant
-- Voice assistant with switchable on Device wake word or Home Assistant wakeword engine eg. Openwakeword
+- Voice assistant with switchable 'on device' wake word or Home Assistant wakeword engine eg. Openwakeword
 
 There are also some settings that can be changed within the config and these can be found at the very top under the `substitutions:` section more details of these can be found in the 'how to customise' Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
