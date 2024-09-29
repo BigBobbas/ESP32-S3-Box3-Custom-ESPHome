@@ -25,7 +25,7 @@ The following features are now included with the latest version of this configur
 - Push to talk voice assistant
 - Voice assistant with switchable on Device wake word or Home Assistant wakeword engine eg. Openwakeword
 
-There are also some settings that can be changed within the config and these can be found at the very top under the `substitutions:` section MOre details of these can be found in the 'how to customise' Guide[click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
+There are also some settings that can be changed within the config and these can be found at the very top under the `substitutions:` section more details of these can be found in the 'how to customise' Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
 
 To go straight to the web installer page [click here](<https://support.bbdl.co.uk>)<br>
@@ -34,7 +34,7 @@ To go straight to the config to use with the sensor dock [click here](<https://g
 To go straight to a config for use without the sensor dock [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/s3b_no_sensors.yaml>)<br>
  
 To go straight to Installation Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/installation%20guide.md>)<br>
-To go straight to the 'how to customise' Guide[click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
+To go straight to the 'how to customise' Guide [click here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/main/instructions/make%20it%20your%20own.md>)<BR>
 
  ![Screenshot 2024-09-27 142215](https://github.com/user-attachments/assets/b7c9f130-e6f8-4faa-a255-f2e366e93231)
 
