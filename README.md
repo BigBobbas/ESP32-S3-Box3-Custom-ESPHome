@@ -1,15 +1,16 @@
 # ESP32-S3-Box3-Custom Firmware
 # The S3 BOX 3  is not just a voice assistant... it can do so much more!! 
 Video demo available [HERE](<https://youtu.be/5W52TOQU_oM>)
-> ### Please have a read through this page and also the instruction pages to see what this config does and what is involved to set it up.
-> Also check out the [Discord server](<https://discord.gg/U3SRYCG6Kp>) or [Discussions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/discussions>) section in the repo, for latest updates, new features, and to ask questions or make suggestions 👍
+
 > [!IMPORTANT]
-> Please note that this firmware is intended to be used as a template for you to customise. You will need to edit the configuration to add your own entities from Home Assistant, and make other changes if you wish . This > is not particularly difficult, we will provide as much information and support as possible. But you will need to navigate the configuration file so a basic understanding of how yaml works is an advantage. We strongly recommend that you use the included guides and refer to these as you should find most things covered. I apreciate it is a lot of reading but it will make your life easier if you have not used ESPHome yaml previously.
+> Please note that this firmware is intended to be used as a template for you to customise. You will need to edit the configuration to add your own entities from Home Assistant, and make other changes if you wish . This is not particularly difficult, we will provide as much information and support as possible.<br><br>
+> You will need to navigate the configuration file, so a basic understanding of how ESPHome yaml works is an advantage. We strongly recommend that you use the included guides and refer to these as you should find most things covered.<br><br>
+>I apreciate it is a lot of reading but it will make your life easier if you have not used ESPHome yaml previously.  Also check out the [Discord server](<https://discord.gg/U3SRYCG6Kp>) or [Discussions](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/discussions>) section in the repo, for latest updates, new features, and to ask questions or make suggestions 👍
  
 ## This firmware will enable your S3 Box 3 to use the touch screen and home button, and configure the box to act like a dashboard for Home Assistant. Giving you the power to control your entitities and display sensor information. 
 ## The box will also be configured as a media player, giving you volume control (also improves the overall volume of the internal speaker compared to the ESPHome stock config) and easily broadcast messages to the device or stream media. Oh, and don't forget! it is also a Voice Assistant!!
 The following features are now included with the latest version of this configuration and all accessible using the touchscreen or the HA ESPHome integration.
-- Alarmo integration
+- Alarmo integration (This is not Home Assistant alarm control panel - it is the **Alarmo** integration)
 - Timers
 - Output all audio to external HA media player with a tap of a switch
 - Advanced device information
