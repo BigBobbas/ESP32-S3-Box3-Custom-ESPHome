@@ -103,10 +103,7 @@ external_components:
       ref: dev-next
     components: [ adf_pipeline, i2s_audio ]
     refresh: 0s  
-
-  - source: github://clydebarrow/esphome@remote_display
-    refresh: 60min
-    components: [ vnc]   
+  
 api:
   on_client_connected:
     - lambda: |-
