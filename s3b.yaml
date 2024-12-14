@@ -17,7 +17,7 @@ substitutions:
 # TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM THE CONFIG BELOW - CTRL + F to search for "models" 
   micro_wake_word_model_1: alexa
   micro_wake_word_model_2: hey_jarvis
-  micro_wake_word_model_3: okay_nabu # latest test can also be used >> replace okay_nabu with this url https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu/okay_nabu.json
+  micro_wake_word_model_3: okay_nabu 
   micro_wake_word_model_4: hey_mycroft
 ####################################################################
 
