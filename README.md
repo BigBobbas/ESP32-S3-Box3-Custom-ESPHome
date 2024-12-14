@@ -1,3 +1,6 @@
+
+# PLEASE NOTE THAT THE CONFIGS IN THIS BRANCH ARE NO LONGER MAINTAINED AND SOME FEATURES MAY NOT WORK 
+
 # ESP32-S3-Box3-Custom-ESPHome
  Custom ESPHome config for ESP32-S3-Box-3 with sensors and touchscreen<br><br>
  
