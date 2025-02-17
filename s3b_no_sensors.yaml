@@ -397,6 +397,14 @@ script:
       - lambda: |-
           id(current_pin) += "0";  
           ESP_LOGD("increment_digit_0", "Current PIN: %s", id(current_pin).c_str());       
+  - id: show_notification
+    then:
+      - display.page.show: notification_page
+      - component.update: s3_box_lcd
+      - delay: 10s
+      - display.page.show: saver_page
+      - component.update: s3_box_lcd
+
 globals:
   - id: wifi_connection
     type: bool
@@ -433,6 +441,9 @@ globals:
   - id: current_pin
     type: std::string
     initial_value: "" 
+  - id: previous_notification_text
+    type: std::string
+    initial_value: ""
 
 number:
   - id: s_saver_delay
@@ -756,7 +767,22 @@ text_sensor:
     id: alarm_status  
     on_value:
       - component.update: s3_box_lcd    
-      
+
+  - platform: homeassistant
+    id: notification_text
+    entity_id: input_text.notify_s3_box
+    on_value:
+      then:
+        - lambda: |-
+            if (!id(notification_text).state.empty() && 
+                id(notification_text).state != id(previous_notification_text) &&
+                !id(previous_notification_text).empty()) {
+              id(previous_notification_text) = id(notification_text).state;
+              id(show_notification).execute();
+            } else if (id(previous_notification_text).empty()) {
+              id(previous_notification_text) = id(notification_text).state;
+            }
+            
 i2s_audio:
   - id: i2s_shared
     i2s_lrclk_pin:
@@ -2096,7 +2122,47 @@ display:
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(255, 30, id(icon_font_55), green, TextAlign::CENTER, "\U000F1828");
           it.printf(255, 70, id(my_font3), green, TextAlign::CENTER, "Armed");
-          }            
+          }      
+      - id: notification_page
+        lambda: |-
+          it.fill(Color::BLACK);
+          const char* text = id(notification_text).state.c_str();
+          int max_chars_per_line = 14;  // Adjusted maximum characters per line
+          int line_height = 40;         // Height of each line
+          int display_width = 320;
+          int display_height = 240;
+          int y = 60;                   // Starting Y position for text
+          std::vector<std::string> lines;
+          
+          // Split text into lines of max_chars_per_line
+          std::string current_line;
+          for (const char* p = text; *p != '\0'; ++p) {
+            if (current_line.length() >= max_chars_per_line || *p == '\n') {
+              lines.push_back(current_line);
+              current_line.clear();
+              if (*p != '\n') {
+                current_line += *p;
+              }
+            } else {
+              current_line += *p;
+            }
+          }
+          if (!current_line.empty()) {
+            lines.push_back(current_line);
+          }
+      
+          // Calculate the starting Y position to center the text vertically
+          int total_height = lines.size() * line_height;
+          y = (display_height - total_height) / 2;
+      
+          // Print each line centered
+          for (const auto& line : lines) {
+            int line_width = line.length() * 21; // Approximate width of the line
+            int x = (display_width - line_width) / 2;
+            it.printf(x, y, id(my_font4), Color::WHITE, TextAlign::BASELINE_LEFT, "%s", line.c_str());
+            y += line_height;
+          }
+
 i2c:
   - id: bus_a
     sda: GPIO08
