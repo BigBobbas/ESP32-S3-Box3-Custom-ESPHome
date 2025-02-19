@@ -768,21 +768,6 @@ text_sensor:
     on_value:
       - component.update: s3_box_lcd    
 
-  - platform: homeassistant
-    id: notification_text
-    entity_id: input_text.notify_s3_box
-    on_value:
-      then:
-        - lambda: |-
-            if (!id(notification_text).state.empty() && 
-                id(notification_text).state != id(previous_notification_text) &&
-                !id(previous_notification_text).empty()) {
-              id(previous_notification_text) = id(notification_text).state;
-              id(show_notification).execute();
-            } else if (id(previous_notification_text).empty()) {
-              id(previous_notification_text) = id(notification_text).state;
-            }
-            
 i2s_audio:
   - id: i2s_shared
     i2s_lrclk_pin:
@@ -3661,5 +3646,20 @@ binary_sensor:
       then:
         - display.page.show: alarm_night_activate_page
         - component.update: s3_box_lcd   
+
+text:
+  - platform: template
+    name: "Notification Text"
+    id: notification_text
+    mode: text
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            if (!id(notification_text).state.empty() && 
+                (id(previous_notification_text).empty() || id(notification_text).state != id(previous_notification_text))) {
+              id(previous_notification_text) = id(notification_text).state;
+              id(show_notification).execute();
+            }
 ################## config end ############################
 
