@@ -55,9 +55,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2024.9.0
-  platformio_options:
-    board_build.flash_mode: dio
+  min_version: 2025.2.0
   on_boot:
     priority: 600
     then:
@@ -71,40 +69,24 @@ esphome:
             switch.is_on: output_audio
           then:
             media_player.volume_set:    
-              id: adf_media_player
+              id: s3_media_player
               volume: 0 
   project:
     name: "BigBobbas.s3box"
-    version: "2024.09.01"
+    version: "2025.02.01"
 esp32:
   board: esp32s3box
   flash_size: 16MB
   framework:
     type: esp-idf
-    version: 4.4.8
-    platform_version: 5.4.0
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
-      CONFIG_AUDIO_BOARD_CUSTOM: "y"
-      CONFIG_ESP32_S3_BOX_3_BOARD: "y"
-    components:
-      - name: esp32_s3_box_3_board
-        source: github://jesserockz/esp32-s3-box-3-board@main
-        refresh: 0s
    
 psram:
   mode: octal
   speed: 80MHz
-  
-external_components:
-  - source:
-      type: git
-      url: https://github.com/gnumpi/esphome_audio
-      ref: dev-next
-    components: [ adf_pipeline, i2s_audio ]
-    refresh: 0s  
   
 api:
   on_client_connected:
@@ -121,16 +103,15 @@ ota:
   - platform: esphome
     on_begin:
       - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
-                id(led).loop();
-      
+                id(led).loop(); 
       - display.page.show: ota_page
       - component.update: s3_box_lcd   
+
 logger:
   hardware_uart: USB_SERIAL_JTAG
   logs:
     text_sensor: WARN
     component: ERROR
-
 
 wifi:
   ssid: !secret wifi_ssid
@@ -147,7 +128,9 @@ wifi:
   on_disconnect:
     - lambda: |-
         id(wifi_connection) = false;
+
 captive_portal:      
+
 time:
   - platform: homeassistant
     id: ha_time
@@ -255,7 +238,41 @@ select:
                     state: !lambda 'return "12 Hr";'
         - component.update: s3_box_lcd
                 
-script:           
+script: 
+  - id: start_voice_assistant
+    then:
+      - if:
+          condition:
+            switch.is_off: mute_switch
+          then:
+            - if:
+                condition:
+                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                then:
+                  - lambda: id(va).set_use_wake_word(true);
+                  - voice_assistant.start_continuous:
+            - if:
+                condition:
+                  lambda: return id(wake_word_engine_location).state == "On device";
+                then:
+                  - lambda: id(va).set_use_wake_word(false);
+                  - micro_wake_word.start
+
+  - id: stop_voice_assistant
+    then:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - voice_assistant.stop:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - voice_assistant.stop:
+            - micro_wake_word.stop:
+          
   - id: set_volume
     then:
       - media_player.volume_set:
@@ -321,8 +338,7 @@ script:
                 media_content_id: '${home_assistant_host}/local/sounds/timer_finished.mp3'
                 media_content_type: music
           - delay: 1700ms
-        
-        
+                
   - id: timer_ending
     then:
       - wait_until: 
@@ -330,7 +346,6 @@ script:
       - script.execute: saver_enabled
       - display.page.show: time_remaining_page
       - component.update: s3_box_lcd         
-
 
   - id: increment_digit_1
     then:
@@ -344,13 +359,11 @@ script:
           id(current_pin) += "2";  
           ESP_LOGD("increment_digit_2", "Current PIN: %s", id(current_pin).c_str());
 
-
   - id: increment_digit_3
     then:
       - lambda: |-
           id(current_pin) += "3";  
           ESP_LOGD("increment_digit_3", "Current PIN: %s", id(current_pin).c_str());
-
 
   - id: increment_digit_4
     then:
@@ -358,13 +371,11 @@ script:
           id(current_pin) += "4";  
           ESP_LOGD("increment_digit_4", "Current PIN: %s", id(current_pin).c_str());
 
-
   - id: increment_digit_5
     then:
       - lambda: |-
           id(current_pin) += "5";  
           ESP_LOGD("increment_digit_5", "Current PIN: %s", id(current_pin).c_str());
-
 
   - id: increment_digit_6
     then:
@@ -372,13 +383,11 @@ script:
           id(current_pin) += "6";  
           ESP_LOGD("increment_digit_6", "Current PIN: %s", id(current_pin).c_str());
 
-
   - id: increment_digit_7
     then:
       - lambda: |-
           id(current_pin) += "7";  
           ESP_LOGD("increment_digit_7", "Current PIN: %s", id(current_pin).c_str());
-
 
   - id: increment_digit_8
     then:
@@ -509,6 +518,13 @@ button:
     entity_category: diagnostic
     
 switch:
+  - platform: gpio
+    name: Speaker Enable
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    disabled_by_default: true
+
   - platform: template
     name: Display conversation
     id: display_conversation
@@ -526,11 +542,11 @@ switch:
     entity_category: config  
     on_turn_on: 
       media_player.volume_set:    
-        id: adf_media_player
+        id: s3_media_player
         volume: 0    
     on_turn_off: 
       media_player.volume_set:    
-        id: adf_media_player
+        id: s3_media_player
         volume: 1.0 
       
   - platform: template
@@ -570,11 +586,11 @@ switch:
     optimistic: true
     on_turn_on:   
       media_player.volume_set:    
-        id: adf_media_player
+        id: s3_media_player
         volume: 0
     on_turn_off:
       media_player.volume_set: 
-        id: adf_media_player
+        id: s3_media_player
         volume: 1.0       
         
   - platform: template
@@ -801,86 +817,78 @@ text_sensor:
     id: alarm_status  
     on_value:
       - component.update: s3_box_lcd    
-      
+
+
 i2s_audio:
-  - id: i2s_shared
-    i2s_lrclk_pin:
-      number: GPIO45
-      ignore_strapping_warning: true
+  - id: i2s_audio_bus
+    i2s_lrclk_pin: GPIO45
     i2s_bclk_pin: GPIO17
     i2s_mclk_pin: GPIO2
-    access_mode: duplex
 
-adf_pipeline:
-  - platform: i2s_audio
-    type: audio_out
-    id: adf_i2s_out
-    i2s_audio_id: i2s_shared
-    i2s_dout_pin: GPIO15
-    adf_alc: false
-    dac:
-      i2c_id: bus_a
-      model: es8311
-      address: 0x18
-      enable_pin:
-        number: GPIO46
-        ignore_strapping_warning: true
-    sample_rate: 16000
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: bus_a
     bits_per_sample: 16bit
-    fixed_settings: true
+    sample_rate: 16000
 
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    bits_per_sample: 16bit
+    sample_rate: 48000
+
+microphone:
   - platform: i2s_audio
-    type: audio_in
-    id: adf_i2s_in
-    i2s_audio_id: i2s_shared
+    id: box_mic
+    sample_rate: 16000
     i2s_din_pin: GPIO16
-    pdm: false
-    adc:
-      i2c_id: bus_a
-      model: es7210
-      address: 0x40
-    sample_rate: 16000
     bits_per_sample: 16bit
-    fixed_settings: true
+    adc_type: external
+
+speaker:
+  - platform: i2s_audio
+    id: box_speaker
+    i2s_dout_pin: GPIO15
+    dac_type: external
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: left
+    audio_dac: es8311_dac
+    buffer_duration: 100ms
 
 media_player:
-  - platform: adf_pipeline
-    id: adf_media_player
-    name: s3-box_media_player
-    internal: false
-    keep_pipeline_alive: true
-    announcement_audio:
-      sample_rate: ${tts_voice_speed}
-      bits_per_sample: 16
-      num_channels: 1
-    pipeline:
-      - self
-      - resampler
-      - adf_i2s_out
-    on_play: 
-      - lambda: |-
-          id(media_state) = true;
-      - component.update: s3_box_lcd
+  - platform: speaker
+    name: None
+    id: s3_media_player
+    volume_min: 0.5
+    volume_max: 0.8
+    announcement_pipeline:
+      speaker: box_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1  # S3 Box only has one output channel
+    files:
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+    on_announcement:
+      - if:
+          condition:
+            microphone.is_capturing:
+          then:
+            - script.execute: stop_voice_assistant
     on_idle:
-      - lambda: |-
-          id(media_state) = false;
-      - component.update: s3_box_lcd
-microphone:
-  - platform: adf_pipeline
-    id: box_mic
-    keep_pipeline_alive: true
-    pipeline:
-      - adf_i2s_in
-      - resampler
-      - self
+      - script.execute: start_voice_assistant
+    
 
 micro_wake_word:  
   vad:
   models: 
-    - model: ${micro_wake_word_model_1}
-    - model: ${micro_wake_word_model_2}
+    #- model: ${micro_wake_word_model_1}
+    # - model: ${micro_wake_word_model_2}
     - model: ${micro_wake_word_model_3}
-    - model: ${micro_wake_word_model_4}
+    # - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
     - if:
         condition:
@@ -889,11 +897,12 @@ micro_wake_word:
             - switch.is_on: wake_sound
         then:
           - media_player.play_media:
-              id: adf_media_player
+              id: s3_media_player
               media_url: '${home_assistant_host}/local/sounds/awake.mp3'
           - delay: 500ms
           - media_player.stop
-          - voice_assistant.start
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
         else:
           if:
             condition:
@@ -908,19 +917,21 @@ micro_wake_word:
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
               - media_player.stop
-              - voice_assistant.start
+              - voice_assistant.start:
+                  wake_word: !lambda return wake_word;
             else:
               if:
                 condition:
                   - switch.is_off: wake_sound
                 then:
                   - media_player.stop
-                  - voice_assistant.start
+                  - voice_assistant.start:
+                      wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
   microphone: box_mic
-  media_player: adf_media_player
+  media_player: s3_media_player
   use_wake_word: true
   noise_suppression_level: 2
   auto_gain: 31dBFS
@@ -1120,38 +1131,38 @@ image:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
     id: error_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/idle.png"
     id: idle_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/listening.png"
     id: listening_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/thinking.png"
     id: thinking_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/replying.png"
     id: replying_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/loading.png"
     id: loading_img
     resize: 320x240
-    type: RGB24
-    use_transparency: true
+    type: RGB
+    transparency: alpha_channel
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/logo.png"
     id: logo_img
     resize: 80x75
-    type: RGB24
-    use_transparency: true 
+    type: RGB
+    transparency: alpha_channel 
 font:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
@@ -3290,11 +3301,7 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
-        
-        
-        
-        
-        
+          
   - id: ss_bright_down
     page_id: timeout_settings_page
     platform: touchscreen
@@ -3686,4 +3693,3 @@ binary_sensor:
         - display.page.show: alarm_night_activate_page
         - component.update: s3_box_lcd   
 ################## config end ############################
-
