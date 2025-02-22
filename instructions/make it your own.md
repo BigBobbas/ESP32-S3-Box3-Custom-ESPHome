@@ -233,13 +233,13 @@ text_sensor:
 <br>
 Next we need to make some changes to the line that prints our output to the screen. To do this we need to use 2 print lines, 1 for each state. We will use an if statement to tell the display which line to print depending on state.<br>
 This is how the completed block will look:
-```
+
           if(id(light1_state).state == "on") {
                 it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8" );
           } else {
                 it.printf(120, 75, id(icon_font_80), blue_drk,"\U000F0335" );
           }
-```
+
 The first print line is the state when the light is on so use your icon and colour of choice in the lines above. `light1_state` is the `id` we gave to the text sensor, so you need these to match.  The line below else is the line used to print the off state of the light, again use your colour and icon of choice. It is very important in order to avoid compile errors that the whole block is in line and correctly indented with the rest of the config. the completed result should look like below.<br>
 This section displays the 3 icons in the middle row on the display.<br>
 
