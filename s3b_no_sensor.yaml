@@ -73,7 +73,7 @@ esphome:
               volume: 0 
   project:
     name: "BigBobbas.s3box"
-    version: "2025.02.01"
+    version: "2024.09.02"
 esp32:
   board: esp32s3box
   flash_size: 16MB
@@ -125,6 +125,7 @@ wifi:
         id(wifi_connection) = true;
     - display.page.show: idle_page
     - component.update: s3_box_lcd
+    - switch.turn_on: speaker_enable
   on_disconnect:
     - lambda: |-
         id(wifi_connection) = false;
@@ -520,8 +521,9 @@ button:
 switch:
   - platform: gpio
     name: Speaker Enable
+    id: speaker_enable
     pin: GPIO46
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: ALWAYS_OFF
     entity_category: config
     disabled_by_default: true
 
@@ -608,14 +610,6 @@ switch:
     optimistic: true    
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
-
-  # - platform: template # remove for no sensor version
-    # id: s_saver_presc
-    # name: Screen wake on motion
-    # icon: 'mdi:motion-sensor'
-    # entity_category: config
-    # optimistic: true    
-    # restore_mode: RESTORE_DEFAULT_OFF 
      
   - platform: template
     id: timer_ringing
@@ -678,43 +672,6 @@ light:
     default_transition_length: 50ms
     
 sensor:
-  # - platform: aht10 # remove for no sensor version
-    # i2c_id: bus_b
-    # variant: AHT20
-    # temperature:
-      # name: "S3 Temperature"
-      # id: s3temp
-    # humidity:
-      # name: "S3 Humidity"
-    # update_interval: 60s
-
-  # - platform: adc # remove for no sensor version
-    # pin: GPIO10
-    # id: battery_voltage
-    # unit_of_measurement: "V"
-    # accuracy_decimals: 1
-    # device_class: "voltage"
-    # entity_category: "diagnostic"
-    # disabled_by_default: true
-    # update_interval: 30s
-    # attenuation: auto
-    # filters:
-        # - multiply: 4.11
-
-  # - platform: copy # remove for no sensor version
-    # id: battery_percent
-    # source_id: battery_voltage
-    # name: "Battery level"
-    # unit_of_measurement: "%"
-    # accuracy_decimals: 0
-    # device_class: "battery"
-    # entity_category: "diagnostic"
-    # filters:
-      # - lambda: return (x - 2.7) / (4.2 - 2.7) * 100;
-      # - clamp:
-          # min_value: 0
-          # max_value: 100
-          
   - platform: uptime
     id: up_sens
     on_value:
@@ -872,14 +829,17 @@ media_player:
     files:
       - id: timer_finished_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_sound_file
+        file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/sounds/awake.flac
     on_announcement:
       - if:
           condition:
             microphone.is_capturing:
           then:
-            - script.execute: stop_voice_assistant
+            - voice_assistant.stop:
     on_idle:
-      - script.execute: start_voice_assistant
+      - delay: 100ms
+      - voice_assistant.start:
     
 
 micro_wake_word:  
@@ -896,13 +856,18 @@ micro_wake_word:
             - switch.is_off: output_audio          
             - switch.is_on: wake_sound
         then:
-          - media_player.play_media:
-              id: s3_media_player
-              media_url: '${home_assistant_host}/local/sounds/awake.mp3'
-          - delay: 500ms
-          - media_player.stop
-          - voice_assistant.start:
-              wake_word: !lambda return wake_word;
+          - if:
+              condition:
+                not:
+                  microphone.is_capturing:
+              then:
+                - media_player.speaker.play_on_device_media_file:
+                    media_file: wake_sound_file
+                    announcement: true
+          - wait_until:
+              not:
+                - media_player.is_announcing:
+          - voice_assistant.start
         else:
           if:
             condition:
@@ -937,16 +902,29 @@ voice_assistant:
   auto_gain: 31dBFS
   volume_multiplier: 4.0
   on_wake_word_detected:
+    - voice_assistant.stop:
+    - lambda: id(va).set_use_wake_word(false);
     - if:
         condition:
           and:
             - switch.is_off: output_audio          
             - switch.is_on: wake_sound
-        then:    
-          - media_player.play_media:
-              media_url: '${home_assistant_host}/local/sounds/awake.mp3'
-          - delay: 500ms
-          - media_player.stop
+        then:
+          # - voice_assistant.stop:
+          # - delay: 150ms
+          # - if:
+              # condition:
+                # not:
+                  # microphone.is_capturing:
+              # then:
+          - media_player.speaker.play_on_device_media_file:
+              media_file: wake_sound_file
+              announcement: true
+          - wait_until:
+              - not:
+                  - media_player.is_announcing               
+          - delay: 150ms
+          - voice_assistant.start
           - display.page.show: listening_page
           - component.update: s3_box_lcd
         else:
@@ -962,7 +940,9 @@ voice_assistant:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
-    - media_player.stop
+            else:
+              - voice_assistant.start
+    # - media_player.stop
   on_start:    
     if: 
       condition:
@@ -1417,7 +1397,6 @@ display:
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
           }        
           it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
-          //it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state); // remove for no sensor version
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8" );
           it.printf(220, 75, id(icon_font_80), purple,"\U000F0210");
           it.printf(20, 155, id(icon_font_80), red,"\U000F075A");
@@ -1505,9 +1484,7 @@ display:
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
-          //it.printf(40, 210, id(my_font5), light_blue, TextAlign::LEFT, "Battery Level"); // remove for no sensor version
-          //it.printf(265, 210, id(my_font5), yellow, TextAlign::RIGHT, "%.f%%", id(battery_percent).state); // remove for no sensor version   
-          
+      
           
       - id: ss_set_page ##### screen saver settings page #####
         lambda: |-
@@ -1522,7 +1499,6 @@ display:
           } else {   
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
           } 
-
           it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout to blank :");          
           if(id(s_saver_mode).state) {
                  it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
@@ -1831,7 +1807,6 @@ display:
           } else {
             it.strftime(160, 88, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
           }
-          //it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state); // remove for no sensor version
          
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
@@ -2163,14 +2138,14 @@ i2c:
   - id: bus_a
     sda: GPIO08
     scl: GPIO18
-    scan: false
+    scan: true
     sda_pullup_enabled: true
     scl_pullup_enabled: true
     frequency: 100kHz
 
   - sda: GPIO41
     scl: GPIO40
-    scan: false
+    scan: true
     sda_pullup_enabled: true
     scl_pullup_enabled: true
     frequency: 50kHz
@@ -2180,6 +2155,7 @@ i2c:
 touchscreen:
   - platform: gt911
     i2c_id: bus_a
+    address: 0x5D
     id: gt911_touchscreen
     interrupt_pin:
       number: GPIO3
@@ -2230,25 +2206,6 @@ binary_sensor:
           - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-
-###### radar sensor ########   # remove for no sensor version
-  # - platform: gpio
-    # pin:
-      # number: GPIO21
-    # name: "Presence detect"
-    # disabled_by_default: false
-    # device_class: "occupancy"
-    # on_state:
-      # if:
-        # condition:
-          # and:
-            # - switch.is_on: s_saver
-            # - switch.is_on: s_saver_presc 
-            # - display.is_displaying_page: saver_page
-        # then:
-          # - display.page.show: idle_page
-          # - component.update: s3_box_lcd
-          # - script.execute: saver_enabled
 
 ##### satus bar buttons #####             
   - platform: touchscreen
@@ -3097,21 +3054,6 @@ binary_sensor:
       then:
         - switch.toggle: s_saver
         - component.update: s3_box_lcd
-      
-  # - platform: touchscreen # remove for no sensor version
-    # page_id: ss_set_page
-    # id: ss_wake_presc
-    # internal: true
-    # x_min: 250
-    # x_max: 315
-    # y_min: 180
-    # y_max: 205
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-        # - switch.toggle: s_saver_presc
-        # - component.update: s3_box_lcd
         
   - platform: touchscreen
     page_id: ss_set_page
