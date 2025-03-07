@@ -892,7 +892,8 @@ micro_wake_word:
           - wait_until:
             - media_player.is_idle:
           - delay: 150ms
-          - voice_assistant.start
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
         else:
           if:
             condition:
