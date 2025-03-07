@@ -893,7 +893,8 @@ micro_wake_word:
               media_url: '${home_assistant_host}/local/sounds/awake.mp3'
           - delay: 500ms
           - media_player.stop
-          - voice_assistant.start
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
         else:
           if:
             condition:
@@ -908,14 +909,16 @@ micro_wake_word:
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
               - media_player.stop
-              - voice_assistant.start
+              - voice_assistant.start:
+                  wake_word: !lambda return wake_word;
             else:
               if:
                 condition:
                   - switch.is_off: wake_sound
                 then:
                   - media_player.stop
-                  - voice_assistant.start
+                  - voice_assistant.start:
+                      wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
