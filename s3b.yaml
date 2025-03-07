@@ -316,15 +316,18 @@ script:
             - component.update: s3_box_lcd
     mode: restart 
  
-  - id: timer_started
-    then:      
-      while:
-        condition:
-          switch.is_on: timer_ringing
-        then:    
-          - media_player.play_media:
-              media_url: '${home_assistant_host}/local/sounds/timer_finished.mp3'
-          - delay: 1s   
+  # - id: timer_started
+    # then:      
+      # while:
+        # condition:
+          # switch.is_on: timer_ringing
+        # then: 
+          # - voice_assistant.stop
+          # - delay: 150ms   
+          # - media_player.speaker.play_on_device_media_file:
+              # media_file: wake_sound_file
+              # announcement: true
+          # - delay: 1s   
         
   - id: timer_started_external
     then:
@@ -624,12 +627,47 @@ switch:
     optimistic: true
     internal: true
     restore_mode: ALWAYS_OFF
-    on_turn_on:
-      - lambda: id(led).turn_on().set_brightness(1.0).perform();
-      - delay: 15min
-      - switch.turn_off: timer_ringing 
+
     on_turn_off:
-      - media_player.stop
+      # Turn off the repeat mode and disable the pause between playlist items
+      - lambda: |-
+              id(s3_media_player)
+                ->make_call()
+                .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_OFF)
+                .set_announcement(true)
+                .perform();
+              id(s3_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 0);
+      # Stop playing the alarm
+      - media_player.stop:
+          announcement: true
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start     
+          else:
+            - lambda: id(va).set_use_wake_word(true);
+            - voice_assistant.start
+    on_turn_on:
+      - lambda: id(va).set_use_wake_word(false);
+      - voice_assistant.stop:
+      - micro_wake_word.stop:
+      - delay: 150ms
+      # Turn on the repeat mode and pause for 1000 ms between playlist items/repeats
+      - lambda: id(led).turn_on().set_brightness(1.0).perform();
+      - lambda: |-
+            id(s3_media_player)
+              ->make_call()
+              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_ONE)
+              .set_announcement(true)
+              .perform();
+            id(s3_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 1000);
+      - media_player.speaker.play_on_device_media_file:
+          media_file: timer_finished_sound
+          announcement: true
+      - delay: 15min
+      - switch.turn_off: timer_ringing
       
   - platform: template
     id: wake_sound
@@ -860,12 +898,14 @@ speaker:
     audio_dac: es8311_dac
     buffer_duration: 100ms
 
+
 media_player:
   - platform: speaker
     name: None
     id: s3_media_player
     volume_min: 0.5
     volume_max: 0.8
+    task_stack_in_psram: true
     announcement_pipeline:
       speaker: box_speaker
       format: FLAC
@@ -876,16 +916,6 @@ media_player:
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
       - id: wake_sound_file
         file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/sounds/awake.flac
-    on_announcement:
-      - if:
-          condition:
-            microphone.is_capturing:
-          then:
-            - voice_assistant.stop:
-    on_idle:
-      - delay: 100ms
-      - voice_assistant.start:
-    
 
 micro_wake_word:  
   vad:
@@ -901,17 +931,12 @@ micro_wake_word:
             - switch.is_off: output_audio          
             - switch.is_on: wake_sound
         then:
-          - if:
-              condition:
-                not:
-                  microphone.is_capturing:
-              then:
-                - media_player.speaker.play_on_device_media_file:
-                    media_file: wake_sound_file
-                    announcement: true
+          - media_player.speaker.play_on_device_media_file:
+              media_file: wake_sound_file
+              announcement: true
           - wait_until:
-              not:
-                - media_player.is_announcing:
+            - media_player.is_idle:
+          - delay: 150ms
           - voice_assistant.start
         else:
           if:
@@ -926,7 +951,6 @@ micro_wake_word:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
-              - media_player.stop
               - voice_assistant.start:
                   wake_word: !lambda return wake_word;
             else:
@@ -934,7 +958,6 @@ micro_wake_word:
                 condition:
                   - switch.is_off: wake_sound
                 then:
-                  - media_player.stop
                   - voice_assistant.start:
                       wake_word: !lambda return wake_word;
 
@@ -966,10 +989,10 @@ voice_assistant:
               media_file: wake_sound_file
               announcement: true
           - wait_until:
-              - not:
-                  - media_player.is_announcing               
+              - media_player.is_idle              
           - delay: 150ms
           - voice_assistant.start
+          - lambda: id(va).set_use_wake_word(false);
           - display.page.show: listening_page
           - component.update: s3_box_lcd
         else:
@@ -987,7 +1010,6 @@ voice_assistant:
                     media_content_type: music
             else:
               - voice_assistant.start
-    # - media_player.stop
   on_start:    
     if: 
       condition:
@@ -1148,7 +1170,7 @@ voice_assistant:
               - switch.is_off: output_audio
             then:
               - switch.turn_on: timer_ringing
-              - script.execute: timer_started
+              # - script.execute: timer_started
               - display.page.show: timer_finished_page
               - component.update: s3_box_lcd
     
@@ -1868,8 +1890,9 @@ display:
           it.fill(Color::BLACK);
           it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");  
           it.printf((it.get_width() / 2), (it.get_height() / 2), id(my_font3), red, TextAlign::CENTER, "FIRMWARE UPDATING");
-          it.printf(160,190, id(my_font3), red, TextAlign::CENTER, "won't be long....");
-          
+          it.printf(160,155, id(my_font5), blue, TextAlign::CENTER, "Once update and restarted");
+          it.printf(160,190, id(my_font5), blue, TextAlign::CENTER, "press the reboot button");
+          it.printf(160,225, id(my_font5), blue, TextAlign::CENTER, "to enable touch");
       - id: settings_page ##### settings parent page #####
         lambda: |-
           it.fill(id(black));
