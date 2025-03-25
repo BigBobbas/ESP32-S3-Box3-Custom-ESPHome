@@ -1,23 +1,23 @@
-## You can change the friendly name if you wish on line 7 below. The friendly name is how the device will show in HA 
+## You can change the friendly name if you wish on line 7 below. The friendly name is how the device will show in HA
 ## However the <name:> is how HA connects to the device eg. esp32-s3-box-3.local is the mDNS hostname for the device.
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
-  
+
   external_media_player: your_media_player  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
-  
+
 #################### ON DEVICE WAKE WORDS #######################################
 ####          all of the below wakewords are installed on the device        #####
 ####      you can use any of these without re-compiling - just say them!    #####
 #################################################################################
-# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM THE CONFIG BELOW - CTRL + F to search for "models" 
+# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM THE CONFIG BELOW - CTRL + F to search for "models"
   micro_wake_word_model_1: alexa
   micro_wake_word_model_2: hey_jarvis
-  micro_wake_word_model_3: okay_nabu 
+  micro_wake_word_model_3: okay_nabu
   micro_wake_word_model_4: hey_mycroft
 ####################################################################
 
@@ -30,7 +30,7 @@ substitutions:
   friday: Friday
   saturday: Saturday
   sunday: Sunday
-  
+
   jan: January
   feb: February
   mar: March
@@ -46,8 +46,8 @@ substitutions:
 #####################################################################
 
 ##### DO NOT CHANGE SUBSTITUTIONS BELOW THIS LINE ######
-#####      UNLESS YOU KNOW WHAT YOU ARE DOING     ######  
-  font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'  
+#####      UNLESS YOU KNOW WHAT YOU ARE DOING     ######
+  font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
 
 ############# END OF SUBSTITUTIONS #################
 ####################################################
@@ -63,14 +63,14 @@ esphome:
       - display.page.show: loading_page
       - component.update: s3_box_lcd
       - script.execute: saver_enabled
-      - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
+      - lambda: id(time_remaining_0).publish_state ("0:00:00");
       - if:
           condition:
             switch.is_on: output_audio
           then:
-            media_player.volume_set:    
-              id: s3_media_player
-              volume: 0 
+            media_player.volume_set:
+              id: speaker_media_player
+              volume: 0
   project:
     name: "BigBobbas.s3box"
     version: "2024.09.02"
@@ -83,11 +83,11 @@ esp32:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
-   
+
 psram:
   mode: octal
   speed: 80MHz
-  
+
 api:
   on_client_connected:
     - lambda: |-
@@ -103,9 +103,9 @@ ota:
   - platform: esphome
     on_begin:
       - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
-                id(led).loop(); 
+                id(led).loop();
       - display.page.show: ota_page
-      - component.update: s3_box_lcd   
+      - component.update: s3_box_lcd
 
 logger:
   hardware_uart: USB_SERIAL_JTAG
@@ -130,12 +130,12 @@ wifi:
     - lambda: |-
         id(wifi_connection) = false;
 
-captive_portal:      
+captive_portal:
 
 time:
   - platform: homeassistant
     id: ha_time
-    
+
 interval:
   - interval: 30s
     then:
@@ -176,7 +176,7 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
-      
+
 select:
   - platform: template
     entity_category: config
@@ -235,11 +235,11 @@ select:
                   state: !lambda 'return "24 Hr";'
             else:
               - text_sensor.template.publish:
-                    id: time_display_format
-                    state: !lambda 'return "12 Hr";'
+                  id: time_display_format
+                  state: !lambda 'return "12 Hr";'
         - component.update: s3_box_lcd
-                
-script: 
+
+script:
   - id: start_voice_assistant
     then:
       - if:
@@ -273,17 +273,17 @@ script:
           then:
             - voice_assistant.stop:
             - micro_wake_word.stop:
-          
+
   - id: set_volume
     then:
       - media_player.volume_set:
           volume: !lambda return 0.5 + id(speaker_volume) * 0.05 ;
-          
+
   - id: saver_enabled
     then:
       - if:
-          condition: 
-            switch.is_on: s_saver 
+          condition:
+            switch.is_on: s_saver
           then:
             - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
             - delay: !lambda return id(s_saver_delay).state * 1000;
@@ -292,7 +292,7 @@ script:
             - component.update: s3_box_lcd
       - if:
           condition:
-            - switch.is_on: s_saver_mode            
+            - switch.is_on: s_saver_mode
           then:
             - delay: !lambda return id(s_saver_blank_delay).state * 1000;
             - light.turn_off: led
@@ -301,34 +301,34 @@ script:
   - id: saver_enabled_manual
     then:
       - if:
-          condition: 
-            - switch.is_on: s_saver 
+          condition:
+            - switch.is_on: s_saver
           then:
             - lambda: id(led).turn_on().set_brightness(id(s_saver_brightness).state /100).perform();
             - display.page.show: saver_page
             - component.update: s3_box_lcd
       - if:
           condition:
-            - switch.is_on: s_saver_mode            
+            - switch.is_on: s_saver_mode
           then:
             - delay: !lambda return id(s_saver_blank_delay).state * 1000;
             - light.turn_off: led
             - component.update: s3_box_lcd
-    mode: restart 
- 
+    mode: restart
+
   # - id: timer_started
-    # then:      
+    # then:
       # while:
         # condition:
           # switch.is_on: timer_ringing
-        # then: 
+        # then:
           # - voice_assistant.stop
-          # - delay: 150ms   
+          # - delay: 150ms
           # - media_player.speaker.play_on_device_media_file:
               # media_file: wake_sound_file
               # announcement: true
-          # - delay: 1s   
-        
+          # - delay: 1s
+
   - id: timer_started_external
     then:
       while:
@@ -342,74 +342,75 @@ script:
                 media_content_id: '${home_assistant_host}/local/sounds/timer_finished.mp3'
                 media_content_type: music
           - delay: 1700ms
-                
+
   - id: timer_ending
     then:
-      - wait_until: 
-            - lambda: return (id(time_remaining_0).state == "0:00:10");
+      - wait_until:
+          - lambda: return (id(time_remaining_0).state == "0:00:10");
       - script.execute: saver_enabled
       - display.page.show: time_remaining_page
-      - component.update: s3_box_lcd         
+      - component.update: s3_box_lcd
 
   - id: increment_digit_1
     then:
       - lambda: |-
-          id(current_pin) += "1"; 
+          id(current_pin) += "1";
           ESP_LOGD("increment_digit_1", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_2
     then:
       - lambda: |-
-          id(current_pin) += "2";  
+          id(current_pin) += "2";
           ESP_LOGD("increment_digit_2", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_3
     then:
       - lambda: |-
-          id(current_pin) += "3";  
+          id(current_pin) += "3";
           ESP_LOGD("increment_digit_3", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_4
     then:
       - lambda: |-
-          id(current_pin) += "4";  
+          id(current_pin) += "4";
           ESP_LOGD("increment_digit_4", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_5
     then:
       - lambda: |-
-          id(current_pin) += "5";  
+          id(current_pin) += "5";
           ESP_LOGD("increment_digit_5", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_6
     then:
       - lambda: |-
-          id(current_pin) += "6";  
+          id(current_pin) += "6";
           ESP_LOGD("increment_digit_6", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_7
     then:
       - lambda: |-
-          id(current_pin) += "7";  
+          id(current_pin) += "7";
           ESP_LOGD("increment_digit_7", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_8
     then:
       - lambda: |-
-          id(current_pin) += "8";  
+          id(current_pin) += "8";
           ESP_LOGD("increment_digit_8", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_9
     then:
       - lambda: |-
-          id(current_pin) += "9";  
+          id(current_pin) += "9";
           ESP_LOGD("increment_digit_9", "Current PIN: %s", id(current_pin).c_str());
 
   - id: increment_digit_0
     then:
       - lambda: |-
-          id(current_pin) += "0";  
-          ESP_LOGD("increment_digit_0", "Current PIN: %s", id(current_pin).c_str());       
+          id(current_pin) += "0";
+          ESP_LOGD("increment_digit_0", "Current PIN: %s", id(current_pin).c_str());
+
 globals:
   - id: wifi_connection
     type: bool
@@ -418,11 +419,11 @@ globals:
   - id: api_connection
     type: bool
     restore_value: no
-    initial_value: "false" 
+    initial_value: "false"
   - id: mute_value
     type: bool
     restore_value: no
-    initial_value: "false" 
+    initial_value: "false"
   - id: speaker_volume
     type: int
     restore_value: no
@@ -442,10 +443,13 @@ globals:
     restore_value: false
   - id: global_is_timer
     type: bool
-    restore_value: false    
+    restore_value: false
   - id: current_pin
     type: std::string
-    initial_value: "" 
+    initial_value: ""
+  - id: global_is_assisting
+    type: bool
+    restore_value: false
 
 number:
   - id: s_saver_delay
@@ -464,7 +468,7 @@ number:
       - component.update: s3_box_lcd
       - component.update: s_saver_delay
       - script.execute: saver_enabled
-      
+
   - id: s_saver_blank_delay
     platform: template
     name: "Scr/off delay"
@@ -481,7 +485,7 @@ number:
       - component.update: s_saver_blank_delay
       - script.execute: saver_enabled
       - component.update: s3_box_lcd
-      
+
   - id: s_saver_brightness
     platform: template
     name: "Scr/save Brightness"
@@ -498,7 +502,7 @@ number:
       - component.update: s_saver_brightness
       - script.execute: saver_enabled
       - component.update: s3_box_lcd
-      
+
   - id: s_default_brightness
     platform: template
     name: "Default Brightness"
@@ -520,7 +524,7 @@ button:
     id: reboot
     name: "Reboot"
     entity_category: diagnostic
-    
+
 switch:
   - platform: gpio
     name: Speaker Enable
@@ -544,16 +548,16 @@ switch:
     icon: 'mdi:volume-off'
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config  
-    on_turn_on: 
-      media_player.volume_set:    
-        id: s3_media_player
-        volume: 0    
-    on_turn_off: 
-      media_player.volume_set:    
-        id: s3_media_player
-        volume: 1.0 
-      
+    entity_category: config
+    on_turn_on:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 0
+    on_turn_off:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 1.0
+
   - platform: template
     name: Mute
     id: mute_switch
@@ -589,32 +593,32 @@ switch:
   - platform: template
     id: media_mute
     optimistic: true
-    on_turn_on:   
-      media_player.volume_set:    
-        id: s3_media_player
+    on_turn_on:
+      media_player.volume_set:
+        id: speaker_media_player
         volume: 0
     on_turn_off:
-      media_player.volume_set: 
-        id: s3_media_player
-        volume: 1.0       
-        
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 1.0
+
   - platform: template
     id: s_saver
     name: Scr/save enable
     icon: mdi:sleep
-    optimistic: true    
+    optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
-     
+
   - platform: template
     id: s_saver_mode
     name: Scr/off enable
     icon: 'mdi:monitor-off'
-    optimistic: true    
+    optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
 
-  - platform: template 
+  - platform: template
     id: timer_ringing
     optimistic: true
     internal: true
@@ -623,12 +627,12 @@ switch:
     on_turn_off:
       # Turn off the repeat mode and disable the pause between playlist items
       - lambda: |-
-              id(s3_media_player)
+              id(speaker_media_player)
                 ->make_call()
                 .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_OFF)
                 .set_announcement(true)
                 .perform();
-              id(s3_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 0);
+              id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 0);
       # Stop playing the alarm
       - media_player.stop:
           announcement: true
@@ -637,7 +641,7 @@ switch:
             lambda: return id(wake_word_engine_location).state == "On device";
           then:
             - lambda: id(va).set_use_wake_word(false);
-            - micro_wake_word.start     
+            - micro_wake_word.start
           else:
             - lambda: id(va).set_use_wake_word(true);
             - voice_assistant.start
@@ -649,18 +653,18 @@ switch:
       # Turn on the repeat mode and pause for 1000 ms between playlist items/repeats
       - lambda: id(led).turn_on().set_brightness(1.0).perform();
       - lambda: |-
-            id(s3_media_player)
+            id(speaker_media_player)
               ->make_call()
               .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_ONE)
               .set_announcement(true)
               .perform();
-            id(s3_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 1000);
+            id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 1000);
       - media_player.speaker.play_on_device_media_file:
           media_file: timer_finished_sound
           announcement: true
       - delay: 15min
       - switch.turn_off: timer_ringing
-      
+
   - platform: template
     id: wake_sound
     name: Play wake sound
@@ -668,7 +672,7 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    
+
   - platform: template
     id: mute_response_switch
     name: Mute Responses
@@ -676,7 +680,7 @@ switch:
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    
+
   - platform: template
     id: ext_media_mute
     icon: 'mdi:volume-off'
@@ -690,11 +694,11 @@ switch:
             data:
               entity_id: media_player.${external_media_player}
     on_turn_off:
-        - homeassistant.service:
-            service: media_player.volume_mute
-            data:
-              entity_id: media_player.${external_media_player}    
- 
+      - homeassistant.service:
+          service: media_player.volume_mute
+          data:
+            entity_id: media_player.${external_media_player}
+
 output:
   - platform: ledc
     pin: GPIO47
@@ -708,8 +712,8 @@ light:
     output: backlight_output
     restore_mode: ALWAYS_ON
     default_transition_length: 50ms
-    
-sensor:       
+
+sensor:
   - platform: uptime
     id: up_sens
     on_value:
@@ -719,15 +723,15 @@ sensor:
           int hours = seconds / 3600;
           int minutes = (seconds % 3600) / 60;
           seconds %= 60;
-          id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds)); 
+          id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds));
     update_interval: 30s
 
   - platform: wifi_signal
     name: "WiFi db"
     id: wifi_signal_db
     update_interval: 30s
-    
-  - platform: copy 
+
+  - platform: copy
     source_id: wifi_signal_db
     name: "WiFi Signal"
     id: wifi_percent
@@ -735,8 +739,8 @@ sensor:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
     unit_of_measurement: "%"
     entity_category: "diagnostic"
-    device_class: ""   
-    
+    device_class: ""
+
 text_sensor:
   - id: text_request
     platform: template
@@ -784,9 +788,9 @@ text_sensor:
 
   - platform: template
     id: time_remaining_0
-    name: Timer 
+    name: Timer
     icon: mdi:clock
-               
+
   - platform: template
     id: time_remaining_1
 
@@ -804,19 +808,20 @@ text_sensor:
     id: ha_media_title
     attribute: media_content_id
     on_value:
-      component.update: s3_box_lcd 
+      component.update: s3_box_lcd
 
   - platform: homeassistant
     name: "Alarm Status"
     entity_id: alarm_control_panel.alarmo
-    id: alarm_status  
+    id: alarm_status
     on_value:
-      - component.update: s3_box_lcd    
-
+      - component.update: s3_box_lcd
 
 i2s_audio:
   - id: i2s_audio_bus
-    i2s_lrclk_pin: GPIO45
+    i2s_lrclk_pin:
+      number: GPIO45
+      ignore_strapping_warning: true
     i2s_bclk_pin: GPIO17
     i2s_mclk_pin: GPIO2
 
@@ -843,38 +848,98 @@ microphone:
     adc_type: external
 
 speaker:
-  - platform: i2s_audio
-    id: box_speaker
+  - id: i2s_audio_speaker
+    platform: i2s_audio
+    i2s_audio_id: i2s_audio_bus
     i2s_dout_pin: GPIO15
     dac_type: external
     sample_rate: 48000
     bits_per_sample: 16bit
     channel: left
     audio_dac: es8311_dac
-    buffer_duration: 100ms
-
+    buffer_duration: 500ms  # Increased for stability without timeout @youkorr
+  # Virtual speakers to combine the announcement and media streams together into one output
+  - id: mixing_speaker
+    platform: mixer
+    output_speaker: i2s_audio_speaker
+    source_speakers:
+      - id: announcement_mixing_input
+      - id: media_mixing_input
+  # Vritual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000  # Added explicit sample rate
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000  # Added explicit sample rate
 
 media_player:
   - platform: speaker
-    name: None
-    id: s3_media_player
+    name: Media Player
+    id: speaker_media_player
+    volume_increment: 0.05
     volume_min: 0.5
     volume_max: 0.8
     task_stack_in_psram: true
     announcement_pipeline:
-      speaker: box_speaker
+      speaker: announcement_resampling_speaker
       format: FLAC
       sample_rate: 48000
       num_channels: 1  # S3 Box only has one output channel
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC  # FLAC is the least processor intensive codec
+      num_channels: 2
+      sample_rate: 48000
     files:
       - id: timer_finished_sound
         file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
       - id: wake_sound_file
         file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/sounds/awake.flac
+    on_state:
+      then:
+        - if:
+            condition:
+              media_player.is_playing:
+            then:
+              - micro_wake_word.stop
+              - voice_assistant.stop
+        - if:
+            condition:
+              and:
+                - lambda: return id(global_is_assisting) == false;
+                - or:
+                    - media_player.is_idle
+                    - media_player.is_paused
+            then:
+              - micro_wake_word.start
+        - if:
+            condition:
+              and:
+                - switch.is_off: timer_ringing_switch
+                - not:
+                    voice_assistant.is_running:
+                - not:
+                    media_player.is_announcing:
+            then:
+              - mixer_speaker.apply_ducking:
+                  id: media_mixing_input
+                  decibel_reduction: 0
+                  duration: 1.0s
+    on_play:
+      - wait_until:
+          - lambda: return id(global_is_assisting) == false;
+    on_announcement:
+      - mixer_speaker.apply_ducking:
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0.0s
 
-micro_wake_word:  
+micro_wake_word:
   vad:
-  models: 
+  models:
     #- model: ${micro_wake_word_model_1}
     # - model: ${micro_wake_word_model_2}
     - model: ${micro_wake_word_model_3}
@@ -883,17 +948,16 @@ micro_wake_word:
     - if:
         condition:
           and:
-            - switch.is_off: output_audio          
+            - switch.is_off: output_audio
             - switch.is_on: wake_sound
         then:
           - media_player.speaker.play_on_device_media_file:
               media_file: wake_sound_file
               announcement: true
           - wait_until:
-            - media_player.is_idle:
+              not:
+                - media_player.is_announcing:
           - delay: 150ms
-          - voice_assistant.start:
-              wake_word: !lambda return wake_word;
         else:
           if:
             condition:
@@ -907,31 +971,25 @@ micro_wake_word:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
-              - voice_assistant.start:
-                  wake_word: !lambda return wake_word;
-            else:
-              if:
-                condition:
-                  - switch.is_off: wake_sound
-                then:
-                  - voice_assistant.start:
-                      wake_word: !lambda return wake_word;
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
   microphone: box_mic
-  media_player: s3_media_player
+  media_player: speaker_media_player
   use_wake_word: true
   noise_suppression_level: 2
   auto_gain: 31dBFS
   volume_multiplier: 4.0
   on_wake_word_detected:
+    - lambda: id(global_is_assisting) = true;
     - voice_assistant.stop:
     - lambda: id(va).set_use_wake_word(false);
     - if:
         condition:
           and:
-            - switch.is_off: output_audio          
+            - switch.is_off: output_audio
             - switch.is_on: wake_sound
         then:
           # - voice_assistant.stop:
@@ -945,9 +1003,9 @@ voice_assistant:
               media_file: wake_sound_file
               announcement: true
           - wait_until:
-              - media_player.is_idle              
+              not:
+                - media_player.is_announcing:
           - delay: 150ms
-          - voice_assistant.start
           - lambda: id(va).set_use_wake_word(false);
           - display.page.show: listening_page
           - component.update: s3_box_lcd
@@ -964,10 +1022,9 @@ voice_assistant:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
-            else:
-              - voice_assistant.start
-  on_start:    
-    if: 
+    - voice_assistant.start
+  on_start:
+    if:
       condition:
         - display.is_displaying_page: listening_page
         - display.is_displaying_page: thinking_page
@@ -988,7 +1045,7 @@ voice_assistant:
     - text_sensor.template.publish:
         id: text_request
         state: !lambda return x;
-  on_stt_vad_end: 
+  on_stt_vad_end:
     - display.page.show: thinking_page
     - component.update: s3_box_lcd
   on_tts_start:
@@ -997,14 +1054,14 @@ voice_assistant:
         state: !lambda return x;
   on_tts_end:
     - if:
-        condition: 
+        condition:
           and:
             - switch.is_on: mute_response_switch
             - switch.is_off: media_mute
             - switch.is_off: ext_media_mute
         then:
           - switch.turn_on: media_mute
-          - switch.turn_on: ext_media_mute                  
+          - switch.turn_on: ext_media_mute
     - display.page.show: replying_page
     - component.update: s3_box_lcd
     - if:
@@ -1021,7 +1078,7 @@ voice_assistant:
     - delay: 5s
     - display.page.show: idle_page
     - component.update: s3_box_lcd
-   
+
   on_error:
     - if:
         condition:
@@ -1037,12 +1094,21 @@ voice_assistant:
               then:
                 - display.page.show: idle_page
                 - component.update: s3_box_lcd
+    - lambda: id(global_is_assisting) = false;
 
   on_idle:
     - display.page.show: idle_page
-    - component.update: s3_box_lcd 
-    
+    - component.update: s3_box_lcd
+
   on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 1.0s
+    - lambda: id(global_is_assisting) = false;
     - if:
         condition:
           and:
@@ -1050,36 +1116,29 @@ voice_assistant:
             - lambda: return id(wake_word_engine_location).state == "On device";
         then:
           - voice_assistant.stop
-          - wait_until:
-              not:
-                voice_assistant.is_running:
-          - delay: 100ms
           - micro_wake_word.start
 
         else:
           if:
-            condition: 
-              - switch.is_off: mute_switch  
-            then:              
-              - wait_until:
-                  not:
-                    voice_assistant.is_running:
+            condition:
+              - switch.is_off: mute_switch
+            then:
               - lambda: id(va).set_use_wake_word(false);
-              - voice_assistant.stop:    
+              - voice_assistant.stop:
               - delay: 100ms
               - lambda: id(va).set_use_wake_word(true);
               - delay: 100ms
-              - voice_assistant.start 
+              - voice_assistant.start
     - if:
-        condition: 
+        condition:
           and:
             - switch.is_on: mute_response_switch
             - switch.is_on: media_mute
             - switch.is_on: ext_media_mute
         then:
-           - switch.turn_off: media_mute
-           - switch.turn_off: ext_media_mute 
-          
+          - switch.turn_off: media_mute
+          - switch.turn_off: ext_media_mute
+
   on_client_connected:
     - if:
         condition:
@@ -1087,19 +1146,19 @@ voice_assistant:
             - switch.is_off: mute_switch
             - lambda: return id(wake_word_engine_location).state == "On device";
         then:
-          - micro_wake_word.start 
+          - micro_wake_word.start
         else:
           - if:
-              condition: 
-                - switch.is_off: mute_switch          
+              condition:
+                - switch.is_off: mute_switch
               then:
                 - lambda: id(va).set_use_wake_word(true);
-                - voice_assistant.start      
+                - voice_assistant.start
   on_timer_started:
     - script.execute: timer_ending
     - component.update: s3_box_lcd
   on_timer_cancelled:
-    - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
+    - lambda: id(time_remaining_0).publish_state ("0:00:00");
     - component.update: s3_box_lcd
   on_timer_updated:
     - component.update: s3_box_lcd
@@ -1109,10 +1168,10 @@ voice_assistant:
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         seconds %= 60;
-        id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds)); 
+        id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds));
     - component.update: s3_box_lcd
   on_timer_finished:
-    if: 
+    if:
       condition:
         - switch.is_on: output_audio
       then:
@@ -1129,7 +1188,7 @@ voice_assistant:
               # - script.execute: timer_started
               - display.page.show: timer_finished_page
               - component.update: s3_box_lcd
-    
+
 image:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
     id: error_img
@@ -1165,7 +1224,7 @@ image:
     id: logo_img
     resize: 80x75
     type: RGB
-    transparency: alpha_channel 
+    transparency: alpha_channel
 font:
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
@@ -1178,7 +1237,7 @@ font:
     size: 16
     glyphs:
       '${font_glyphs}'
-      
+
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font2
     size: 72
@@ -1196,12 +1255,12 @@ font:
     size: 40
     glyphs:
       '${font_glyphs}'
-      
+
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font18
     size: 18
     glyphs:
-      '${font_glyphs}'      
+      '${font_glyphs}'
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font5
     size: 22
@@ -1217,7 +1276,7 @@ font:
     id: my_font82
     size: 82
     glyphs:
-      '${font_glyphs}'     
+      '${font_glyphs}'
 
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_55
@@ -1240,8 +1299,8 @@ font:
       - "\U000F0238"#heating
       - "\U000F024A"#garden/flower
       - "\U000F0335"#light bulb off
-      - "\U000F036C"#microphone on 
-      - "\U000F036D"#microphone off 
+      - "\U000F036C"#microphone on
+      - "\U000F036D"#microphone off
       - "\U000F036F"#voice settings
       - "\U000F03E4"#pause
       - "\U000F040A"#play
@@ -1261,7 +1320,7 @@ font:
       - "\U000F05CB"#voice
       - "\U000F068A"#alarm home
       - "\U000F06E8"#light bulb illuminated
-      - "\U000F075A"#music 
+      - "\U000F075A"#music
       - "\U000F075D"#vol plus
       - "\U000F075E"#vol minus
       - "\U000F0769"#ceiling
@@ -1303,7 +1362,7 @@ font:
       - "\U000F1C3B"#battery charging/usb powered
       - "\U000F1C6F"#info
 
-      
+
   - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_180
     size: 180
@@ -1319,7 +1378,7 @@ font:
     id: icon_font_60
     size: 60
     glyphs: *icon_glyphs
-      
+
 color:
   - id: green
     hex: '75D15F'
@@ -1389,12 +1448,12 @@ display:
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-          it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+          it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1404,21 +1463,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }        
+          }
           it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8" );
           it.printf(220, 75, id(icon_font_80), purple,"\U000F0210");
@@ -1430,12 +1489,12 @@ display:
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1445,38 +1504,38 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F06E8");
           it.printf(20, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(120, 155, id(icon_font_80), light_blue,"\U000F06E8");
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F06E8");
-          
+
       - id: info_page ##### info page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1486,86 +1545,86 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(160, 75, id(my_font5), light_blue, TextAlign::CENTER, "IP Address");
           it.printf(160, 95, id(my_font5), yellow, TextAlign::CENTER, "%s", id(ip_addr).state.c_str());
           it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "Host Name");
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
-         
-          
+
+
       - id: ss_set_page ##### screen saver settings page #####
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");  
+          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F08D6");
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screensaver Settings");
           it.printf(250, 115, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout Settings :");
           it.printf(255, 95, id(icon_font_55), lime, "\U000F08D6");
           it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Enable screensaver :");
           if(id(s_saver).state) {
                  it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
-          } 
-          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout to blank :");          
+          }
+          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Timeout to blank :");
           if(id(s_saver_mode).state) {
                  it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
-          }         
-          
+          }
+
       - id: ww_set_page ##### voice settings page #####
         lambda: |-
           it.fill(id(black));
-          it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F08D6");  
+          it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F08D6");
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Voice Settings");
           it.printf(155, 85, id(my_font5), light_blue, TextAlign::CENTER, "tap to change");
           it.printf(135, 115, id(my_font5), light_blue, TextAlign::RIGHT, "WakeWord :");
           it.printf(310, 115, id(my_font5), lime, TextAlign::RIGHT, "%s", id(wakeword_location).state.c_str());
-          it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Mute responses :"); 
+          it.printf(250, 145, id(my_font5), light_blue, TextAlign::RIGHT, "Mute responses :");
           if(id(mute_response_switch).state) {
                  it.printf(255, 135, id(icon_font_55), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 135, id(icon_font_55), blue_drk, "\U000F0A19");
-          }          
-          it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake up sound :");          
+          }
+          it.printf(250, 175, id(my_font5), light_blue, TextAlign::RIGHT, "Wake up sound :");
           if(id(wake_sound).state) {
                  it.printf(255, 165, id(icon_font_55), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 165, id(icon_font_55), blue_drk, "\U000F0A19");
-          } 
-          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Show Conversation :");          
+          }
+          it.printf(250, 205, id(my_font5), light_blue, TextAlign::RIGHT, "Show Conversation :");
           if(id(display_conversation).state) {
                  it.printf(255, 195, id(icon_font_55), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 195, id(icon_font_55), blue_drk, "\U000F0A19");
-          }           
-         
+          }
+
       - id: climate_page ##### climate page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1575,21 +1634,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F050F");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F050F");
@@ -1601,12 +1660,12 @@ display:
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1616,21 +1675,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F0335");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F0335");
@@ -1639,15 +1698,15 @@ display:
           it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0335");
 
       - id: media_page ##### media player page #####
-        lambda: |-  
+        lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1657,21 +1716,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           if(id(media_state) == true) {
                  it.printf(160, 80, id(my_font5), lime, TextAlign::CENTER, "Playing");
           } else {
@@ -1680,21 +1739,21 @@ display:
           it.printf(20, 100, id(icon_font_80), blue,"\U000F075E");
           it.printf(120, 100, id(icon_font_80), blue,"\U000F040E");
           it.printf(220, 100, id(icon_font_80), blue,"\U000F075D");
-          if(id(media_mute).state) {          
+          if(id(media_mute).state) {
                   it.printf(120, 165, id(icon_font_80), red,"\U000F0581");
-          } else {        
+          } else {
                   it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
           }
       - id: ext_media_page ##### media player page #####
-        lambda: |-  
+        lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1704,43 +1763,43 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(160, 80, id(my_font5), lime, TextAlign::CENTER, id(ha_media_status).state.c_str());
           it.printf(20, 100, id(icon_font_80), blue,"\U000F04AE");
           it.printf(120, 100, id(icon_font_80), blue,"\U000F040E");
           it.printf(220, 100, id(icon_font_80), blue,"\U000F04AD");
-          if(id(ext_media_mute).state) {          
+          if(id(ext_media_mute).state) {
                   it.printf(120, 165, id(icon_font_80), red,"\U000F0581");
-          } else {        
+          } else {
                   it.printf(120, 165, id(icon_font_80), lime,"\U000F057E");
           }
           it.printf(20, 165, id(icon_font_80), blue,"\U000F075E");
           it.printf(220, 165, id(icon_font_80), blue,"\U000F075D");
-          
+
       - id: scenes_page ##### scenes page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1750,21 +1809,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }    
+          }
           it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0FCE");
           it.printf(120, 75, id(icon_font_80), light_blue,"\U000F0FCE");
           it.printf(220, 75, id(icon_font_80), light_blue, "\U000F0FCE");
@@ -1782,7 +1841,7 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(listening_img), ImageAlign::CENTER);
-      
+
       - id: thinking_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1790,7 +1849,7 @@ display:
           if (id(display_conversation).state) {
             it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
             it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
-          }          
+          }
       - id: replying_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1805,7 +1864,7 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(error_img), ImageAlign::CENTER);
-          
+
       - id: timer_finished_page
         lambda: |-
           it.fill(id(black));
@@ -1821,7 +1880,7 @@ display:
       - id: saver_page ##### screen saver display page #####
         lambda: |-
           it.fill(id(black));
-           
+
           const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
           const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
           it.printf(160, 28, id(my_font5), light_blue, TextAlign::CENTER, "%s %d %s", days[id(ha_time).now().day_of_week - 1], id(ha_time).now().day_of_month, months[id(ha_time).now().month - 1]);
@@ -1830,11 +1889,11 @@ display:
           } else {
             it.strftime(160, 88, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
           }
-         
+
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
           it.fill(Color::BLACK);
-          it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");  
+          it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");
           it.printf((it.get_width() / 2), (it.get_height() / 2), id(my_font3), red, TextAlign::CENTER, "FIRMWARE UPDATING");
           it.printf(160,155, id(my_font5), blue, TextAlign::CENTER, "Once update and restarted");
           it.printf(160,190, id(my_font5), blue, TextAlign::CENTER, "press the reboot button");
@@ -1843,12 +1902,12 @@ display:
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1858,44 +1917,44 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }          
-          it.printf(160, 65, id(my_font5), light_blue, TextAlign::CENTER, "settings");         
+          }
+          it.printf(160, 65, id(my_font5), light_blue, TextAlign::CENTER, "settings");
           it.printf(20, 80, id(icon_font_55), light_blue,"\U000F036F");
           it.printf(140, 80, id(icon_font_55), light_blue,"\U000F0502");
-          it.printf(255, 80, id(icon_font_55), light_blue, "\U000F1C6F");  
+          it.printf(255, 80, id(icon_font_55), light_blue, "\U000F1C6F");
           it.printf(15, 210, id(my_font5), light_blue,"Device");
-          it.printf(245, 130, id(my_font5), light_blue, "Info");           
-          it.printf(20, 160, id(icon_font_55), light_blue,"\U000F08D6");        
+          it.printf(245, 130, id(my_font5), light_blue, "Info");
+          it.printf(20, 160, id(icon_font_55), light_blue,"\U000F08D6");
           it.printf(255, 160, id(icon_font_55), light_blue, "\U000F05CB");
           it.printf(15, 130, id(my_font5), light_blue,"Voice");
           it.printf(135, 130, id(my_font5), light_blue,"Saver");
-          it.printf(245, 210, id(my_font5), light_blue, "Test"); 
+          it.printf(245, 210, id(my_font5), light_blue, "Test");
           it.image((it.get_width() / 2), 195, id(logo_img), ImageAlign::CENTER);
-          
+
       - id: device_set_page ##### Device settings page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1905,32 +1964,32 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }          
-          it.printf(15, 75, id(my_font5), light_blue, "Ext media player"); 
+          }
+          it.printf(15, 75, id(my_font5), light_blue, "Ext media player");
           if(id(output_audio).state) {
                  it.printf(255, 60, id(icon_font_60), lime, "\U000F0521");
-          } else {   
+          } else {
                  it.printf(255, 60, id(icon_font_60), blue_drk, "\U000F0A19");
           }
           it.printf(5, 190, id(icon_font_55), light_blue, "\U000F0B28");
-          it.printf(15, 135, id(my_font5), light_blue, "Brightness");          
-          it.printf(238, 148, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_default_brightness).state);  
-          it.printf(160, 125, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(315, 125, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");           
+          it.printf(15, 135, id(my_font5), light_blue, "Brightness");
+          it.printf(238, 148, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_default_brightness).state);
+          it.printf(160, 125, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");
+          it.printf(315, 125, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");
           it.rectangle(215 , 125 , 46 , 40 , light_blue);
           it.printf(65, 180, id(my_font5), light_blue, "Time Format:");
           it.printf(210, 180, id(my_font5), lime, "%s", id(time_display_format).state.c_str());
@@ -1938,22 +1997,22 @@ display:
       - id: timeout_settings_page ##### Timeout Settings page #####
         lambda: |-
           it.fill(id(black));
-          //it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F0150"); 
-          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screen Settings");  
-          it.printf(160, 60, id(my_font5), light_blue, TextAlign::CENTER, "Screen Saver"); 
+          //it.printf(160, 50, id(icon_font_55), light_blue, TextAlign::CENTER, "\U000F0150");
+          it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Screen Settings");
+          it.printf(160, 60, id(my_font5), light_blue, TextAlign::CENTER, "Screen Saver");
           it.printf(50, 80, id(my_font), light_blue, "Delay secs");
           it.printf(185, 80, id(my_font), light_blue, "Dim Brightness");
-          it.printf(105, 100, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(65, 100, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.printf(105, 100, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");
+          it.printf(65, 100, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");
           it.rectangle(65 , 105 , 40 , 40 , lime);
           it.printf(85, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_delay).state);
-          it.printf(20, 160, id(my_font), light_blue, "Screen off delay"); 
-          it.printf(105, 180, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(65, 180, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");          
+          it.printf(20, 160, id(my_font), light_blue, "Screen off delay");
+          it.printf(105, 180, id(icon_font_55), lime, TextAlign::LEFT, "\U000F0B2C");
+          it.printf(65, 180, id(icon_font_55), lime, TextAlign::RIGHT, "\U000F0B26");
           it.rectangle(65 , 180 , 40 , 40 , lime);
           it.printf(85, 200, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_blank_delay).state);
-          it.printf(255, 100, id(icon_font_55), pink, TextAlign::LEFT, "\U000F0B2C");    
-          it.printf(215, 100, id(icon_font_55), pink, TextAlign::RIGHT, "\U000F0B26");          
+          it.printf(255, 100, id(icon_font_55), pink, TextAlign::LEFT, "\U000F0B2C");
+          it.printf(215, 100, id(icon_font_55), pink, TextAlign::RIGHT, "\U000F0B26");
           it.rectangle(215 , 105 , 40 , 40 , pink);
           it.printf(235, 125, id(my_font5), light_blue, TextAlign::CENTER, "%.f", id(s_saver_brightness).state);
 
@@ -1961,19 +2020,19 @@ display:
         lambda: |-
           it.fill(id(black));
           it.printf(160, 20, id(my_font5), light_blue, TextAlign::CENTER, "Active Timers");
-          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F0150"); 
-          it.printf(160, 155, id(my_font6), light_blue, TextAlign::CENTER, "%s", id(time_remaining_0).state.c_str()); 
-          
+          it.printf(160, 70, id(icon_font_80), light_blue, TextAlign::CENTER, "\U000F0150");
+          it.printf(160, 155, id(my_font6), light_blue, TextAlign::CENTER, "%s", id(time_remaining_0).state.c_str());
+
       - id: wifi_page ##### wifi info page #####
         lambda: |-
           it.fill(id(black));
           if(id(api_connection) == true) {
-                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");      
+                  it.printf(15, 5, id(icon_font_55), blue, "\U000F07D0");
           } else {
                   it.printf(15, 5, id(icon_font_55), red, "\U000F087B");
           }
           if(id(wifi_connection) == true) {
-                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");      
+                  it.printf(80, 5, id(icon_font_55), lime, "\U000F16BD");
           } else {
                   it.printf(80, 5, id(icon_font_55), red, "\U000F16BC");
           }
@@ -1983,21 +2042,21 @@ display:
           it.printf(135, 5, id(icon_font_55), lime, "\U000F0150");
           }
           if(id(mute_switch).state) {
-                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D"); 
+                 it.printf(190, 5, id(icon_font_55), red, "\U000F036D");
           } else {
-                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C"); 
+                 it.printf(190, 5, id(icon_font_55), lime, "\U000F036C");
           }
           if(id(alarm_status).state == "disarmed") {
-          it.printf(250, 5, id(icon_font_55), red, "\U000F099E"); 
+          it.printf(250, 5, id(icon_font_55), red, "\U000F099E");
           } else if(id(alarm_status).state == "arming") {
-          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565"); 
+          it.printf(250, 5, id(icon_font_55), amber, "\U000F0565");
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F068A");
           } else if(id(alarm_status).state == "armed_away") {
-          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");     
+          it.printf(250, 5, id(icon_font_55), green, "\U000F099D");
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
-          }  
+          }
           it.printf(160, 75, id(my_font5), light_blue, TextAlign::CENTER, "ssid");
           it.printf(160, 95, id(my_font5), yellow, TextAlign::CENTER, "%s", id(connected_ssid).state.c_str());
           it.printf(160, 125, id(my_font5), light_blue, TextAlign::CENTER, "bssid");
@@ -2035,15 +2094,15 @@ display:
           if(id(alarm_status).state == "armed_away") {
           it.printf(225, 80, id(icon_font_60), green, "\U000F099D");
           it.printf(233, 135, id(my_font18), light_blue, "Away");
-          } else {          
+          } else {
           it.printf(225, 80, id(icon_font_60), blue_drk, "\U000F099D");
           it.printf(233, 135, id(my_font18), light_blue, "Away");
           }
           if(id(alarm_status).state == "armed_night") {
-          it.printf(225, 155, id(icon_font_60), green, "\U000F1828");         
+          it.printf(225, 155, id(icon_font_60), green, "\U000F1828");
           it.printf(228, 215, id(my_font18), light_blue, "Night");
           } else {
-          it.printf(225, 155, id(icon_font_60), blue_drk, "\U000F1828");         
+          it.printf(225, 155, id(icon_font_60), blue_drk, "\U000F1828");
           it.printf(228, 215, id(my_font18), light_blue, "Night");
           }
       - id: alarm_home_activate_page ##### alarm  home activation page #####
@@ -2069,9 +2128,9 @@ display:
           it.filled_rectangle(198, 110, 108, 50, red);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Arm");
           } else if(id(alarm_status).state == "armed_home"){
-          it.filled_rectangle(198, 110, 108, 50, green); 
+          it.filled_rectangle(198, 110, 108, 50, green);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Disarm");
-          }                 
+          }
           it.filled_rectangle(198, 170, 108, 50, blue_drk);
           it.print(255, 195, id(my_font3), white, TextAlign::CENTER, "Clear");
           if(id(alarm_status).state == "disarmed") {
@@ -2083,7 +2142,7 @@ display:
           } else if(id(alarm_status).state == "armed_home") {
           it.printf(255, 30, id(icon_font_55), green, TextAlign::CENTER, "\U000F068A");
           it.printf(255, 70, id(my_font3), green, TextAlign::CENTER, "Armed");
-          }         
+          }
       - id: alarm_away_activate_page ##### alarm away activation page #####
         lambda: |-
           auto pin_state = id(current_pin).c_str();
@@ -2106,7 +2165,7 @@ display:
           it.filled_rectangle(198, 110, 108, 50, red);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Arm");
           } else if(id(alarm_status).state == "armed_away"){
-          it.filled_rectangle(198, 110, 108, 50, green); 
+          it.filled_rectangle(198, 110, 108, 50, green);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Disarm");
           }
           it.filled_rectangle(198, 170, 108, 50, blue_drk);
@@ -2120,7 +2179,7 @@ display:
           } else if(id(alarm_status).state == "armed_away") {
           it.printf(255, 30, id(icon_font_55), green, TextAlign::CENTER, "\U000F099D");
           it.printf(255, 70, id(my_font3), green, TextAlign::CENTER, "Armed");
-          }  
+          }
       - id: alarm_night_activate_page ##### alarm night activation page #####
         lambda: |-
           auto pin_state = id(current_pin).c_str();
@@ -2143,7 +2202,7 @@ display:
           it.filled_rectangle(198, 110, 108, 50, red);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Arm");
           } else if(id(alarm_status).state == "armed_night"){
-          it.filled_rectangle(198, 110, 108, 50, green); 
+          it.filled_rectangle(198, 110, 108, 50, green);
           it.print(255, 135, id(my_font3), white, TextAlign::CENTER, "Disarm");
           }
           it.filled_rectangle(198, 170, 108, 50, blue_drk);
@@ -2157,7 +2216,7 @@ display:
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(255, 30, id(icon_font_55), green, TextAlign::CENTER, "\U000F1828");
           it.printf(255, 70, id(my_font3), green, TextAlign::CENTER, "Armed");
-          }            
+          }
 i2c:
   - id: bus_a
     sda: GPIO08
@@ -2187,8 +2246,8 @@ touchscreen:
     on_touch:
       - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
     on_release:
-      - script.execute: saver_enabled 
-   
+      - script.execute: saver_enabled
+
 binary_sensor:
 ###### top left hand physical button #######
   - platform: gpio
@@ -2215,7 +2274,7 @@ binary_sensor:
                 - script.execute: saver_enabled
                 - display.page.show: saver_page
                 - component.update: s3_box_lcd
-            
+
 # #######     red circle home button   #####################
   - platform: gt911
     id: home_button
@@ -2223,16 +2282,16 @@ binary_sensor:
     on_press:
       if:
         condition:
-          - display.is_displaying_page: idle_page  
+          - display.is_displaying_page: idle_page
         then:
           - script.execute: saver_enabled
-        else: 
+        else:
           - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
 
 
-##### satus bar buttons #####             
+##### satus bar buttons #####
   - platform: touchscreen
     pages:
       - idle_page
@@ -2242,7 +2301,7 @@ binary_sensor:
       - media_page
       - ext_media_page
       - scenes_page
-      - settings_page      
+      - settings_page
     id: status_bar_1
     x_min: 5
     x_max: 60
@@ -2252,8 +2311,8 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
          # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2265,7 +2324,7 @@ binary_sensor:
       - media_page
       - ext_media_page
       - scenes_page
-      - settings_page  
+      - settings_page
     id: status_bar_2
     internal: true
     x_min: 65
@@ -2401,7 +2460,7 @@ binary_sensor:
       then:
         - display.page.show: info_page
         - component.update: s3_box_lcd
-        
+
   - platform: touchscreen
     page_id: settings_page
     id: device_set
@@ -2419,7 +2478,7 @@ binary_sensor:
 
   - platform: touchscreen
     page_id: settings_page
-    id: voice_test 
+    id: voice_test
     internal: true
     x_min: 215
     x_max: 315
@@ -2430,16 +2489,16 @@ binary_sensor:
         - switch.turn_on: mute_switch
         - lambda: id(va).set_use_wake_word(false);
         - delay: 100ms
-        - voice_assistant.start 
+        - voice_assistant.start
         - wait_until:
             not:
               - voice_assistant.is_running
         - voice_assistant.stop
     on_release:
       then:
-        - switch.turn_off: mute_switch    
+        - switch.turn_off: mute_switch
         - component.update: s3_box_lcd
-        
+
   - platform: touchscreen
     pages:
       - device_set_page
@@ -2541,7 +2600,7 @@ binary_sensor:
 
   - platform: touchscreen
     page_id: idle_page
-    id: control_6 
+    id: control_6
     internal: true
     x_min: 215
     x_max: 315
@@ -2552,8 +2611,8 @@ binary_sensor:
       max_length: 500ms
       then:
         - display.page.show: settings_page
-        - component.update: s3_box_lcd   
-            
+        - component.update: s3_box_lcd
+
 #### climate page #####
   - platform: touchscreen
     page_id: climate_page
@@ -2567,10 +2626,10 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
+      # then:
 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2585,10 +2644,10 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
-        # - component.update: s3_box_lcd 
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
+        # - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: climate_page
@@ -2602,9 +2661,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2619,9 +2678,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2636,9 +2695,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2653,11 +2712,11 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
-##### lights page #####  
+##### lights page #####
   - platform: touchscreen
     page_id: lights_page
     id: lights1
@@ -2670,9 +2729,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2687,9 +2746,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2704,9 +2763,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2721,9 +2780,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2738,9 +2797,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2755,9 +2814,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
 ##### media player #####
@@ -2821,7 +2880,7 @@ binary_sensor:
             else:
               - media_player.stop
         - logger.log: "Play Paused pressed"
-        
+
   - platform: touchscreen
     page_id: media_page
     name: Mute Media
@@ -2836,7 +2895,7 @@ binary_sensor:
       then:
         - switch.toggle: media_mute
         - component.update: s3_box_lcd
-#### external media ####        
+#### external media ####
   - platform: touchscreen
     page_id: ext_media_page
     id: ext_prev_track
@@ -2855,7 +2914,7 @@ binary_sensor:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
 
-        
+
   - platform: touchscreen
     page_id: ext_media_page
     id: ext_next_track
@@ -2893,7 +2952,7 @@ binary_sensor:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
 
-        
+
   - platform: touchscreen
     page_id: ext_media_page
     name: Mute Media
@@ -2908,7 +2967,7 @@ binary_sensor:
       then:
         - switch.toggle: ext_media_mute
         - component.update: s3_box_lcd
-        
+
   - platform: touchscreen
     page_id: ext_media_page
     id: vol_minus
@@ -2960,9 +3019,9 @@ binary_sensor:
     # on_click:
       # min_length: 10ms
       # max_length: 500ms
-      # then: 
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####      
-        
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
         # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -2976,9 +3035,9 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-    
+
         #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
-            
+
             # - component.update: s3_box_lcd
 
 
@@ -2993,9 +3052,9 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-    
+
         #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
-            
+
             # - component.update: s3_box_lcd
 
   - platform: touchscreen
@@ -3009,9 +3068,9 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-    
+
         #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
-            
+
             # - component.update: s3_box_lcd
 
 
@@ -3026,11 +3085,10 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-    
-        #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
-            
-            # - component.update: s3_box_lcd
 
+        #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
+
+            # - component.update: s3_box_lcd
 
 
   - platform: touchscreen
@@ -3044,12 +3102,12 @@ binary_sensor:
     # on_click:
     #   min_length: 10ms
     #   max_length: 500ms
-    
+
         #### make sure that the following  line are uncommented and sit at the bottom of this block after your action ###
-            
+
             # - component.update: s3_box_lcd
-            
-##### Screensaver Settings #####            
+
+##### Screensaver Settings #####
   - platform: touchscreen
     page_id: ss_set_page
     id: ss_timeout
@@ -3064,7 +3122,7 @@ binary_sensor:
       then:
         - display.page.show: timeout_settings_page
         - component.update: s3_box_lcd
- 
+
   - platform: touchscreen
     page_id: ss_set_page
     id: ss_toggle
@@ -3079,7 +3137,7 @@ binary_sensor:
       then:
         - switch.toggle: s_saver
         - component.update: s3_box_lcd
-        
+
   - platform: touchscreen
     page_id: ss_set_page
     id: ss_toggle_blank
@@ -3093,8 +3151,8 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.toggle: s_saver_mode
-        - component.update: s3_box_lcd   
-        
+        - component.update: s3_box_lcd
+
 ##### voice settings page #####
   - platform: touchscreen
     page_id: ww_set_page
@@ -3111,9 +3169,9 @@ binary_sensor:
         - select.operation:
             id: wake_word_engine_location
             operation: Next
-            cycle: true   
+            cycle: true
         - component.update: s3_box_lcd
-       
+
   - platform: touchscreen
     page_id: ww_set_page
     id: mute_response
@@ -3126,9 +3184,9 @@ binary_sensor:
       min_length: 10ms
       max_length: 500ms
       then:
-        - switch.toggle: mute_response_switch  
+        - switch.toggle: mute_response_switch
         - component.update: s3_box_lcd
-       
+
   - platform: touchscreen
     page_id: ww_set_page
     id: ww_wake_sound
@@ -3143,7 +3201,7 @@ binary_sensor:
       then:
         - switch.toggle: wake_sound
         - component.update: s3_box_lcd
-      
+
   - platform: touchscreen
     page_id: ww_set_page
     id: ww_toggle_conv
@@ -3153,9 +3211,9 @@ binary_sensor:
     y_min: 210
     y_max: 235
     on_click:
-        - switch.toggle: display_conversation
-        - component.update: s3_box_lcd
-   
+      - switch.toggle: display_conversation
+      - component.update: s3_box_lcd
+
 ##### touch to wake screen #####
   - platform: touchscreen
     page_id: saver_page
@@ -3171,7 +3229,7 @@ binary_sensor:
       then:
         - display.page.show: idle_page
         - component.update: s3_box_lcd
-     
+
 ##### Timer finished page #####
   - platform: touchscreen
     page_id: timer_finished_page
@@ -3226,7 +3284,7 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
-        
+
   - id: ss_blank_down
     page_id: timeout_settings_page
     platform: touchscreen
@@ -3263,7 +3321,7 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
-          
+
   - id: ss_bright_down
     page_id: timeout_settings_page
     platform: touchscreen
@@ -3300,7 +3358,7 @@ binary_sensor:
             call.set_value(bright);
             call.perform();
         - component.update: s3_box_lcd
-##### device settings page #####        
+##### device settings page #####
   - id: s_default_bright_down
     page_id: device_set_page
     platform: touchscreen
@@ -3320,7 +3378,7 @@ binary_sensor:
             call.set_value(default_bright);
             call.perform();
         - component.update: s3_box_lcd
-        
+
   - id: s_default_bright_up
     page_id: device_set_page
     platform: touchscreen
@@ -3365,16 +3423,16 @@ binary_sensor:
         - select.operation:
             id: time_format
             operation: Next
-            cycle: true   
+            cycle: true
         - component.update: s3_box_lcd
 
-          
+
 ##### alarm panel buttons #####
   - platform: touchscreen
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page      
+      - alarm_night_activate_page
     id: alarm_key_1
     internal: true
     x_min: 15
@@ -3389,7 +3447,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_2
     internal: true
     x_min: 71
@@ -3404,7 +3462,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_3
     internal: true
     x_min: 127
@@ -3419,7 +3477,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_4
     internal: true
     x_min: 15
@@ -3434,7 +3492,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_5
     internal: true
     x_min: 71
@@ -3449,7 +3507,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_6
     internal: true
     x_min: 127
@@ -3464,7 +3522,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_7
     internal: true
     x_min: 15
@@ -3479,7 +3537,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_8
     internal: true
     x_min: 71
@@ -3494,7 +3552,7 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_9
     internal: true
     x_min: 127
@@ -3509,24 +3567,24 @@ binary_sensor:
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_key_0
     internal: true
     x_min: 71
     x_max: 119
     y_min: 183
     y_max: 231
-    on_press:   
+    on_press:
       - media_player.play_media:
           media_url: '${home_assistant_host}/local/sounds/key.mp3'
-      - script.execute: increment_digit_0 
-      - component.update: s3_box_lcd     
-           
+      - script.execute: increment_digit_0
+      - component.update: s3_box_lcd
+
   - platform: touchscreen
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: clear_pin
     x_min: 198
     x_max: 306
@@ -3537,12 +3595,12 @@ binary_sensor:
         - lambda: |-
             id(current_pin) = "";
         - component.update: s3_box_lcd
-            
+
   - platform: touchscreen
     pages:
       - alarm_away_activate_page
       - alarm_home_activate_page
-      - alarm_night_activate_page 
+      - alarm_night_activate_page
     id: alarm_ok
     x_min: 198
     x_max: 306
@@ -3570,7 +3628,7 @@ binary_sensor:
                     and:
                       - lambda: |-
                           return (id(alarm_status).state == "disarmed");
-                      - display.is_displaying_page: alarm_home_activate_page                         
+                      - display.is_displaying_page: alarm_home_activate_page
                   then:
                     - homeassistant.service:
                         service: alarm_control_panel.alarm_arm_home
@@ -3578,14 +3636,14 @@ binary_sensor:
                           entity_id: alarm_control_panel.alarmo
                           code: !lambda return id(current_pin).c_str();
                     - lambda: |-
-                        id(current_pin) = "";  
+                        id(current_pin) = "";
                   else:
                     - if:
                         condition:
                           and:
                             - lambda: |-
                                 return (id(alarm_status).state == "disarmed");
-                                
+
                             - display.is_displaying_page: alarm_away_activate_page
                         then:
                           - homeassistant.service:
@@ -3594,9 +3652,9 @@ binary_sensor:
                                 entity_id: alarm_control_panel.alarmo
                                 code: !lambda return id(current_pin).c_str();
                           - lambda: |-
-                              id(current_pin) = "";     
-                        
-                        else:                        
+                              id(current_pin) = "";
+
+                        else:
                           - if:
                               condition:
                                 and:
@@ -3610,9 +3668,9 @@ binary_sensor:
                                       entity_id: alarm_control_panel.alarmo
                                       code: !lambda return id(current_pin).c_str();
                                 - lambda: |-
-                                    id(current_pin) = ""; 
-        - component.update: s3_box_lcd      
-                                                           
+                                    id(current_pin) = "";
+        - component.update: s3_box_lcd
+
   - platform: touchscreen
     page_id: alarm_page
     id: arm_disarm_home
@@ -3625,8 +3683,8 @@ binary_sensor:
       max_length: 500ms
       then:
         - display.page.show: alarm_home_activate_page
-        - component.update: s3_box_lcd   
-        
+        - component.update: s3_box_lcd
+
   - platform: touchscreen
     page_id: alarm_page
     id: arm_disarm_away
@@ -3639,8 +3697,8 @@ binary_sensor:
       max_length: 500ms
       then:
         - display.page.show: alarm_away_activate_page
-        - component.update: s3_box_lcd   
-        
+        - component.update: s3_box_lcd
+
   - platform: touchscreen
     page_id: alarm_page
     id: arm_disarm_night
@@ -3653,5 +3711,5 @@ binary_sensor:
       max_length: 500ms
       then:
         - display.page.show: alarm_night_activate_page
-        - component.update: s3_box_lcd   
+        - component.update: s3_box_lcd
 ################## config end ############################
