@@ -914,11 +914,23 @@ media_player:
                     - media_player.is_idle
                     - media_player.is_paused
             then:
-              - micro_wake_word.start
+              - if:
+                  condition:
+                    and:
+                      - switch.is_off: mute_switch
+                      - lambda: return id(wake_word_engine_location).state == "On device";
+                  then:
+                    - micro_wake_word.start
+                  else:
+                    - if:
+                        condition:
+                          - switch.is_off: mute_switch
+                        then:
+                          - voice_assistant.start
         - if:
             condition:
               and:
-                - switch.is_off: timer_ringing_switch
+                - switch.is_off: timer_ringing
                 - not:
                     voice_assistant.is_running:
                 - not:
@@ -945,6 +957,7 @@ micro_wake_word:
     - model: ${micro_wake_word_model_3}
     # - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
+    - lambda: id(global_is_assisting) = true;
     - if:
         condition:
           and:
