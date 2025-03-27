@@ -958,6 +958,7 @@ micro_wake_word:
     # - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
     - lambda: id(global_is_assisting) = true;
+    - delay: 50ms
     - if:
         condition:
           and:
@@ -984,6 +985,9 @@ micro_wake_word:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
+    - display.page.show: listening_page
+    - component.update: s3_box_lcd
+    - delay: 100ms
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
 
