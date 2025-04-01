@@ -116,7 +116,6 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
   ap:
     ssid: ${name}
     password: s3box123
@@ -131,7 +130,6 @@ wifi:
         id(wifi_connection) = false;
 
 captive_portal:
-
 time:
   - platform: homeassistant
     id: ha_time
@@ -410,7 +408,15 @@ script:
       - lambda: |-
           id(current_pin) += "0";
           ESP_LOGD("increment_digit_0", "Current PIN: %s", id(current_pin).c_str());
-
+  - id: show_notification
+    then:
+      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+      - display.page.show: notification_page
+      - component.update: s3_box_lcd
+      - delay: 10s
+      - display.page.show: idle_page
+      - script.execute: saver_enabled
+      - component.update: s3_box_lcd
 globals:
   - id: wifi_connection
     type: bool
@@ -450,6 +456,9 @@ globals:
   - id: global_is_assisting
     type: bool
     restore_value: false
+  - id: previous_notification_text
+    type: std::string
+    initial_value: ""
 
 number:
   - id: s_saver_delay
@@ -529,7 +538,9 @@ switch:
   - platform: gpio
     name: Speaker Enable
     id: speaker_enable
-    pin: GPIO46
+    pin: 
+      number: GPIO46
+      ignore_strapping_warning: true
     restore_mode: ALWAYS_OFF
     entity_category: config
     disabled_by_default: true
@@ -817,6 +828,20 @@ text_sensor:
     on_value:
       - component.update: s3_box_lcd
 
+text:
+  - platform: template
+    name: "Notification Text"
+    id: notification_text
+    mode: text
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            if (!id(notification_text).state.empty() && 
+                (id(previous_notification_text).empty() || id(notification_text).state != id(previous_notification_text))) {
+              id(previous_notification_text) = id(notification_text).state;
+              id(show_notification).execute();
+            }
 i2s_audio:
   - id: i2s_audio_bus
     i2s_lrclk_pin:
@@ -1584,7 +1609,6 @@ display:
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
 
-
       - id: ss_set_page ##### screen saver settings page #####
         lambda: |-
           it.fill(id(black));
@@ -1912,7 +1936,7 @@ display:
           it.fill(Color::BLACK);
           it.printf(160, 60, id(icon_font_80), red, TextAlign::CENTER, "\U000F08D6");
           it.printf((it.get_width() / 2), (it.get_height() / 2), id(my_font3), red, TextAlign::CENTER, "FIRMWARE UPDATING");
-          it.printf(160,155, id(my_font5), blue, TextAlign::CENTER, "Once update and restarted");
+          it.printf(160,155, id(my_font5), blue, TextAlign::CENTER, "Once restarted");
           it.printf(160,190, id(my_font5), blue, TextAlign::CENTER, "press the reboot button");
           it.printf(160,225, id(my_font5), blue, TextAlign::CENTER, "to enable touch");
       - id: settings_page ##### settings parent page #####
@@ -2234,6 +2258,45 @@ display:
           it.printf(255, 30, id(icon_font_55), green, TextAlign::CENTER, "\U000F1828");
           it.printf(255, 70, id(my_font3), green, TextAlign::CENTER, "Armed");
           }
+      - id: notification_page
+        lambda: |-
+          it.fill(Color::BLACK);
+          const char* text = id(notification_text).state.c_str();
+          int max_chars_per_line = 14;  // Adjusted maximum characters per line
+          int line_height = 40;         // Height of each line
+          int display_width = 320;
+          int display_height = 240;
+          int y = 60;                   // Starting Y position for text
+          std::vector<std::string> lines;
+          
+          // Split text into lines of max_chars_per_line
+          std::string current_line;
+          for (const char* p = text; *p != '\0'; ++p) {
+            if (current_line.length() >= max_chars_per_line || *p == '\n') {
+              lines.push_back(current_line);
+              current_line.clear();
+              if (*p != '\n') {
+                current_line += *p;
+              }
+            } else {
+              current_line += *p;
+            }
+          }
+          if (!current_line.empty()) {
+            lines.push_back(current_line);
+          }
+      
+          // Calculate the starting Y position to center the text vertically
+          int total_height = lines.size() * line_height;
+          y = (display_height - total_height) / 2;
+
+          // Print each line centered
+          for (const auto& line : lines) {
+            int line_width = line.length() * 21; // Approximate width of the line
+            int x = (display_width - line_width) / 2;
+            it.printf(x, y, id(my_font4), Color::WHITE, TextAlign::BASELINE_LEFT, "%s", line.c_str());
+            y += line_height;
+          }
 i2c:
   - id: bus_a
     sda: GPIO08
@@ -2306,7 +2369,6 @@ binary_sensor:
           - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
-
 
 ##### satus bar buttons #####
   - platform: touchscreen
