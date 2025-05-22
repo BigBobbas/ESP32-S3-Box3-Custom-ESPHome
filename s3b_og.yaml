@@ -929,6 +929,8 @@ touchscreen:
     i2c_id: bus_a
     address 0x24
     id: tt21100_touchscreen
+    transform:
+      mirror_x: true
     interrupt_pin:
       number: GPIO3
       ignore_strapping_warning: true
