@@ -6,6 +6,14 @@ substitutions:
   name: esp32-s3box-3
   friendly_name: ESP32-S3-Box-3
 
+  #Images
+  loading_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/loading.png
+  idle_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/idle.png
+  listening_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/listening.png
+  thinking_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/thinking.png
+  replying_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/replying.png
+  error_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png
+  logo_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/logo.png
   external_media_player: your_media_player  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
@@ -48,17 +56,25 @@ substitutions:
 ##### DO NOT CHANGE SUBSTITUTIONS BELOW THIS LINE ######
 #####      UNLESS YOU KNOW WHAT YOU ARE DOING     ######
   font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
-
+  font_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf
+  icon_font_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf
 ############# END OF SUBSTITUTIONS #################
 ####################################################
 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2025.2.0
+  min_version: 2025.5.0
+  name_add_mac_suffix: false
   on_boot:
     priority: 600
     then:
+      - at581x.settings:
+          id: "Radar"
+          # trigger_base: 100ms #amount of movement to sense
+          # trigger_keep: 10s #how long to remain triggered for
+          sensing_distance: 1000 #distance to sense 0-1023
+          stage_gain: 12 #gain for testing (highest) 0 - (lowest) 12
       - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
       - display.page.show: loading_page
       - component.update: s3_box_lcd
@@ -77,12 +93,16 @@ esphome:
 esp32:
   board: esp32s3box
   flash_size: 16MB
+  cpu_frequency: 240MHZ
   framework:
     type: esp-idf
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y" 
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y" 
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
 
 psram:
   mode: octal
@@ -101,6 +121,7 @@ api:
 
 ota:
   - platform: esphome
+    id: ota_esphome
     on_begin:
       - lambda: id(led).turn_on().set_brightness(1.0).set_transition_length(0).perform();
                 id(led).loop();
@@ -128,6 +149,10 @@ wifi:
   on_disconnect:
     - lambda: |-
         id(wifi_connection) = false;
+
+qr_code:
+  - id: wifi_qr
+    value: !secret wifi_qr
 
 captive_portal:
 time:
@@ -174,12 +199,22 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
+  - interval: 10s
+    then:
+      - lambda: |-
+          float celsius = id(s3temp).state;
+          if (id(temp_unit).state == "Fahrenheit") {
+            id(display_temp) = celsius * 9.0 / 5.0 + 32.0;
+          } else {
+            id(display_temp) = celsius;
+          }
 
 select:
   - platform: template
     entity_category: config
     name: Wake word engine location
     id: wake_word_engine_location
+    icon: "mdi:account-voice"
     optimistic: true
     restore_value: true
     options:
@@ -236,6 +271,16 @@ select:
                   id: time_display_format
                   state: !lambda 'return "12 Hr";'
         - component.update: s3_box_lcd
+  - platform: template
+    id: temp_unit
+    name: "Temperature Unit"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - Celsius
+      - Fahrenheit
+    initial_option: Celsius
 
 script:
   - id: start_voice_assistant
@@ -313,6 +358,41 @@ script:
             - light.turn_off: led
             - component.update: s3_box_lcd
     mode: restart
+    # Starts either mWW or the streaming wake word, depending on the configured location
+  - id: start_wake_word
+    then:
+      - if:
+          condition:
+            and:
+              - not:
+                  - voice_assistant.is_running:
+              - lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start:
+      - if:
+          condition:
+            and:
+              - not:
+                  - voice_assistant.is_running:
+              - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          then:
+            - lambda: id(va).set_use_wake_word(true);
+            - voice_assistant.start_continuous:
+  # Stops either mWW or the streaming wake word, depending on the configured location
+  - id: stop_wake_word
+    then:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - voice_assistant.stop:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - micro_wake_word.stop:
 
   # - id: timer_started
     # then:
@@ -459,6 +539,10 @@ globals:
   - id: previous_notification_text
     type: std::string
     initial_value: ""
+  - id: display_temp
+    type: float
+    restore_value: no
+    initial_value: '0.0'
 
 number:
   - id: s_saver_delay
@@ -528,11 +612,34 @@ number:
       - component.update: s_default_brightness
       - script.execute: saver_enabled
       - component.update: s3_box_lcd
+
+  - id: radar_delayed_off
+    platform: template
+    name: "Presence duration"
+    icon: mdi:account-clock
+    optimistic: true
+    restore_value: true
+    initial_value: 30
+    min_value: 10
+    step: 5
+    max_value: 300
+    unit_of_measurement: 'secs'
+    entity_category: config
+    mode: box
+    
 button:
   - platform: restart
     id: reboot
     name: "Reboot"
     entity_category: diagnostic
+
+  - platform: template
+    id: restart_radar
+    name: "Radar Reset"
+    entity_category: diagnostic
+    on_press:
+      at581x.reset:
+        id: "Radar"
 
 switch:
   - platform: gpio
@@ -579,7 +686,7 @@ switch:
     on_turn_on:
       then:
         - voice_assistant.stop
-        - micro_wake_word.stop
+        - script.execute: stop_wake_word
     on_turn_off:
       - if:
           condition:
@@ -598,7 +705,7 @@ switch:
                   lambda: return id(wake_word_engine_location).state == "On device";
                 then:
                   - lambda: id(va).set_use_wake_word(false);
-                  - micro_wake_word.start
+                  - script.execute: start_wake_word
             - component.update: s3_box_lcd
 
   - platform: template
@@ -660,7 +767,7 @@ switch:
             lambda: return id(wake_word_engine_location).state == "On device";
           then:
             - lambda: id(va).set_use_wake_word(false);
-            - micro_wake_word.start
+            - script.execute: start_wake_word
           else:
             - lambda: id(va).set_use_wake_word(true);
             - voice_assistant.start
@@ -717,6 +824,11 @@ switch:
           service: media_player.volume_mute
           data:
             entity_id: media_player.${external_media_player}
+ 
+  - platform: at581x
+    at581x_id: "Radar"
+    name: "Radar Enable"
+    restore_mode: RESTORE_DEFAULT_ON
 
 output:
   - platform: ledc
@@ -738,6 +850,8 @@ sensor:
     variant: AHT20
     temperature:
       name: "S3 Temperature"
+      filters:
+        offset: 0 #use to calibrate temperature as required
       id: s3temp
     humidity:
       name: "S3 Humidity"
@@ -887,6 +1001,41 @@ text:
               id(previous_notification_text) = id(notification_text).state;
               id(show_notification).execute();
             }
+
+i2c:
+  - id: bus_a
+    sda: GPIO08
+    scl: GPIO18
+    scan: true
+    sda_pullup_enabled: true
+    scl_pullup_enabled: true
+    frequency: 100kHz
+
+  - sda: GPIO41
+    scl: GPIO40
+    scan: true
+    sda_pullup_enabled: true
+    scl_pullup_enabled: true
+    frequency: 50kHz
+    id: bus_b
+
+at581x:
+  id: "Radar"
+  i2c_id: bus_b
+
+touchscreen:
+  - platform: gt911
+    i2c_id: bus_a
+    address: 0x5D
+    id: gt911_touchscreen
+    interrupt_pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+    on_touch:
+      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+    on_release:
+      - script.execute: saver_enabled
+
 i2s_audio:
   - id: i2s_audio_bus
     i2s_lrclk_pin:
@@ -974,29 +1123,7 @@ media_player:
             condition:
               media_player.is_playing:
             then:
-              - micro_wake_word.stop
-              - voice_assistant.stop
-        - if:
-            condition:
-              and:
-                - lambda: return id(global_is_assisting) == false;
-                - or:
-                    - media_player.is_idle
-                    - media_player.is_paused
-            then:
-              - if:
-                  condition:
-                    and:
-                      - switch.is_off: mute_switch
-                      - lambda: return id(wake_word_engine_location).state == "On device";
-                  then:
-                    - micro_wake_word.start
-                  else:
-                    - if:
-                        condition:
-                          - switch.is_off: mute_switch
-                        then:
-                          - voice_assistant.start
+              - script.execute: stop_wake_word
         - if:
             condition:
               and:
@@ -1014,18 +1141,63 @@ media_player:
       - wait_until:
           - lambda: return id(global_is_assisting) == false;
     on_announcement:
+      # Stop the wake word (mWW or VA) if the mic is capturing
+      - if:
+          condition:
+            - microphone.is_capturing:
+          then:
+            - script.execute: stop_wake_word
+            # Ensure VA stops before moving on
+            - if:
+                condition:
+                  - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                then:
+                  - wait_until:
+                      - not:
+                          voice_assistant.is_running:
+      # Since VA isn't running, this is user-intiated media playback. Draw the mute display
       - mixer_speaker.apply_ducking:
           id: media_mixing_input
           decibel_reduction: 20
           duration: 0.0s
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - if:
+                condition:
+                  - switch.is_on: timer_ringing
+                then:
+                  - display.page.show: timer_finished_page
+                else:
+                  - display.page.show: idle_page
+            - component.update: s3_box_lcd
+    on_idle:
+      # Since VA isn't running, this is the end of user-intiated media playback. Restart the wake word.
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - script.execute: start_wake_word
+            - if:
+                condition:
+                  - switch.is_on: timer_ringing
+                then:
+                  - display.page.show: timer_finished_page
+                else:
+                  - display.page.show: idle_page
+            - component.update: s3_box_lcd
 
 micro_wake_word:
+  id: mww
   vad:
   models:
-    #- model: ${micro_wake_word_model_1}
-    # - model: ${micro_wake_word_model_2}
-    - model: ${micro_wake_word_model_3}
-    # - model: ${micro_wake_word_model_4}
+    - model: ${micro_wake_word_model_1} #alexa
+    - model: ${micro_wake_word_model_2} #hey jarvis
+    - model: ${micro_wake_word_model_3} #okay nabu
+    - model: ${micro_wake_word_model_4} #hey mmycroft
   on_wake_word_detected:
     - lambda: id(global_is_assisting) = true;
     - delay: 50ms
@@ -1065,27 +1237,18 @@ voice_assistant:
   id: va
   microphone: box_mic
   media_player: speaker_media_player
-  use_wake_word: true
+  micro_wake_word: mww
   noise_suppression_level: 2
   auto_gain: 31dBFS
   volume_multiplier: 4.0
   on_wake_word_detected:
     - lambda: id(global_is_assisting) = true;
-    - voice_assistant.stop:
-    - lambda: id(va).set_use_wake_word(false);
     - if:
         condition:
           and:
             - switch.is_off: output_audio
             - switch.is_on: wake_sound
         then:
-          # - voice_assistant.stop:
-          # - delay: 150ms
-          # - if:
-              # condition:
-                # not:
-                  # microphone.is_capturing:
-              # then:
           - media_player.speaker.play_on_device_media_file:
               media_file: wake_sound_file
               announcement: true
@@ -1109,7 +1272,7 @@ voice_assistant:
                     entity_id: media_player.${external_media_player}
                     media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
                     media_content_type: music
-    - voice_assistant.start
+  
   on_start:
     if:
       condition:
@@ -1162,8 +1325,14 @@ voice_assistant:
                 media_content_id: !lambda 'return x;'
                 media_content_type: music
                 announce: "false"
-    - delay: 5s
-    - display.page.show: idle_page
+    - delay: 10s
+    - if:
+        condition:
+          - switch.is_on: timer_ringing
+        then:
+          - display.page.show: timer_finished_page
+        else:
+          - display.page.show: idle_page
     - component.update: s3_box_lcd
 
   on_error:
@@ -1184,27 +1353,41 @@ voice_assistant:
     - lambda: id(global_is_assisting) = false;
 
   on_idle:
-    - display.page.show: idle_page
-    - component.update: s3_box_lcd
-
+    - if:
+        condition:
+          not:
+            - switch.is_on: timer_ringing
+        then:
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd 
+           
   on_end:
+    # Wait a short amount of time to see if an announcement starts
     - wait_until:
-        not:
-          voice_assistant.is_running:
+        condition:
+          - media_player.is_announcing:
+        timeout: 0.5s
+    # Announcement is finished and the I2S bus is free
+    - wait_until:
+        - and:
+            - not:
+                media_player.is_announcing:
+            - not:
+                media_player.is_playing:
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 0
         duration: 1.0s
     - lambda: id(global_is_assisting) = false;
+    # Restart only mWW if enabled; streaming wake words automatically restart
     - if:
         condition:
           and:
             - switch.is_off: mute_switch
             - lambda: return id(wake_word_engine_location).state == "On device";
         then:
-          - voice_assistant.stop
+          - lambda: id(va).set_use_wake_word(false);
           - micro_wake_word.start
-
         else:
           if:
             condition:
@@ -1225,22 +1408,17 @@ voice_assistant:
         then:
           - switch.turn_off: media_mute
           - switch.turn_off: ext_media_mute
-
+    # Clear text sensors
+    - text_sensor.template.publish:
+        id: text_request
+        state: ""
+    - text_sensor.template.publish:
+        id: text_response
+        state: ""
   on_client_connected:
-    - if:
-        condition:
-          and:
-            - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
-        then:
-          - micro_wake_word.start
-        else:
-          - if:
-              condition:
-                - switch.is_off: mute_switch
-              then:
-                - lambda: id(va).set_use_wake_word(true);
-                - voice_assistant.start
+    - script.execute: start_wake_word
+  on_client_disconnected:
+    - script.execute: stop_wake_word
   on_timer_started:
     - script.execute: timer_ending
     - component.update: s3_box_lcd
@@ -1277,95 +1455,96 @@ voice_assistant:
               - component.update: s3_box_lcd
 
 image:
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png"
+  - file: ${error_illustration_file}
     id: error_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/idle.png"
+  - file: ${idle_illustration_file}
     id: idle_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/listening.png"
+  - file: ${listening_illustration_file}
     id: listening_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/thinking.png"
+  - file: ${thinking_illustration_file}
     id: thinking_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/replying.png"
+  - file: ${replying_illustration_file}
     id: replying_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/loading.png"
+  - file: ${loading_illustration_file}
     id: loading_img
     resize: 320x240
     type: RGB
     transparency: alpha_channel
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/logo.png"
+  - file: ${logo_illustration_file}
     id: logo_img
     resize: 80x75
     type: RGB
     transparency: alpha_channel
+
 font:
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font
     size: 14
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font16
     size: 16
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font2
     size: 72
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font3
     size: 28
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font4
     size: 40
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font18
     size: 18
     glyphs:
       '${font_glyphs}'
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font5
     size: 22
     glyphs:
       '${font_glyphs}'
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font6
     size: 50
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/consola.ttf"
+  - file: ${font_file}
     id: my_font82
     size: 82
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: ${icon_font_file}
     id: icon_font_55
     size: 45
     glyphs: &icon_glyphs
@@ -1418,6 +1597,7 @@ font:
       - "\U000F0875"#car miles low
       - "\U000F087B"#api disconnected
       - "\U000F08D6"#settings
+      - "\U000F097E"#light switch
       - "\U000F099D"#alarm away
       - "\U000F099E"#disarmed
       - "\U000F0A19"#toggle off
@@ -1448,20 +1628,24 @@ font:
       - "\U000F1A1B"#gas
       - "\U000F1C3B"#battery charging/usb powered
       - "\U000F1C6F"#info
+      - "\U000F05FA"#kettle
+      - "\U000F070D"#vacuum
+      - "\U000F0AAC"#dishwasher
+      - "\U000F11B8"#dishwasheralert
+      - "\U000F083B"#televisionoff
 
-
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: ${icon_font_file}
     id: icon_font_180
     size: 180
     glyphs: *icon_glyphs
 
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: ${icon_font_file}
     id: icon_font_80
     size: 75
     glyphs: *icon_glyphs
 
-  - file: "https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: ${icon_font_file}
     id: icon_font_60
     size: 60
     glyphs: *icon_glyphs
@@ -1566,7 +1750,7 @@ display:
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
           }
           it.printf(20, 75, id(icon_font_80), blue,"\U000F050F");
-          it.printf(40, 120, id(my_font3), white, "%.f", id(s3temp).state); // remove for no sensor version
+          it.printf(30, 120, id(my_font5), white, "%.1f%s", id(display_temp), (id(temp_unit).state == "Fahrenheit" ? "°F" : "°C")); // remove for no sensor version
           it.printf(120, 75, id(icon_font_80), yellow,"\U000F06E8" );
           it.printf(220, 75, id(icon_font_80), purple,"\U000F0210");
           it.printf(20, 155, id(icon_font_80), red,"\U000F075A");
@@ -1985,8 +2169,8 @@ display:
           } else {
             it.strftime(160, 88, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
           }
-          it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state); // remove for no sensor version
-
+          it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER,"%.1f%s", id(display_temp), (id(temp_unit).state == "Fahrenheit" ? "°F" : "°C")); // remove for no sensor version
+          
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
           it.fill(Color::BLACK);
@@ -2162,6 +2346,14 @@ display:
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(device_mac).state.c_str());
           it.printf(38, 210, id(my_font5), light_blue, TextAlign::LEFT, "Signal Strength");
           it.printf(283, 210, id(my_font5), yellow, TextAlign::RIGHT, "%4.f%%", id(wifi_percent).state);
+
+      - id: wifi_qr_page ##### wifi QR code #####
+        lambda: |-
+          // Draw the QR-code in the center of the screen with white color and a 4x scale
+          auto size = id(wifi_qr).get_size() * 4; // Multiply by scale
+          auto x = (it.get_width() / 2) - (size / 2);
+          auto y = (it.get_height() / 2) - (size / 2);
+          it.qr_code(x, y, id(wifi_qr), Color(255,255,255), 4);
 
       - id: alarm_page   #### alarm page #####
         lambda: |-
@@ -2353,41 +2545,11 @@ display:
             it.printf(x, y, id(my_font4), Color::WHITE, TextAlign::BASELINE_LEFT, "%s", line.c_str());
             y += line_height;
           }
-i2c:
-  - id: bus_a
-    sda: GPIO08
-    scl: GPIO18
-    scan: true
-    sda_pullup_enabled: true
-    scl_pullup_enabled: true
-    frequency: 100kHz
-
-  - sda: GPIO41
-    scl: GPIO40
-    scan: true
-    sda_pullup_enabled: true
-    scl_pullup_enabled: true
-    frequency: 50kHz
-    id: bus_b
-
-
-touchscreen:
-  - platform: gt911
-    i2c_id: bus_a
-    address: 0x5D
-    id: gt911_touchscreen
-    interrupt_pin:
-      number: GPIO3
-      ignore_strapping_warning: true
-    on_touch:
-      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-    on_release:
-      - script.execute: saver_enabled
 
 binary_sensor:
 ###### top left hand physical button #######
   - platform: gpio
-    id: top_left_button
+    id: left_top_button
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
@@ -2410,21 +2572,38 @@ binary_sensor:
                 - script.execute: saver_enabled
                 - display.page.show: saver_page
                 - component.update: s3_box_lcd
+      - if:
+          condition:
+            - switch.is_on: timer_ringing
+          then:
+            - switch.turn_off: timer_ringing
 
 # #######     red circle home button   #####################
   - platform: gt911
     id: home_button
     index: 0
     on_press:
-      if:
-        condition:
-          - display.is_displaying_page: idle_page
-        then:
-          - script.execute: saver_enabled
-        else:
-          - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-          - display.page.show: idle_page
-          - component.update: s3_box_lcd
+      - if:
+          condition:
+            - voice_assistant.is_running
+          then:
+            - switch.turn_on: mute_switch
+            - voice_assistant.stop
+            - switch.turn_off: mute_switch
+      - if:
+          condition:
+            - media_player.is_playing:
+          then:
+            - media_player.stop:
+      - if:
+          condition:
+            - display.is_displaying_page: idle_page
+          then:
+            - script.execute: saver_enabled
+          else:
+            - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+            - display.page.show: idle_page
+            - component.update: s3_box_lcd
 
 ###### radar sensor ########   # remove for no sensor version
   - platform: gpio
@@ -2433,6 +2612,9 @@ binary_sensor:
     name: "Presence detect"
     disabled_by_default: false
     device_class: "occupancy"
+    publish_initial_state: true
+    filters:
+      - delayed_off: !lambda return id(radar_delayed_off).state * 1000;
     on_state:
       if:
         condition:
@@ -2456,18 +2638,28 @@ binary_sensor:
       - ext_media_page
       - scenes_page
       - settings_page
+      - climate_page
+      - wifi_page
     id: status_bar_1
     x_min: 5
     x_max: 60
     y_min: 0
     y_max: 55
-          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
-         # - component.update: s3_box_lcd
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        if:
+          condition:
+            and:
+              - switch.is_on: s_saver
+              - display.is_displaying_page: idle_page
+          then:
+            - display.page.show: saver_page
+            - component.update: s3_box_lcd
+          else:
+            - display.page.show: idle_page
+            - component.update: s3_box_lcd
 
   - platform: touchscreen
     pages:
@@ -2479,6 +2671,8 @@ binary_sensor:
       - ext_media_page
       - scenes_page
       - settings_page
+      - climate_page
+      - wifi_page
     id: status_bar_2
     internal: true
     x_min: 65
@@ -2503,6 +2697,8 @@ binary_sensor:
       - ext_media_page
       - scenes_page
       - settings_page
+      - climate_page
+      - wifi_page
     id: status_bar_3
     internal: true
     x_min: 130
@@ -2533,6 +2729,8 @@ binary_sensor:
       - ext_media_page
       - scenes_page
       - settings_page
+      - climate_page
+      - wifi_page
     id: status_bar_4
     internal: true
     x_min: 190
@@ -2556,6 +2754,8 @@ binary_sensor:
       - ext_media_page
       - scenes_page
       - settings_page
+      - climate_page
+      - wifi_page
     name: status_bar_5
     internal: true
     x_min: 250
@@ -2648,8 +2848,6 @@ binary_sensor:
             not:
               - voice_assistant.is_running
         - voice_assistant.stop
-    on_release:
-      then:
         - switch.turn_off: mute_switch
         - component.update: s3_box_lcd
 
@@ -3595,6 +3793,37 @@ binary_sensor:
             cycle: true
         - component.update: s3_box_lcd
 
+#### wifi page #####
+  - platform: touchscreen
+    page_id: wifi_page
+    id: wifi1
+    internal: true
+    x_min: 0
+    x_max: 320
+    y_min: 75
+    y_max: 240
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - display.page.show: wifi_qr_page
+        - component.update: s3_box_lcd
+
+#### wifi QR page #####
+  - platform: touchscreen
+    page_id: wifi_qr_page
+    id: wifiqr1
+    internal: true
+    x_min: 0
+    x_max: 320
+    y_min: 0
+    y_max: 240
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - display.page.show: wifi_page
+        - component.update: s3_box_lcd
 
 ##### alarm panel buttons #####
   - platform: touchscreen
