@@ -400,7 +400,7 @@ speaker:
     bits_per_sample: 16bit
     channel: left
     audio_dac: es8311_dac
-    buffer_duration: 500ms  # Increased for stability without timeout @youkorr
+    buffer_duration: 100ms  # Increased for stability without timeout @youkorr
 
   # Virtual speakers to combine the announcement and media streams together into one output
   - id: mixing_speaker
