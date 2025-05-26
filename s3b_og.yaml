@@ -5,29 +5,35 @@
 substitutions:
   name: esp32-s3box
   friendly_name: ESP32-S3-Box
-
-  #Images
   loading_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/loading.png
   idle_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/idle.png
   listening_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/listening.png
   thinking_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/thinking.png
   replying_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/replying.png
   error_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/error.png
+  timer_finished_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/timer_finished_320_240.png
   logo_illustration_file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/images/logo.png
+
+  loading_illustration_background_color: "000000"
+  idle_illustration_background_color: "000000"
+  listening_illustration_background_color: "FFFFFF"
+  thinking_illustration_background_color: "FFFFFF"
+  replying_illustration_background_color: "FFFFFF"
+  error_illustration_background_color: "000000"
+
+  voice_assist_idle_phase_id: "1"
+  voice_assist_listening_phase_id: "2"
+  voice_assist_thinking_phase_id: "3"
+  voice_assist_replying_phase_id: "4"
+  voice_assist_not_ready_phase_id: "10"
+  voice_assist_error_phase_id: "11"
+  voice_assist_muted_phase_id: "12"
+  voice_assist_timer_finished_phase_id: "20"
+  voice_assist_timer_finishing_phase_id: "30"
+
   external_media_player: your_media_player  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
-
-#################### ON DEVICE WAKE WORDS #######################################
-####          all of the below wakewords are installed on the device        #####
-####      you can use any of these without re-compiling - just say them!    #####
-#################################################################################
-# TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM THE CONFIG BELOW - CTRL + F to search for "models"
-  micro_wake_word_model_1: alexa
-  micro_wake_word_model_2: hey_jarvis
-  micro_wake_word_model_3: okay_nabu
-  micro_wake_word_model_4: hey_mycroft
-####################################################################
 
 #####  Days and months #####
 ## Change the values on the right to match your locale ##
@@ -51,8 +57,8 @@ substitutions:
   oct: October
   nov: November
   dec: December
-#####################################################################
 
+#####################################################################
 ##### DO NOT CHANGE SUBSTITUTIONS BELOW THIS LINE ######
 #####      UNLESS YOU KNOW WHAT YOU ARE DOING     ######
   font_glyphs: '&@!"''%()+=,-_.:°/$€£¥?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzÀàÁáÂâÃãÄäĀāĂăÅåǺǻẠạĄąÆæǼǽĆćĈĉČčĊċÇçĎďĐđÐðÈèÉéÊêẼẽĚěËëĒēĔĕĖėẸẹĘęĜĝǦǧĞğĠġĢģĤĥĦħıÌìÍíÎîĨĩÏïĪīĬĭİỊịĮįȷĴĵĶķĸĹĺĽľĻļŁłĿŀŃńÑñŇňŅņƝɲŊŋŉÒòÓóÔôÕõÖöŌōŎŏŐőỌọǪǫØøǾǿŒœŔŕŘřŖŗŚśŜŝŠšŞşȘșẞßŤťŢţȚțŦŧÞþÙùÚúÛûŨũÜüŪūŬŭŮůŰűỤụŲųẀẁẂẃŴŵẄẅỲỳÝýŶŷỸỹŸÿȲȳŹźŽžŻżĲĳƏə'
@@ -70,10 +76,8 @@ esphome:
     priority: 600
     then:
       - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-      - display.page.show: loading_page
-      - component.update: s3_box_lcd
-      - script.execute: saver_enabled
       - lambda: id(time_remaining_0).publish_state ("0:00:00");
+      - script.execute: draw_display
       - if:
           condition:
             switch.is_on: output_audio
@@ -81,13 +85,22 @@ esphome:
             media_player.volume_set:
               id: speaker_media_player
               volume: 0
+      - delay: 30s
+      - if:
+          condition:
+            lambda: return id(init_in_progress);
+          then:
+            - lambda: id(init_in_progress) = false;
+            - script.execute: draw_display
+      - script.execute: saver_enabled
+
   project:
     name: "BigBobbas.s3box"
     version: "2024.09.02"
 esp32:
   board: esp32s3box
   flash_size: 16MB
-  cpu_frequency: 240MHZ
+  cpu_frequency: 240MHz
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -97,21 +110,17 @@ esp32:
       CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y" 
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y" 
       CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
-
 psram:
   mode: octal
   speed: 80MHz
 
 api:
   on_client_connected:
-    - lambda: |-
-        id(api_connection) = true;
     - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-    - component.update: s3_box_lcd
+    - script.execute: draw_display
     - script.execute: saver_enabled
   on_client_disconnected:
-    - lambda: |-
-        id(api_connection) = false;
+    - script.execute: draw_display
 
 ota:
   - platform: esphome
@@ -135,14 +144,10 @@ wifi:
     ssid: ${name}
     password: s3box123
   on_connect:
-    - lambda: |-
-        id(wifi_connection) = true;
-    - display.page.show: idle_page
-    - component.update: s3_box_lcd
+    - script.execute: draw_display
     - switch.turn_on: speaker_enable
   on_disconnect:
-    - lambda: |-
-        id(wifi_connection) = false;
+    - script.execute: draw_display
 
 qr_code:
   - id: wifi_qr
@@ -194,80 +199,639 @@ interval:
                 then:
                   - lambda: "id(wifi_connection) = false;"
 
-select:
-  - platform: template
-    entity_category: config
-    name: Wake word engine location
-    id: wake_word_engine_location
-    icon: "mdi:account-voice"
-    optimistic: true
-    restore_value: true
-    options:
-      - In Home Assistant
-      - On device
-    initial_option: In Home Assistant
-    on_value:
-      - if:
-          condition:
-            lambda: return x == "In Home Assistant";
-          then:
-            - micro_wake_word.stop
-            - delay: 500ms
-            - lambda: id(va).set_use_wake_word(true);
-            - voice_assistant.start_continuous:
-            - text_sensor.template.publish:
-                id: wakeword_location
-                state: !lambda 'return "Home Assistant";'
-            - component.update: s3_box_lcd
-      - if:
-          condition:
-            lambda: return x == "On device";
-          then:
-            - text_sensor.template.publish:
-                id: wakeword_location
-                state: !lambda 'return "On Device";'
-            - lambda: id(va).set_use_wake_word(false);
-            - voice_assistant.stop
-            - delay: 500ms
-            - micro_wake_word.start
-            - component.update: s3_box_lcd
+button:
+  - platform: factory_reset
+    id: factory_reset_btn
+    internal: true
 
-  - platform: template
+  - platform: restart
+    id: reboot
+    name: "Reboot"
+    entity_category: diagnostic
+
+output:
+  - platform: ledc
+    pin:
+      number: GPIO45
+      ignore_strapping_warning: true
+    id: backlight_output
+
+light:
+  - platform: monochromatic
+    id: led
+    name: LCD Backlight
     entity_category: config
-    name: Time Format
-    id: time_format
-    optimistic: true
-    restore_value: true
-    options:
-      - 12 Hr
-      - 24 Hr
-    initial_option: 24 Hr
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+    default_transition_length: 50ms
+
+sensor:
+  - platform: uptime
+    id: up_sens
     on_value:
+      - lambda: |-
+          int seconds = id(up_sens).state;
+          int days = seconds / 86400;
+          int hours = seconds / 3600;
+          int minutes = (seconds % 3600) / 60;
+          seconds %= 60;
+          id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds));
+    update_interval: 30s
+
+  - platform: wifi_signal
+    name: "WiFi db"
+    id: wifi_signal_db
+    update_interval: 30s
+
+  - platform: copy
+    source_id: wifi_signal_db
+    name: "WiFi Signal"
+    id: wifi_percent
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: "diagnostic"
+    device_class: ""
+
+text:
+  - platform: template
+    name: "Notification Text"
+    id: notification_text
+    mode: text
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            if (!id(notification_text).state.empty() && 
+                (id(previous_notification_text).empty() || id(notification_text).state != id(previous_notification_text))) {
+              id(previous_notification_text) = id(notification_text).state;
+              id(show_notification).execute();
+            }
+
+i2c:
+  - id: bus_a
+    sda: GPIO08
+    scl: GPIO18
+    scan: true
+    sda_pullup_enabled: true
+    scl_pullup_enabled: true
+    frequency: 100kHz
+
+touchscreen:
+  - platform: tt21100
+    i2c_id: bus_a
+    address: 0x24
+    id: tt21100_touchscreen
+    transform:
+      mirror_x: true
+    interrupt_pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+    on_touch:
+      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+    on_release:
+      - script.execute: saver_enabled
+
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_lrclk_pin:
+      number: GPIO47
+    i2s_bclk_pin: GPIO17
+    i2s_mclk_pin: GPIO2
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    i2c_id: bus_a
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: bus_a
+    bits_per_sample: 16bit
+    sample_rate: 48000
+
+microphone:
+  - platform: i2s_audio
+    id: box_mic
+    sample_rate: 16000
+    i2s_din_pin: GPIO16
+    bits_per_sample: 16bit
+    adc_type: external
+
+speaker:
+  - id: i2s_audio_speaker
+    platform: i2s_audio
+    i2s_audio_id: i2s_audio_bus
+    i2s_dout_pin: GPIO15
+    dac_type: external
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: left
+    audio_dac: es8311_dac
+    buffer_duration: 500ms  # Increased for stability without timeout @youkorr
+
+  # Virtual speakers to combine the announcement and media streams together into one output
+  - id: mixing_speaker
+    platform: mixer
+    output_speaker: i2s_audio_speaker
+    source_speakers:
+      - id: announcement_mixing_input
+      - id: media_mixing_input
+  # Vritual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000  # Added explicit sample rate
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000  # Added explicit sample rate
+
+media_player:
+  - platform: speaker
+    name: Media Player
+    id: speaker_media_player
+    volume_increment: 0.05
+    volume_min: 0.5
+    volume_max: 0.8
+    task_stack_in_psram: true
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1  # S3 Box only has one output channel
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC  # FLAC is the least processor intensive codec
+      num_channels: 2
+      sample_rate: 48000
+    files:
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_sound_file
+        file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/sounds/awake.flac
+    on_state:
       then:
         - if:
             condition:
-              lambda: return x == "24 Hr";
+              media_player.is_playing:
             then:
-              - text_sensor.template.publish:
-                  id: time_display_format
-                  state: !lambda 'return "24 Hr";'
-            else:
-              - text_sensor.template.publish:
-                  id: time_display_format
-                  state: !lambda 'return "12 Hr";'
-        - component.update: s3_box_lcd
-  - platform: template
-    id: temp_unit
-    name: "Temperature Unit"
-    entity_category: config
-    optimistic: true
-    restore_value: true
-    options:
-      - Celsius
-      - Fahrenheit
-    initial_option: Celsius
+              - script.execute: stop_wake_word
+        - if:
+            condition:
+              and:
+                - switch.is_off: timer_ringing
+                - not:
+                    voice_assistant.is_running:
+                - not:
+                    media_player.is_announcing:
+            then:
+              - mixer_speaker.apply_ducking:
+                  id: media_mixing_input
+                  decibel_reduction: 0
+                  duration: 1.0s
+    on_play:
+      - wait_until:
+          - lambda: return id(global_is_assisting) == false;
+    on_announcement:
+      # Stop the wake word (mWW or VA) if the mic is capturing
+      - if:
+          condition:
+            - microphone.is_capturing:
+          then:
+            - script.execute: stop_wake_word
+            # Ensure VA stops before moving on
+            - if:
+                condition:
+                  - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                then:
+                  - wait_until:
+                      - not:
+                          voice_assistant.is_running:
+      # Since VA isn't running, this is user-intiated media playback. Draw the mute display
+      - mixer_speaker.apply_ducking:
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0.0s
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+            - script.execute: draw_display
+    on_idle:
+      # Since VA isn't running, this is the end of user-intiated media playback. Restart the wake word.
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - script.execute: start_wake_word
+            - script.execute: set_idle_or_mute_phase
+            - script.execute: draw_display
+
+micro_wake_word:
+  id: mww
+  vad:
+  models:
+    - okay_nabu
+    - hey_mycroft
+    - hey_jarvis
+    - alexa
+  on_wake_word_detected:
+    - lambda: id(global_is_assisting) = true;
+    - delay: 50ms
+    - if:
+        condition:
+          and:
+            - switch.is_off: output_audio
+            - switch.is_on: wake_sound
+        then:
+          - media_player.speaker.play_on_device_media_file:
+              media_file: wake_sound_file
+              announcement: true
+          - wait_until:
+              not:
+                - media_player.is_announcing:
+          - delay: 150ms
+        else:
+          if:
+            condition:
+              and:
+                - switch.is_on: output_audio
+                - switch.is_on: wake_sound
+            then:
+              - homeassistant.service:
+                  service: media_player.play_media
+                  data:
+                    entity_id: media_player.${external_media_player}
+                    media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
+                    media_content_type: music
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone: box_mic
+  media_player: speaker_media_player
+  micro_wake_word: mww
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 4.0
+  on_wake_word_detected:
+    - lambda: id(global_is_assisting) = true;
+    - if:
+        condition:
+          and:
+            - switch.is_off: output_audio
+            - switch.is_on: wake_sound
+        then:
+          - media_player.speaker.play_on_device_media_file:
+              media_file: wake_sound_file
+              announcement: true
+          - wait_until:
+              not:
+                - media_player.is_announcing:
+          - delay: 150ms
+          - lambda: id(va).set_use_wake_word(false);
+        else:
+          if:
+            condition:
+              and:
+                - switch.is_on: wake_sound
+                - switch.is_on: output_audio
+            then:
+              - homeassistant.service:
+                  service: media_player.play_media
+                  data:
+                    entity_id: media_player.${external_media_player}
+                    media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
+                    media_content_type: music
+  on_start:
+    - script.execute: draw_display
+  on_listening:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - text_sensor.template.publish:
+        id: text_request
+        state: "..."
+    - text_sensor.template.publish:
+        id: text_response
+        state: "..."
+    - script.execute: draw_display
+    - script.execute: saver_enabled
+  on_stt_vad_end:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - script.execute: draw_display
+  on_stt_end:
+    - text_sensor.template.publish:
+        id: text_request
+        state: !lambda return x;
+    - script.execute: draw_display
+  on_tts_start:
+    - text_sensor.template.publish:
+        id: text_response
+        state: !lambda return x;
+    - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+    - script.execute: draw_display
+  on_tts_end:
+    - if:
+        condition:
+          and:
+            - switch.is_on: mute_response_switch
+            - switch.is_off: media_mute
+            - switch.is_off: ext_media_mute
+        then:
+          - switch.turn_on: media_mute
+          - switch.turn_on: ext_media_mute
+    - script.execute: draw_display
+    - if:
+        condition:
+          - switch.is_on: output_audio
+        then:
+          - homeassistant.service:
+              service: media_player.play_media
+              data:
+                entity_id: media_player.${external_media_player}
+                media_content_id: !lambda 'return x;'
+                media_content_type: music
+                announce: "false"
+    - delay: 10s
+    - script.execute: draw_display
+  on_idle:
+    - script.execute: draw_display
+  on_end:
+    # Wait a short amount of time to see if an announcement starts
+    - wait_until:
+        condition:
+          - media_player.is_announcing:
+        timeout: 0.5s
+    # Announcement is finished and the I2S bus is free
+    - wait_until:
+        - and:
+            - not:
+                media_player.is_announcing:
+            - not:
+                media_player.is_playing:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 1.0s
+    - lambda: id(global_is_assisting) = false;
+    # Restart only mWW if enabled; streaming wake words automatically restart
+    - if:
+        condition:
+          - lambda: return id(wake_word_engine_location).state == "On device";
+        then:
+          - lambda: id(va).set_use_wake_word(false);
+          - micro_wake_word.start:
+    - script.execute: set_idle_or_mute_phase
+    - script.execute: draw_display
+    - if:
+        condition:
+          and:
+            - switch.is_on: mute_response_switch
+            - switch.is_on: media_mute
+            - switch.is_on: ext_media_mute
+        then:
+          - switch.turn_off: media_mute
+          - switch.turn_off: ext_media_mute
+    # Clear text sensors
+    - text_sensor.template.publish:
+        id: text_request
+        state: ""
+    - text_sensor.template.publish:
+        id: text_response
+        state: ""
+  on_error:
+    - if:
+        condition:
+          lambda: return !id(init_in_progress);
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+          - script.execute: draw_display
+          - delay: 1s
+          - if:
+              condition:
+                switch.is_off: mute_switch
+              then:
+                - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+              else:
+                - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+          - script.execute: draw_display
+    - lambda: id(global_is_assisting) = false;
+  on_client_connected:
+    - lambda: id(init_in_progress) = false;
+    - script.execute: start_wake_word
+    - script.execute: set_idle_or_mute_phase
+    - script.execute: draw_display
+  on_client_disconnected:
+    - script.execute: stop_wake_word
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    - script.execute: draw_display
+  on_timer_started:
+    - script.execute: timer_ending
+    - script.execute: draw_display
+  on_timer_cancelled:
+    - lambda: id(time_remaining_0).publish_state ("0:00:00");
+    - script.execute: draw_display
+  on_timer_updated:
+    - script.execute: draw_display
+  on_timer_tick:
+    - lambda: |-
+        int seconds = timers[0].seconds_left;
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        seconds %= 60;
+        id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds));
+    - script.execute: draw_display
+  on_timer_finished:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+    - if:
+        condition:
+          - switch.is_on: output_audio
+        then:
+          - switch.turn_on: timer_ringing
+          - script.execute: timer_started_external
+          - script.execute: draw_display
+        else:
+          - if:
+              condition:
+                - switch.is_off: output_audio
+              then:
+                - switch.turn_on: timer_ringing
+                # - script.execute: timer_started
+                - script.execute: draw_display
 
 script:
+  - id: draw_display
+    then:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  - lambda: |-
+                      id(wifi_connection) = true;
+                  - if:
+                      condition:
+                        api.connected:
+                      then:
+                        - if:
+                            condition:
+                              switch.is_on: timer_ringing
+                            then:
+                              - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+                        - lambda: |-
+                            id(api_connection) = true;
+                        - lambda: |
+                            switch(id(voice_assistant_phase)) {
+                              case ${voice_assist_listening_phase_id}:
+                                id(s3_box_lcd).show_page(listening_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_thinking_phase_id}:
+                                id(s3_box_lcd).show_page(thinking_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_replying_phase_id}:
+                                id(s3_box_lcd).show_page(replying_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_error_phase_id}:
+                                id(s3_box_lcd).show_page(error_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_muted_phase_id}:
+                                id(s3_box_lcd).show_page(idle_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_not_ready_phase_id}:
+                                id(s3_box_lcd).show_page(idle_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_timer_finished_phase_id}:
+                                id(s3_box_lcd).show_page(timer_finished_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              case ${voice_assist_timer_finishing_phase_id}:
+                                id(s3_box_lcd).show_page(time_remaining_page);
+                                id(s3_box_lcd).update();
+                                break;
+                              default:
+                                id(s3_box_lcd).show_page(idle_page);
+                                id(s3_box_lcd).update();
+                            }
+                      else:
+                        - lambda: |-
+                            id(api_connection) = false;
+                        - display.page.show: idle_page
+                        - component.update: s3_box_lcd
+                else:
+                  - lambda: |-
+                      id(wifi_connection) = false;
+                  - display.page.show: idle_page
+                  - component.update: s3_box_lcd
+          else:
+            - display.page.show: loading_page
+            - component.update: s3_box_lcd
+
+  - id: fetch_first_active_timer
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          auto output_timer = timers.begin()->second;
+          for (auto &iterable_timer : timers) {
+            if (iterable_timer.second.is_active && iterable_timer.second.seconds_left <= output_timer.seconds_left) {
+              output_timer = iterable_timer.second;
+            }
+          }
+          id(global_first_active_timer) = output_timer;
+  - id: check_if_timers_active
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            for (auto &iterable_timer : timers) {
+              if(iterable_timer.second.is_active) {
+                output = true;
+              }
+            }
+          }
+          id(global_is_timer_active) = output;
+  - id: fetch_first_timer
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          auto output_timer = timers.begin()->second;
+          for (auto &iterable_timer : timers) {
+            if (iterable_timer.second.seconds_left <= output_timer.seconds_left) {
+              output_timer = iterable_timer.second;
+            }
+          }
+          id(global_first_timer) = output_timer;
+  - id: check_if_timers
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            output = true;
+          }
+          id(global_is_timer) = output;
+
+  - id: draw_timer_timeline
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          id(check_if_timers).execute();
+          if (id(global_is_timer_active)){
+            id(fetch_first_active_timer).execute();
+            int active_pixels = round( 320 * id(global_first_active_timer).seconds_left / max(id(global_first_active_timer).total_seconds , static_cast<uint32_t>(1)) );
+            if (active_pixels > 0){
+              id(s3_box_lcd).filled_rectangle(0 , 225 , 320 , 15 , Color::WHITE );
+              id(s3_box_lcd).filled_rectangle(0 , 226 , active_pixels , 13 , id(active_timer_color) );
+            }
+          } else if (id(global_is_timer)){
+            id(fetch_first_timer).execute();
+            int active_pixels = round( 320 * id(global_first_timer).seconds_left / max(id(global_first_timer).total_seconds , static_cast<uint32_t>(1)));
+            if (active_pixels > 0){
+              id(s3_box_lcd).filled_rectangle(0 , 225 , 320 , 15 , Color::WHITE );
+              id(s3_box_lcd).filled_rectangle(0 , 226 , active_pixels , 13 , id(paused_timer_color) );
+            }
+          }
+  - id: draw_active_timer_widget
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          if (id(global_is_timer_active)){
+            id(s3_box_lcd).filled_rectangle(80 , 40 , 160 , 50 , Color::WHITE );
+            id(s3_box_lcd).rectangle(80 , 40 , 160 , 50 , Color::BLACK );
+
+            id(fetch_first_active_timer).execute();
+            int hours_left = floor(id(global_first_active_timer).seconds_left / 3600);
+            int minutes_left = floor((id(global_first_active_timer).seconds_left - hours_left * 3600) / 60);
+            int seconds_left = id(global_first_active_timer).seconds_left - hours_left * 3600 - minutes_left * 60 ;
+            auto display_hours = (hours_left < 10 ? "0" : "") + std::to_string(hours_left);
+            auto display_minute = (minutes_left < 10 ? "0" : "") + std::to_string(minutes_left);
+            auto display_seconds = (seconds_left  < 10 ? "0" : "") + std::to_string(seconds_left) ;
+
+            std::string display_string = "";
+            if (hours_left > 0) {
+              display_string = display_hours + ":" + display_minute;
+            } else {
+              display_string = display_minute + ":" + display_seconds;
+            }
+            id(s3_box_lcd).printf(120, 47, id(font_timer), Color::BLACK, "%s", display_string.c_str());
+          }
+
   - id: start_voice_assistant
     then:
       - if:
@@ -378,20 +942,16 @@ script:
             lambda: return id(wake_word_engine_location).state == "On device";
           then:
             - micro_wake_word.stop:
-
-  # - id: timer_started
-    # then:
-      # while:
-        # condition:
-          # switch.is_on: timer_ringing
-        # then:
-          # - voice_assistant.stop
-          # - delay: 150ms
-          # - media_player.speaker.play_on_device_media_file:
-              # media_file: wake_sound_file
-              # announcement: true
-          # - delay: 1s
-
+  # Set the voice assistant phase to idle or muted, depending on if the software mute switch is activated
+  - id: set_idle_or_mute_phase
+    then:
+      - if:
+          condition:
+            switch.is_off: mute_switch
+          then:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+          else:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
   - id: timer_started_external
     then:
       while:
@@ -411,8 +971,9 @@ script:
       - wait_until:
           - lambda: return (id(time_remaining_0).state == "0:00:10");
       - script.execute: saver_enabled
-      - display.page.show: time_remaining_page
-      - component.update: s3_box_lcd
+      - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finishing_phase_id};
+      - script.execute: draw_display
+    mode: parallel
 
   - id: increment_digit_1
     then:
@@ -482,52 +1043,233 @@ script:
       - display.page.show: idle_page
       - script.execute: saver_enabled
       - component.update: s3_box_lcd
-globals:
-  - id: wifi_connection
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: api_connection
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: mute_value
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: speaker_volume
-    type: int
-    restore_value: no
-    initial_value: '5'
-  - id: media_state
-    type: bool
-    restore_value: no
-    initial_value: "false"
-  - id: global_first_active_timer
-    type: voice_assistant::Timer
-    restore_value: false
-  - id: global_is_timer_active
-    type: bool
-    restore_value: false
-  - id: global_first_timer
-    type: voice_assistant::Timer
-    restore_value: false
-  - id: global_is_timer
-    type: bool
-    restore_value: false
-  - id: current_pin
-    type: std::string
-    initial_value: ""
-  - id: global_is_assisting
-    type: bool
-    restore_value: false
-  - id: previous_notification_text
-    type: std::string
-    initial_value: ""
-  - id: display_temp
-    type: float
-    restore_value: no
-    initial_value: '0.0'
+
+switch:
+  - platform: gpio
+    name: Speaker Enable
+    id: speaker_enable
+    pin: 
+      number: GPIO46
+      ignore_strapping_warning: true
+    restore_mode: ALWAYS_OFF
+    entity_category: config
+    disabled_by_default: true
+
+  - platform: template
+    name: Display conversation
+    id: display_conversation
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    icon: 'mdi:chat'
+
+  - platform: template
+    name: Output audio externally
+    id: output_audio
+    icon: 'mdi:volume-off'
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_on:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 0
+    on_turn_off:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 1.0
+
+  - platform: template
+    name: Mute
+    id: mute_switch
+    icon: "mdi:microphone-off"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_off:
+      - microphone.unmute:
+      - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+      - script.execute: draw_display
+    on_turn_on:
+      - microphone.mute:
+      - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+      - script.execute: draw_display
+  - platform: template
+    id: media_mute
+    optimistic: true
+    on_turn_on:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 0
+    on_turn_off:
+      media_player.volume_set:
+        id: speaker_media_player
+        volume: 1.0
+
+  - platform: template
+    id: s_saver
+    name: Scr/save enable
+    icon: mdi:sleep
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+
+  - platform: template
+    id: s_saver_mode
+    name: Scr/off enable
+    icon: 'mdi:monitor-off'
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+
+  - platform: template
+    id: timer_ringing
+    optimistic: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+    on_turn_off:
+      # Turn off the repeat mode and disable the pause between playlist items
+      - lambda: id(time_remaining_0).publish_state ("0:00:00");
+      - lambda: |-
+              id(speaker_media_player)
+                ->make_call()
+                .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_OFF)
+                .set_announcement(true)
+                .perform();
+              id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 0);
+      # Stop playing the alarm
+      - media_player.stop:
+          announcement: true
+    on_turn_on:
+      # Turn on the repeat mode and pause for 1000 ms between playlist items/repeats
+      - lambda: id(led).turn_on().set_brightness(1.0).perform();
+      - lambda: |-
+            id(speaker_media_player)
+              ->make_call()
+              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_ONE)
+              .set_announcement(true)
+              .perform();
+            id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 1000);
+      - media_player.speaker.play_on_device_media_file:
+          media_file: timer_finished_sound
+          announcement: true
+      - delay: 15min
+      - switch.turn_off: timer_ringing
+
+  - platform: template
+    id: wake_sound
+    name: Play wake sound
+    icon: mdi:music
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: template
+    id: mute_response_switch
+    name: Mute Responses
+    icon: mdi:chat-sleep
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: template
+    id: ext_media_mute
+    icon: 'mdi:volume-off'
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_on:
+      then:
+        - homeassistant.service:
+            service: media_player.volume_mute
+            data:
+              entity_id: media_player.${external_media_player}
+    on_turn_off:
+      - homeassistant.service:
+          service: media_player.volume_mute
+          data:
+            entity_id: media_player.${external_media_player}
+ 
+select:
+  - platform: template
+    entity_category: config
+    name: Wake word engine location
+    id: wake_word_engine_location
+    icon: "mdi:account-voice"
+    optimistic: true
+    restore_value: true
+    options:
+      - In Home Assistant
+      - On device
+    initial_option: In Home Assistant
+    on_value:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - wait_until:
+                lambda: return id(voice_assistant_phase) == ${voice_assist_muted_phase_id} || id(voice_assistant_phase) == ${voice_assist_idle_phase_id};
+            - if:
+                condition:
+                  lambda: return x == "In Home Assistant";
+                then:
+                  - micro_wake_word.stop
+                  - delay: 500ms
+                  - if:
+                      condition:
+                        switch.is_off: mute_switch
+                      then:
+                        - lambda: id(va).set_use_wake_word(true);
+                        - voice_assistant.start_continuous:
+            - if:
+                condition:
+                  lambda: return x == "On device";
+                then:
+                  - lambda: id(va).set_use_wake_word(false);
+                  - voice_assistant.stop
+                  - delay: 500ms
+                  - if:
+                      condition:
+                        switch.is_off: mute_switch
+                      then:
+                        - micro_wake_word.start
+            - component.update: s3_box_lcd
+
+  - platform: template
+    entity_category: config
+    name: Time Format
+    id: time_format
+    optimistic: true
+    restore_value: true
+    options:
+      - 12 Hr
+      - 24 Hr
+    initial_option: 24 Hr
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: return x == "24 Hr";
+            then:
+              - text_sensor.template.publish:
+                  id: time_display_format
+                  state: !lambda 'return "24 Hr";'
+            else:
+              - text_sensor.template.publish:
+                  id: time_display_format
+                  state: !lambda 'return "12 Hr";'
+        - component.update: s3_box_lcd
+  - platform: template
+    id: temp_unit
+    name: "Temperature Unit"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    options:
+      - Celsius
+      - Fahrenheit
+    initial_option: Celsius
 
 number:
   - id: s_saver_delay
@@ -598,763 +1340,74 @@ number:
       - script.execute: saver_enabled
       - component.update: s3_box_lcd
 
-button:
-  - platform: restart
-    id: reboot
-    name: "Reboot"
-    entity_category: diagnostic
-
-switch:
-  - platform: gpio
-    name: Speaker Enable
-    id: speaker_enable
-    pin: 
-      number: GPIO46
-      ignore_strapping_warning: true
-    restore_mode: ALWAYS_OFF
-    entity_category: config
-    disabled_by_default: true
-
-  - platform: template
-    name: Display conversation
-    id: display_conversation
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-    entity_category: config
-    icon: 'mdi:chat'
-
-  - platform: template
-    name: Output audio externally
-    id: output_audio
-    icon: 'mdi:volume-off'
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-    on_turn_on:
-      media_player.volume_set:
-        id: speaker_media_player
-        volume: 0
-    on_turn_off:
-      media_player.volume_set:
-        id: speaker_media_player
-        volume: 1.0
-
-  - platform: template
-    name: Mute
-    id: mute_switch
-    icon: "mdi:microphone-off"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-    on_turn_on:
-      then:
-        - voice_assistant.stop
-        - script.execute: stop_wake_word
-    on_turn_off:
-      - if:
-          condition:
-            not:
-              - voice_assistant.is_running
-          then:
-            - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-                then:
-                  - lambda: id(va).set_use_wake_word(true);
-                  - delay: 50ms
-                  - voice_assistant.start_continuous
-            - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
-                then:
-                  - lambda: id(va).set_use_wake_word(false);
-                  - script.execute: start_wake_word
-            - component.update: s3_box_lcd
-
-  - platform: template
-    id: media_mute
-    optimistic: true
-    on_turn_on:
-      media_player.volume_set:
-        id: speaker_media_player
-        volume: 0
-    on_turn_off:
-      media_player.volume_set:
-        id: speaker_media_player
-        volume: 1.0
-
-  - platform: template
-    id: s_saver
-    name: Scr/save enable
-    icon: mdi:sleep
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-
-  - platform: template
-    id: s_saver_mode
-    name: Scr/off enable
-    icon: 'mdi:monitor-off'
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-
-  - platform: template
-    id: timer_ringing
-    optimistic: true
-    internal: true
-    restore_mode: ALWAYS_OFF
-
-    on_turn_off:
-      # Turn off the repeat mode and disable the pause between playlist items
-      - lambda: |-
-              id(speaker_media_player)
-                ->make_call()
-                .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_OFF)
-                .set_announcement(true)
-                .perform();
-              id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 0);
-      # Stop playing the alarm
-      - media_player.stop:
-          announcement: true
-      - if:
-          condition:
-            lambda: return id(wake_word_engine_location).state == "On device";
-          then:
-            - lambda: id(va).set_use_wake_word(false);
-            - script.execute: start_wake_word
-          else:
-            - lambda: id(va).set_use_wake_word(true);
-            - voice_assistant.start
-    on_turn_on:
-      - lambda: id(va).set_use_wake_word(false);
-      - voice_assistant.stop:
-      - micro_wake_word.stop:
-      - delay: 150ms
-      # Turn on the repeat mode and pause for 1000 ms between playlist items/repeats
-      - lambda: id(led).turn_on().set_brightness(1.0).perform();
-      - lambda: |-
-            id(speaker_media_player)
-              ->make_call()
-              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_REPEAT_ONE)
-              .set_announcement(true)
-              .perform();
-            id(speaker_media_player)->set_playlist_delay_ms(speaker::AudioPipelineType::ANNOUNCEMENT, 1000);
-      - media_player.speaker.play_on_device_media_file:
-          media_file: timer_finished_sound
-          announcement: true
-      - delay: 15min
-      - switch.turn_off: timer_ringing
-
-  - platform: template
-    id: wake_sound
-    name: Play wake sound
-    icon: mdi:music
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-
-  - platform: template
-    id: mute_response_switch
-    name: Mute Responses
-    icon: mdi:chat-sleep
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-
-  - platform: template
-    id: ext_media_mute
-    icon: 'mdi:volume-off'
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-    on_turn_on:
-      then:
-        - homeassistant.service:
-            service: media_player.volume_mute
-            data:
-              entity_id: media_player.${external_media_player}
-    on_turn_off:
-      - homeassistant.service:
-          service: media_player.volume_mute
-          data:
-            entity_id: media_player.${external_media_player}
- 
-output:
-  - platform: ledc
-    pin:
-      number: GPIO45
-      ignore_strapping_warning: true
-    id: backlight_output
-
-light:
-  - platform: monochromatic
-    id: led
-    name: LCD Backlight
-    entity_category: config
-    output: backlight_output
-    restore_mode: ALWAYS_ON
-    default_transition_length: 50ms
-
-sensor:
-  - platform: uptime
-    id: up_sens
-    on_value:
-      - lambda: |-
-          int seconds = id(up_sens).state;
-          int days = seconds / 86400;
-          int hours = seconds / 3600;
-          int minutes = (seconds % 3600) / 60;
-          seconds %= 60;
-          id(up_sens_text).publish_state(str_sprintf("%03d:%02d:%02d:%02d", days, hours, minutes, seconds));
-    update_interval: 30s
-
-  - platform: wifi_signal
-    name: "WiFi db"
-    id: wifi_signal_db
-    update_interval: 30s
-
-  - platform: copy
-    source_id: wifi_signal_db
-    name: "WiFi Signal"
-    id: wifi_percent
-    filters:
-      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: "%"
-    entity_category: "diagnostic"
-    device_class: ""
-
-text_sensor:
-  - id: text_request
+  - id: radar_delayed_off
     platform: template
-    on_value:
-      lambda: |-
-        if(id(text_request).state.length()>32) {
-          std::string name = id(text_request).state.c_str();
-          std::string truncated = esphome::str_truncate(name.c_str(),31);
-          id(text_request).state = (truncated+"...").c_str();
-        }
-
-  - id: text_response
-    platform: template
-    on_value:
-      lambda: |-
-        if(id(text_response).state.length()>32) {
-          std::string name = id(text_response).state.c_str();
-          std::string truncated = esphome::str_truncate(name.c_str(),31);
-          id(text_response).state = (truncated+"...").c_str();
-        }
-  - platform: wifi_info
-    ip_address:
-      name: IP Address
-      id: ip_addr
-      entity_category: "diagnostic"
-    ssid:
-      id: connected_ssid
-      name: SSID
-      entity_category: "diagnostic"
-    bssid:
-      id: connected_bssid
-      name: BSSID
-      entity_category: "diagnostic"
-    mac_address:
-      id: device_mac
-
-  - platform: template
-    id: up_sens_text
-    name: Device uptime
-    entity_category: "diagnostic"
-    icon: mdi:clock
-
-  - platform: template
-    id: wakeword_location
-
-  - platform: template
-    id: time_remaining_0
-    name: Timer
-    icon: mdi:clock
-
-  - platform: template
-    id: time_remaining_1
-
-  - platform: template
-    id: time_display_format
-    update_interval: never
-  - platform: homeassistant
-    entity_id: media_player.${external_media_player}
-    id: ha_media_status
-    on_value:
-      component.update: s3_box_lcd
-
-  - platform: homeassistant
-    entity_id: media_player.${external_media_player}
-    id: ha_media_title
-    attribute: media_content_id
-    on_value:
-      component.update: s3_box_lcd
-
-  - platform: homeassistant
-    name: "Alarm Status"
-    entity_id: alarm_control_panel.alarmo
-    id: alarm_status
-    on_value:
-      - component.update: s3_box_lcd
-
-text:
-  - platform: template
-    name: "Notification Text"
-    id: notification_text
-    mode: text
+    name: "Presence duration"
+    icon: mdi:account-clock
     optimistic: true
-    on_value:
-      then:
-        - lambda: |-
-            if (!id(notification_text).state.empty() && 
-                (id(previous_notification_text).empty() || id(notification_text).state != id(previous_notification_text))) {
-              id(previous_notification_text) = id(notification_text).state;
-              id(show_notification).execute();
-            }
+    restore_value: true
+    initial_value: 30
+    min_value: 10
+    step: 5
+    max_value: 300
+    unit_of_measurement: 'secs'
+    entity_category: config
+    mode: box
 
-i2c:
-  - id: bus_a
-    sda: GPIO08
-    scl: GPIO18
-    scan: true
-    sda_pullup_enabled: true
-    scl_pullup_enabled: true
-    frequency: 100kHz
-
-touchscreen:
-  - platform: tt21100
-    i2c_id: bus_a
-    address 0x24
-    id: tt21100_touchscreen
-    transform:
-      mirror_x: true
-    interrupt_pin:
-      number: GPIO3
-      ignore_strapping_warning: true
-    on_touch:
-      - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-    on_release:
-      - script.execute: saver_enabled
-
-i2s_audio:
-  - id: i2s_audio_bus
-    i2s_lrclk_pin:
-      number: GPIO47
-    i2s_bclk_pin: GPIO17
-    i2s_mclk_pin: GPIO2
-
-audio_adc:
-  - platform: es7210
-    id: es7210_adc
-    i2c_id: bus_a
-    bits_per_sample: 16bit
-    sample_rate: 16000
-
-audio_dac:
-  - platform: es8311
-    id: es8311_dac
-    i2c_id: bus_a
-    bits_per_sample: 16bit
-    sample_rate: 48000
-
-microphone:
-  - platform: i2s_audio
-    id: box_mic
-    sample_rate: 16000
-    i2s_din_pin: GPIO16
-    bits_per_sample: 16bit
-    adc_type: external
-
-speaker:
-  - id: i2s_audio_speaker
-    platform: i2s_audio
-    i2s_audio_id: i2s_audio_bus
-    i2s_dout_pin: GPIO15
-    dac_type: external
-    sample_rate: 48000
-    bits_per_sample: 16bit
-    channel: left
-    audio_dac: es8311_dac
-    buffer_duration: 500ms  # Increased for stability without timeout @youkorr
-  # Virtual speakers to combine the announcement and media streams together into one output
-  - id: mixing_speaker
-    platform: mixer
-    output_speaker: i2s_audio_speaker
-    source_speakers:
-      - id: announcement_mixing_input
-      - id: media_mixing_input
-  # Vritual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
-  - platform: resampler
-    id: announcement_resampling_speaker
-    output_speaker: announcement_mixing_input
-    sample_rate: 48000  # Added explicit sample rate
-  - platform: resampler
-    id: media_resampling_speaker
-    output_speaker: media_mixing_input
-    sample_rate: 48000  # Added explicit sample rate
-
-media_player:
-  - platform: speaker
-    name: Media Player
-    id: speaker_media_player
-    volume_increment: 0.05
-    volume_min: 0.5
-    volume_max: 0.8
-    task_stack_in_psram: true
-    announcement_pipeline:
-      speaker: announcement_resampling_speaker
-      format: FLAC
-      sample_rate: 48000
-      num_channels: 1  # S3 Box only has one output channel
-    media_pipeline:
-      speaker: media_resampling_speaker
-      format: FLAC  # FLAC is the least processor intensive codec
-      num_channels: 2
-      sample_rate: 48000
-    files:
-      - id: timer_finished_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
-      - id: wake_sound_file
-        file: https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/raw/main/sounds/awake.flac
-    on_state:
-      then:
-        - if:
-            condition:
-              media_player.is_playing:
-            then:
-              - script.execute: stop_wake_word
-        - if:
-            condition:
-              and:
-                - switch.is_off: timer_ringing
-                - not:
-                    voice_assistant.is_running:
-                - not:
-                    media_player.is_announcing:
-            then:
-              - mixer_speaker.apply_ducking:
-                  id: media_mixing_input
-                  decibel_reduction: 0
-                  duration: 1.0s
-    on_play:
-      - wait_until:
-          - lambda: return id(global_is_assisting) == false;
-    on_announcement:
-      # Stop the wake word (mWW or VA) if the mic is capturing
-      - if:
-          condition:
-            - microphone.is_capturing:
-          then:
-            - script.execute: stop_wake_word
-            # Ensure VA stops before moving on
-            - if:
-                condition:
-                  - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-                then:
-                  - wait_until:
-                      - not:
-                          voice_assistant.is_running:
-      # Since VA isn't running, this is user-intiated media playback. Draw the mute display
-      - mixer_speaker.apply_ducking:
-          id: media_mixing_input
-          decibel_reduction: 20
-          duration: 0.0s
-      - if:
-          condition:
-            not:
-              voice_assistant.is_running:
-          then:
-            - if:
-                condition:
-                  - switch.is_on: timer_ringing
-                then:
-                  - display.page.show: timer_finished_page
-                else:
-                  - display.page.show: idle_page
-            - component.update: s3_box_lcd
-    on_idle:
-      # Since VA isn't running, this is the end of user-intiated media playback. Restart the wake word.
-      - if:
-          condition:
-            not:
-              voice_assistant.is_running:
-          then:
-            - script.execute: start_wake_word
-            - if:
-                condition:
-                  - switch.is_on: timer_ringing
-                then:
-                  - display.page.show: timer_finished_page
-                else:
-                  - display.page.show: idle_page
-            - component.update: s3_box_lcd
-
-micro_wake_word:
-  id: mww
-  vad:
-  models:
-    - model: ${micro_wake_word_model_1} #alexa
-    - model: ${micro_wake_word_model_2} #hey jarvis
-    - model: ${micro_wake_word_model_3} #okay nabu
-    - model: ${micro_wake_word_model_4} #hey mmycroft
-  on_wake_word_detected:
-    - lambda: id(global_is_assisting) = true;
-    - delay: 50ms
-    - if:
-        condition:
-          and:
-            - switch.is_off: output_audio
-            - switch.is_on: wake_sound
-        then:
-          - media_player.speaker.play_on_device_media_file:
-              media_file: wake_sound_file
-              announcement: true
-          - wait_until:
-              not:
-                - media_player.is_announcing:
-          - delay: 150ms
-        else:
-          if:
-            condition:
-              and:
-                - switch.is_on: output_audio
-                - switch.is_on: wake_sound
-            then:
-              - homeassistant.service:
-                  service: media_player.play_media
-                  data:
-                    entity_id: media_player.${external_media_player}
-                    media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
-                    media_content_type: music
-    - display.page.show: listening_page
-    - component.update: s3_box_lcd
-    - delay: 100ms
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
-
-voice_assistant:
-  id: va
-  microphone: box_mic
-  media_player: speaker_media_player
-  micro_wake_word: mww
-  noise_suppression_level: 2
-  auto_gain: 31dBFS
-  volume_multiplier: 4.0
-  on_wake_word_detected:
-    - lambda: id(global_is_assisting) = true;
-    - if:
-        condition:
-          and:
-            - switch.is_off: output_audio
-            - switch.is_on: wake_sound
-        then:
-          - media_player.speaker.play_on_device_media_file:
-              media_file: wake_sound_file
-              announcement: true
-          - wait_until:
-              not:
-                - media_player.is_announcing:
-          - delay: 150ms
-          - lambda: id(va).set_use_wake_word(false);
-          - display.page.show: listening_page
-          - component.update: s3_box_lcd
-        else:
-          if:
-            condition:
-              and:
-                - switch.is_on: wake_sound
-                - switch.is_on: output_audio
-            then:
-              - homeassistant.service:
-                  service: media_player.play_media
-                  data:
-                    entity_id: media_player.${external_media_player}
-                    media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
-                    media_content_type: music
-  
-  on_start:
-    if:
-      condition:
-        - display.is_displaying_page: listening_page
-        - display.is_displaying_page: thinking_page
-      then:
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
-  on_listening:
-    - text_sensor.template.publish:
-        id: text_request
-        state: "..."
-    - text_sensor.template.publish:
-        id: text_response
-        state: "..."
-    - script.execute: saver_enabled
-    - display.page.show: listening_page
-    - component.update: s3_box_lcd
-  on_stt_end:
-    - text_sensor.template.publish:
-        id: text_request
-        state: !lambda return x;
-  on_stt_vad_end:
-    - display.page.show: thinking_page
-    - component.update: s3_box_lcd
-  on_tts_start:
-    - text_sensor.template.publish:
-        id: text_response
-        state: !lambda return x;
-  on_tts_end:
-    - if:
-        condition:
-          and:
-            - switch.is_on: mute_response_switch
-            - switch.is_off: media_mute
-            - switch.is_off: ext_media_mute
-        then:
-          - switch.turn_on: media_mute
-          - switch.turn_on: ext_media_mute
-    - display.page.show: replying_page
-    - component.update: s3_box_lcd
-    - if:
-        condition:
-          - switch.is_on: output_audio
-        then:
-          - homeassistant.service:
-              service: media_player.play_media
-              data:
-                entity_id: media_player.${external_media_player}
-                media_content_id: !lambda 'return x;'
-                media_content_type: music
-                announce: "false"
-    - delay: 10s
-    - if:
-        condition:
-          - switch.is_on: timer_ringing
-        then:
-          - display.page.show: timer_finished_page
-        else:
-          - display.page.show: idle_page
-    - component.update: s3_box_lcd
-
-  on_error:
-    - if:
-        condition:
-          not:
-            - voice_assistant.is_running
-        then:
-          - display.page.show: error_page
-          - component.update: s3_box_lcd
-          - delay: 4s
-          - if:
-              condition:
-                - display.is_displaying_page: error_page
-              then:
-                - display.page.show: idle_page
-                - component.update: s3_box_lcd
-    - lambda: id(global_is_assisting) = false;
-
-  on_idle:
-    - if:
-        condition:
-          not:
-            - switch.is_on: timer_ringing
-        then:
-          - display.page.show: idle_page
-          - component.update: s3_box_lcd 
-           
-  on_end:
-    # Wait a short amount of time to see if an announcement starts
-    - wait_until:
-        condition:
-          - media_player.is_announcing:
-        timeout: 0.5s
-    # Announcement is finished and the I2S bus is free
-    - wait_until:
-        - and:
-            - not:
-                media_player.is_announcing:
-            - not:
-                media_player.is_playing:
-    - mixer_speaker.apply_ducking:
-        id: media_mixing_input
-        decibel_reduction: 0
-        duration: 1.0s
-    - lambda: id(global_is_assisting) = false;
-    # Restart only mWW if enabled; streaming wake words automatically restart
-    - if:
-        condition:
-          and:
-            - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
-        then:
-          - lambda: id(va).set_use_wake_word(false);
-          - micro_wake_word.start
-        else:
-          if:
-            condition:
-              - switch.is_off: mute_switch
-            then:
-              - lambda: id(va).set_use_wake_word(false);
-              - voice_assistant.stop:
-              - delay: 100ms
-              - lambda: id(va).set_use_wake_word(true);
-              - delay: 100ms
-              - voice_assistant.start
-    - if:
-        condition:
-          and:
-            - switch.is_on: mute_response_switch
-            - switch.is_on: media_mute
-            - switch.is_on: ext_media_mute
-        then:
-          - switch.turn_off: media_mute
-          - switch.turn_off: ext_media_mute
-    # Clear text sensors
-    - text_sensor.template.publish:
-        id: text_request
-        state: ""
-    - text_sensor.template.publish:
-        id: text_response
-        state: ""
-  on_client_connected:
-    - script.execute: start_wake_word
-  on_client_disconnected:
-    - script.execute: stop_wake_word
-  on_timer_started:
-    - script.execute: timer_ending
-    - component.update: s3_box_lcd
-  on_timer_cancelled:
-    - lambda: id(time_remaining_0).publish_state ("0:00:00");
-    - component.update: s3_box_lcd
-  on_timer_updated:
-    - component.update: s3_box_lcd
-  on_timer_tick:
-    - lambda: |-
-        int seconds = timers[0].seconds_left;
-        int hours = seconds / 3600;
-        int minutes = (seconds % 3600) / 60;
-        seconds %= 60;
-        id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds));
-    - component.update: s3_box_lcd
-  on_timer_finished:
-    if:
-      condition:
-        - switch.is_on: output_audio
-      then:
-        - switch.turn_on: timer_ringing
-        - script.execute: timer_started_external
-        - display.page.show: timer_finished_page
-        - component.update: s3_box_lcd
-      else:
-        - if:
-            condition:
-              - switch.is_off: output_audio
-            then:
-              - switch.turn_on: timer_ringing
-              # - script.execute: timer_started
-              - display.page.show: timer_finished_page
-              - component.update: s3_box_lcd
+globals:
+  - id: init_in_progress
+    type: bool
+    restore_value: false
+    initial_value: "true"
+  - id: voice_assistant_phase
+    type: int
+    restore_value: false
+    initial_value: ${voice_assist_not_ready_phase_id}
+  - id: wifi_connection
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: api_connection
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: mute_value
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: speaker_volume
+    type: int
+    restore_value: no
+    initial_value: '5'
+  - id: media_state
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: global_first_active_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  - id: global_is_timer_active
+    type: bool
+    restore_value: false
+  - id: global_first_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  - id: global_is_timer
+    type: bool
+    restore_value: false
+  - id: current_pin
+    type: std::string
+    initial_value: ""
+  - id: global_is_assisting
+    type: bool
+    restore_value: false
+  - id: previous_notification_text
+    type: std::string
+    initial_value: ""
+  - id: display_temp
+    type: float
+    restore_value: no
+    initial_value: '0.0'
 
 image:
   - file: ${error_illustration_file}
@@ -1443,6 +1496,12 @@ font:
   - file: ${font_file}
     id: my_font82
     size: 82
+    glyphs:
+      '${font_glyphs}'
+ 
+  - file: ${font_file}
+    id: font_timer
+    size: 30
     glyphs:
       '${font_glyphs}'
 
@@ -1552,7 +1611,100 @@ font:
     size: 60
     glyphs: *icon_glyphs
 
+text_sensor:
+  - id: text_request
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_request).state.length()>32) {
+          std::string name = id(text_request).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_request).state = (truncated+"...").c_str();
+        }
+
+  - id: text_response
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_response).state.length()>32) {
+          std::string name = id(text_response).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_response).state = (truncated+"...").c_str();
+        }
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+      id: ip_addr
+      entity_category: "diagnostic"
+    ssid:
+      id: connected_ssid
+      name: SSID
+      entity_category: "diagnostic"
+    bssid:
+      id: connected_bssid
+      name: BSSID
+      entity_category: "diagnostic"
+    mac_address:
+      id: device_mac
+
+  - platform: template
+    id: up_sens_text
+    name: Device uptime
+    entity_category: "diagnostic"
+    icon: mdi:clock
+
+  - platform: template
+    id: wakeword_location
+
+  - platform: template
+    id: time_remaining_0
+    name: Timer
+    icon: mdi:clock
+
+  - platform: template
+    id: time_remaining_1
+
+  - platform: template
+    id: time_display_format
+    update_interval: never
+  - platform: homeassistant
+    entity_id: media_player.${external_media_player}
+    id: ha_media_status
+    on_value:
+      component.update: s3_box_lcd
+
+  - platform: homeassistant
+    entity_id: media_player.${external_media_player}
+    id: ha_media_title
+    attribute: media_content_id
+    on_value:
+      component.update: s3_box_lcd
+
+  - platform: homeassistant
+    name: "Alarm Status"
+    entity_id: alarm_control_panel.alarmo
+    id: alarm_status
+    on_value:
+      - component.update: s3_box_lcd
+
+
 color:
+  - id: idle_color
+    hex: ${idle_illustration_background_color}
+  - id: listening_color
+    hex: ${listening_illustration_background_color}
+  - id: thinking_color
+    hex: ${thinking_illustration_background_color}
+  - id: replying_color
+    hex: ${replying_illustration_background_color}
+  - id: loading_color
+    hex: ${loading_illustration_background_color}
+  - id: error_color
+    hex: ${error_illustration_background_color}
+  - id: active_timer_color
+    hex: "26ed3a"
+  - id: paused_timer_color
+    hex: "3b89e3"
   - id: green
     hex: '75D15F'
   - id: red
@@ -1595,14 +1747,15 @@ color:
     hex: '4F4F4F'
 
 spi:
-  clk_pin: 7
-  mosi_pin: 6
-
+  - id: spi_bus
+    clk_pin: 7
+    mosi_pin: 6
 
 display:
   - platform: ili9xxx
     id: s3_box_lcd
     model: S3BOX
+    invert_colors: false
     data_rate: 40MHz
     cs_pin: 5
     dc_pin: 4
@@ -1610,7 +1763,7 @@ display:
       number: 48
       inverted: false
     update_interval: never
-    invert_colors: false
+
     ##################################################################################################
     ################ The below section defines, what is displayed on the screen,        ##############
     ################ the colours and mdi icons are defined above under font: and Color: ##############
@@ -1657,6 +1810,8 @@ display:
           it.printf(20, 155, id(icon_font_80), red,"\U000F075A");
           it.printf(120, 155, id(icon_font_80), blue,"\U000F0FCE");
           it.printf(220, 155, id(icon_font_80), lime,"\U000F08D6");
+          id(draw_timer_timeline).execute();
+          //id(draw_active_timer_widget).execute();
 
       - id: template_page ##### template page ##]##
         lambda: |-
@@ -1739,7 +1894,6 @@ display:
           it.printf(160, 145, id(my_font5), yellow, TextAlign::CENTER, "${name}.local");
           it.printf(160, 175, id(my_font5), light_blue, TextAlign::CENTER, "Device Uptime DDD:H:M:S");
           it.printf(160, 195, id(my_font5), yellow, TextAlign::CENTER, "%s", id(up_sens_text).state.c_str());
-
 
       - id: ss_set_page ##### screen saver settings page #####
         lambda: |-
@@ -2014,6 +2168,7 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(listening_img), ImageAlign::CENTER);
+          id(draw_timer_timeline).execute();
 
       - id: thinking_page
         lambda: |-
@@ -2023,16 +2178,23 @@ display:
             it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
             it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
           }
+          id(draw_timer_timeline).execute();
       - id: replying_page
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(replying_img), ImageAlign::CENTER);
           if (id(display_conversation).state) {
             it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
-            it.filled_rectangle(0 , 210 , 320 , 30 , Color::WHITE );
             it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
-            it.printf(10, 220, id(my_font16), Color::BLACK, "%s", id(text_response).state.c_str());
+            if (id(global_is_timer_active)){
+              it.filled_rectangle(0 , 195 , 320 , 30 , Color::WHITE );
+              it.printf(10, 205, id(my_font16), Color::BLACK, "%s", id(text_response).state.c_str());
+            } else {
+              it.filled_rectangle(0 , 210 , 320 , 30 , Color::WHITE );
+              it.printf(10, 220, id(my_font16), Color::BLACK, "%s", id(text_response).state.c_str());
+            }
           }
+          id(draw_timer_timeline).execute();
       - id: error_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -2049,6 +2211,8 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.printf(160, 120, id(my_font4), yellow, TextAlign::CENTER, "Mic & Speaker - Muted");
+          id(draw_timer_timeline).execute();
+          //id(draw_active_timer_widget).execute();
 
       - id: saver_page ##### screen saver display page #####
         lambda: |-
@@ -2441,34 +2605,43 @@ display:
 binary_sensor:
 ###### top left hand physical button #######
   - platform: gpio
-    id: left_top_button
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
       inverted: true
       ignore_strapping_warning: true
-    on_press:
-      - if:
-          condition:
-            - display.is_displaying_page: saver_page
-          then:
-            - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-            - display.page.show: idle_page
-            - script.execute: saver_enabled
-            - component.update: s3_box_lcd
-          else:
-            if:
+    id: left_top_button
+    internal: true
+    on_multi_click:
+      - timing:
+          - ON for at least 50ms
+          - OFF for at least 50ms
+        then:
+          - if:
               condition:
-                - display.is_displaying_page: idle_page
+                - display.is_displaying_page: saver_page
               then:
+                - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+                - display.page.show: idle_page
                 - script.execute: saver_enabled
-                - display.page.show: saver_page
                 - component.update: s3_box_lcd
-      - if:
-          condition:
-            - switch.is_on: timer_ringing
-          then:
-            - switch.turn_off: timer_ringing
+              else:
+                if:
+                  condition:
+                    - display.is_displaying_page: idle_page
+                  then:
+                    - script.execute: saver_enabled
+                    - display.page.show: saver_page
+                    - component.update: s3_box_lcd
+          - if:
+              condition:
+                - switch.is_on: timer_ringing
+              then:
+                - switch.turn_off: timer_ringing
+      - timing:
+          - ON for at least 10s
+        then:
+          - button.press: factory_reset_btn
 
 # #######     red circle home button   #####################
   - platform: tt21100
@@ -2710,16 +2883,8 @@ binary_sensor:
     y_max: 240
     on_press:
       then:
-        - switch.turn_on: mute_switch
-        - lambda: id(va).set_use_wake_word(false);
-        - delay: 100ms
-        - voice_assistant.start
-        - wait_until:
-            not:
-              - voice_assistant.is_running
-        - voice_assistant.stop
-        - switch.turn_off: mute_switch
-        - component.update: s3_box_lcd
+        - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+        - voice_assistant.start:
 
   - platform: touchscreen
     pages:
@@ -3041,6 +3206,40 @@ binary_sensor:
 
         # - component.update: s3_box_lcd
 
+#### template page #####
+  - platform: touchscreen
+    page_id: template_page
+    id: template1
+    internal: true
+    x_min: 5
+    x_max: 105
+    y_min: 90
+    y_max: 170
+          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
+    # on_click:
+      # min_length: 10ms
+      # max_length: 500ms
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
+        # - component.update: s3_box_lcd
+
+  - platform: touchscreen
+    page_id: template_page
+    id: template2
+    internal: true
+    x_min: 110
+    x_max: 210
+    y_min: 90
+    y_max: 170
+          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
+    # on_click:
+      # min_length: 10ms
+      # max_length: 500ms
+      # then:
+      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
+
+        # - component.update: s3_box_lcd
 ##### media player #####
   - platform: touchscreen
     page_id: media_page
@@ -3466,8 +3665,7 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.turn_off: timer_ringing
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
+        - script.execute: draw_display
 
 ##### Timeout settings buttons #####
   - id: ss_sleep_down
