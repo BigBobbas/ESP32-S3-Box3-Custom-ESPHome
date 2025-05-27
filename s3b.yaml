@@ -448,7 +448,13 @@ media_player:
             condition:
               media_player.is_playing:
             then:
+              - lambda: |-
+                  id(media_state) = true;
               - script.execute: stop_wake_word
+            else:
+              - lambda: |-
+                  id(media_state) = false;
+        - component.update: s3_box_lcd
         - if:
             condition:
               and:
@@ -2748,6 +2754,11 @@ binary_sensor:
             - switch.turn_on: mute_switch
             - voice_assistant.stop
             - switch.turn_off: mute_switch
+      - if:
+          condition:
+            - switch.is_on: timer_ringing
+          then:
+            - switch.turn_off: timer_ringing
       - if:
           condition:
             - media_player.is_playing:
