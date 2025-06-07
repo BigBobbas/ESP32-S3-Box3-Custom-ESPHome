@@ -400,7 +400,7 @@ speaker:
     bits_per_sample: 16bit
     channel: left
     audio_dac: es8311_dac
-    buffer_duration: 100ms  # Increased for stability without timeout @youkorr
+    buffer_duration: 100ms
 
   # Virtual speakers to combine the announcement and media streams together into one output
   - id: mixing_speaker
@@ -906,40 +906,6 @@ script:
             }
             id(s3_box_lcd).printf(120, 47, id(font_timer), Color::BLACK, "%s", display_string.c_str());
           }
-
-  - id: start_voice_assistant
-    then:
-      - if:
-          condition:
-            switch.is_off: mute_switch
-          then:
-            - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-                then:
-                  - lambda: id(va).set_use_wake_word(true);
-                  - voice_assistant.start_continuous:
-            - if:
-                condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
-                then:
-                  - lambda: id(va).set_use_wake_word(false);
-                  - micro_wake_word.start
-
-  - id: stop_voice_assistant
-    then:
-      - if:
-          condition:
-            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
-          then:
-            - lambda: id(va).set_use_wake_word(false);
-            - voice_assistant.stop:
-      - if:
-          condition:
-            lambda: return id(wake_word_engine_location).state == "On device";
-          then:
-            - voice_assistant.stop:
-            - micro_wake_word.stop:
 
   - id: set_volume
     then:
