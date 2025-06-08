@@ -1382,6 +1382,7 @@ font:
       - "\U000F0082"#battery 90%
       - "\U000F009E"#bell
       - "\U000F0150"#clock
+      - "\U000F0159"#close-circle
       - "\U000F01AE"#gbp pound symbol
       - "\U000F0210"#fan
       - "\U000F0238"#heating
@@ -1938,6 +1939,7 @@ display:
         lambda: |-
           it.fill(Color::BLACK);
           it.image((it.get_width() / 2), (it.get_height() / 2), id(listening_img), ImageAlign::CENTER);
+          it.printf(310, 10, id(icon_font_55), red, TextAlign::TOP_RIGHT, "\U000F0159");
 
       - id: thinking_page
         lambda: |-
@@ -1947,6 +1949,8 @@ display:
             it.filled_rectangle(0 , 0 , 320 , 30 , Color::WHITE );
             it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
           }
+          it.printf(310, 10, id(icon_font_55), red, TextAlign::TOP_RIGHT, "\U000F0159");
+
       - id: replying_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -1957,6 +1961,8 @@ display:
             it.printf(10, 10, id(my_font16), Color::BLACK, "%s", id(text_request).state.c_str());
             it.printf(10, 220, id(my_font16), Color::BLACK, "%s", id(text_response).state.c_str());
           }
+          it.printf(310, 10, id(icon_font_55), red, TextAlign::TOP_RIGHT, "\U000F0159");
+          
       - id: error_page
         lambda: |-
           it.fill(Color::BLACK);
@@ -2445,6 +2451,24 @@ binary_sensor:
           - display.page.show: idle_page
           - component.update: s3_box_lcd
           - script.execute: saver_enabled
+
+##### Cancel Voice Assist
+  - platform: touchscreen
+    pages: 
+      - listening_page
+      - thinking_page
+      - replying_page
+    id: cancel_from_listening
+    internal: true
+    x_min: 255
+    x_max: 320
+    y_min: 0
+    y_max: 65
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - script.execute: cancel_interaction
 
 ##### satus bar buttons #####
   - platform: touchscreen
