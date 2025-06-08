@@ -1125,7 +1125,7 @@ media_player:
             then:
               - lambda: |-
                   id(media_state) = true;
-              - script.execute: stop_wake_word
+              # - script.execute: stop_wake_word
             else:
               - lambda: |-
                   id(media_state) = false;
