@@ -1186,6 +1186,10 @@ media_player:
             not:
               voice_assistant.is_running:
           then:
+            - wait_until:
+                    - not:
+                        speaker.is_playing:
+                          id: i2s_audio_speaker
             - script.execute: start_wake_word
             - if:
                 condition:
@@ -1380,6 +1384,9 @@ voice_assistant:
                 media_player.is_announcing:
             - not:
                 media_player.is_playing:
+            - not:
+                speaker.is_playing:
+                  id: i2s_audio_speaker
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 0
