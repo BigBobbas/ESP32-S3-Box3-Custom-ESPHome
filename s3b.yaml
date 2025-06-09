@@ -1294,10 +1294,16 @@ select:
                       then:
                         - lambda: id(va).set_use_wake_word(true);
                         - voice_assistant.start_continuous:
+                        - text_sensor.template.publish:
+                            id: wakeword_location
+                            state: !lambda 'return "Home Assistant";'
             - if:
                 condition:
                   lambda: return x == "On device";
                 then:
+                  - text_sensor.template.publish:
+                      id: wakeword_location
+                      state: !lambda 'return "On Device";'
                   - lambda: id(va).set_use_wake_word(false);
                   - voice_assistant.stop
                   - delay: 500ms
