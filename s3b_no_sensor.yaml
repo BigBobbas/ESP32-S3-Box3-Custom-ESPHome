@@ -116,6 +116,12 @@ esp32:
       CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y" 
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y" 
       CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
+
+external_components:
+  - source: github://pr#9100
+    components: [ i2s_audio ]
+    refresh: 10s      
+      
 psram:
   mode: octal
   speed: 80MHz
