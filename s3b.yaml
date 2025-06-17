@@ -1,3 +1,5 @@
+#source esphome_dev/bin/activate
+
 ## You can change the friendly name if you wish on line 7 below. The friendly name is how the device will show in HA
 ## However the <name:> is how HA connects to the device eg. esp32-s3-box-3.local is the mDNS hostname for the device.
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
@@ -116,14 +118,14 @@ esp32:
       CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y" 
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y" 
       CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
+psram:
+  mode: octal
+  speed: 80MHz
 
 external_components:
   - source: github://pr#9100
     components: [ i2s_audio ]
     refresh: 10s
-psram:
-  mode: octal
-  speed: 80MHz
 
 api:
   on_client_connected:
@@ -144,7 +146,7 @@ ota:
 
 logger:
   hardware_uart: USB_SERIAL_JTAG
-  level: verbose
+  level: very_verbose
   # logs:
     # text_sensor: WARN
     # component: ERROR
@@ -152,6 +154,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
   ap:
     ssid: ${name}
     password: s3box123
@@ -606,15 +609,16 @@ voice_assistant:
   # on_start:
     # - script.execute: draw_display
   on_listening:
-    # - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
     - text_sensor.template.publish:
         id: text_request
         state: "..."
     - text_sensor.template.publish:
         id: text_response
         state: "..."
-    # - script.execute: draw_display
+    - script.execute: draw_display
     - script.execute: saver_enabled
+
   on_stt_vad_end:
     - lambda: ESP_LOGD("voice_assistant", "on_stt_vad_end");
     - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
@@ -782,11 +786,11 @@ script:
                       condition:
                         api.connected:
                       then:
-                        - if:
-                            condition:
-                              switch.is_on: timer_ringing
-                            then:
-                              - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+                        # - if:
+                            # condition:
+                              # switch.is_on: timer_ringing
+                            # then:
+                              # - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
                         - lambda: |-
                             id(api_connection) = true;
                         - lambda: |
@@ -3805,7 +3809,8 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.turn_off: timer_ringing
-        - script.execute: draw_display
+        - display.page.show: idle_page
+        - component.update: s3_box_lcd
 
 ##### Timeout settings buttons #####
   - id: ss_sleep_down
