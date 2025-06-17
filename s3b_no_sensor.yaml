@@ -571,14 +571,14 @@ voice_assistant:
   # on_start:
     # - script.execute: draw_display
   on_listening:
-    # - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
     - text_sensor.template.publish:
         id: text_request
         state: "..."
     - text_sensor.template.publish:
         id: text_response
         state: "..."
-    # - script.execute: draw_display
+    - script.execute: draw_display
     - script.execute: saver_enabled
   on_stt_vad_end:
     - lambda: ESP_LOGD("voice_assistant", "on_stt_vad_end");
