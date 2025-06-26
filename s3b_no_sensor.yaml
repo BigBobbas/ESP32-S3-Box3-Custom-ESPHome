@@ -75,12 +75,6 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - at581x.settings:
-          id: "Radar"
-          # trigger_base: 100ms #amount of movement to sense
-          # trigger_keep: 10s #how long to remain triggered for
-          sensing_distance: 1000 #distance to sense 0-1023
-          stage_gain: 12 #gain for testing (highest) 0 - (lowest) 12
       - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
       - lambda: id(time_remaining_0).publish_state ("0:00:00");
       - script.execute: draw_display
@@ -212,15 +206,6 @@ interval:
                     wifi.connected:
                 then:
                   - lambda: "id(wifi_connection) = false;"
-  - interval: 10s
-    then:
-      - lambda: |-
-          float celsius = id(s3temp).state;
-          if (id(temp_unit).state == "Fahrenheit") {
-            id(display_temp) = celsius * 9.0 / 5.0 + 32.0;
-          } else {
-            id(display_temp) = celsius;
-          }
 
 button:
   - platform: factory_reset
@@ -1212,11 +1197,6 @@ switch:
           data:
             entity_id: media_player.${external_media_player}
  
-  - platform: at581x
-    at581x_id: "Radar"
-    name: "Radar Enable"
-    restore_mode: RESTORE_DEFAULT_ON
-
 select:
   - platform: template
     entity_category: config
