@@ -231,15 +231,7 @@ button:
     id: reboot
     name: "Reboot"
     entity_category: diagnostic
-
-  - platform: template
-    id: restart_radar
-    name: "Radar Reset"
-    entity_category: diagnostic
-    on_press:
-      at581x.reset:
-        id: "Radar"
-
+    
 output:
   - platform: ledc
     pin: GPIO47
@@ -313,10 +305,6 @@ i2c:
     scl_pullup_enabled: true
     frequency: 50kHz
     id: bus_b
-
-at581x:
-  id: "Radar"
-  i2c_id: bus_b
 
 touchscreen:
   - platform: gt911
