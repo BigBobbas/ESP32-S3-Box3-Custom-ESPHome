@@ -157,7 +157,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
+  use_address: 192.168.1.202
   ap:
     ssid: ${name}
     password: s3box123
@@ -1212,6 +1212,8 @@ switch:
           id: media_mixing_input
           decibel_reduction: 0
           duration: 1.0s
+      - display.page.show: idle_page
+      - component.update: s3_box_lcd   
     on_turn_on:
       # Turn on the repeat mode and pause for 1000 ms between playlist items/repeats
       - mixer_speaker.apply_ducking:
@@ -2808,7 +2810,7 @@ binary_sensor:
     name: "Presence detect"
     disabled_by_default: false
     device_class: "occupancy"
-    publish_initial_state: true
+    trigger_on_initial_state: true
     filters:
       - delayed_off: !lambda return id(radar_delayed_off).state * 1000;
     on_state:
