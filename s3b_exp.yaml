@@ -129,7 +129,8 @@ external_components:
       ref: i2s-duplex-dev-snapshot1
     components: [ i2s_audio, resampler, audio ]
     refresh: 10s
-
+  - source: github://pr#9543
+    components: [ api ]
 api:
   on_client_connected:
     - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
