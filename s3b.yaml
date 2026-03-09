@@ -873,6 +873,30 @@ text_sensor:
     on_value:
       - component.update: s3_box_lcd
 
+  - platform: homeassistant
+    entity_id: light.bookcase_bloom
+    id: bookcase_bloom_state
+    on_value:
+      component.update: s3_box_lcd
+
+  - platform: homeassistant
+    entity_id: light.desk_bloom
+    id: desk_bloom_state
+    on_value:
+      component.update: s3_box_lcd
+
+  - platform: homeassistant
+    entity_id: light.basement_floor_light
+    id: basement_floor_light_state
+    on_value:
+      component.update: s3_box_lcd
+
+  - platform: homeassistant
+    entity_id: switch.backdoor_light
+    id: backdoor_light_state
+    on_value:
+      component.update: s3_box_lcd
+
 text:
   - platform: template
     name: "Notification Text"
@@ -1786,12 +1810,34 @@ display:
           } else if(id(alarm_status).state == "armed_night") {
           it.printf(250, 5, id(icon_font_55), green, "\U000F1828");
           }
-          it.printf(20, 75, id(icon_font_80), light_blue,"\U000F0335");
-          it.printf(120, 75, id(icon_font_80), light_blue,"\U000F0335");
-          it.printf(220, 75, id(icon_font_80), light_blue, "\U000F0335");
-          it.printf(20, 155, id(icon_font_80), light_blue,"\U000F0335");
-          it.printf(120, 155, id(icon_font_80), light_blue,"\U000F0335");
-          it.printf(220, 155, id(icon_font_80), light_blue, "\U000F0335");
+          // Bookcase Bloom - top left
+          if (id(bookcase_bloom_state).state == "on") {
+            it.printf(20, 90, id(icon_font_55), yellow, "\U000F06E8");
+          } else {
+            it.printf(20, 90, id(icon_font_55), light_blue, "\U000F0335");
+          }
+          it.printf(55, 143, id(my_font), white, TextAlign::CENTER, "Bookcase");
+          // Desk Bloom - top middle
+          if (id(desk_bloom_state).state == "on") {
+            it.printf(120, 90, id(icon_font_55), yellow, "\U000F06E8");
+          } else {
+            it.printf(120, 90, id(icon_font_55), light_blue, "\U000F0335");
+          }
+          it.printf(160, 143, id(my_font), white, TextAlign::CENTER, "Desk");
+          // Basement Floor Light - top right
+          if (id(basement_floor_light_state).state == "on") {
+            it.printf(220, 90, id(icon_font_55), yellow, "\U000F06E8");
+          } else {
+            it.printf(220, 90, id(icon_font_55), light_blue, "\U000F0335");
+          }
+          it.printf(265, 143, id(my_font), white, TextAlign::CENTER, "Floor");
+          // Backdoor Light - bottom left
+          if (id(backdoor_light_state).state == "on") {
+            it.printf(20, 175, id(icon_font_55), yellow, "\U000F06E8");
+          } else {
+            it.printf(20, 175, id(icon_font_55), light_blue, "\U000F0335");
+          }
+          it.printf(55, 223, id(my_font), white, TextAlign::CENTER, "Backdoor");
 
       - id: media_page ##### media player page #####
         lambda: |-
@@ -2879,14 +2925,15 @@ binary_sensor:
     x_max: 105
     y_min: 90
     y_max: 170
-          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
-
-        # - component.update: s3_box_lcd
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: light.toggle
+            data:
+              entity_id: light.bookcase_bloom
+        - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
@@ -2896,14 +2943,15 @@ binary_sensor:
     x_max: 210
     y_min: 90
     y_max: 170
-          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
-
-        # - component.update: s3_box_lcd
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: light.toggle
+            data:
+              entity_id: light.desk_bloom
+        - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
@@ -2913,14 +2961,15 @@ binary_sensor:
     x_max: 315
     y_min: 90
     y_max: 170
-          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
-
-        # - component.update: s3_box_lcd
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: light.toggle
+            data:
+              entity_id: light.basement_floor_light
+        - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
@@ -2930,14 +2979,15 @@ binary_sensor:
     x_max: 105
     y_min: 175
     y_max: 240
-          #### make sure that the following 4 lines are uncommented by removing the prefixed '#' ###
-    # on_click:
-      # min_length: 10ms
-      # max_length: 500ms
-      # then:
-      #### add your action here - make sure to uncomment the following  line by removing the prefixed '#' and keep these below your action #####
-
-        # - component.update: s3_box_lcd
+    on_click:
+      min_length: 10ms
+      max_length: 500ms
+      then:
+        - homeassistant.service:
+            service: switch.toggle
+            data:
+              entity_id: switch.backdoor_light
+        - component.update: s3_box_lcd
 
   - platform: touchscreen
     page_id: lights_page
