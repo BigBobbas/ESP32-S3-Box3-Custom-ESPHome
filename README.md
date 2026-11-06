@@ -65,3 +65,24 @@ Click [here](<https://github.com/BigBobbas/ESP32-S3-Box3-Custom-ESPHome/blob/mai
 
 ### I really hope you enjoy this project and I thank you for your support. If you have found this project useful and would like to buy me a coffee then the link is below ❤️<br>
 <a href="https://www.buymeacoffee.com/BigBobba" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+---
+
+## Licensing
+
+The ESPHome configuration, scripts and documentation authored in this repository are released under the [MIT License](LICENSE). You are free to use, modify and redistribute them, including in commercial projects, provided the copyright notice and permission notice are retained.
+
+The MIT License covers the work authored here. It does **not** relicense the third-party assets bundled in this repository, which remain subject to the terms of their respective owners:
+
+| Asset | Origin | Licence |
+| --- | --- | --- |
+| `fonts/DSEG7Classic-Regular.ttf`<br>`fonts/DSEG14Classic-Regular.ttf` | DSEG, by keshikan | [SIL Open Font License 1.1](https://github.com/keshikan/DSEG/blob/master/LICENSE-DSEG.txt) |
+| `fonts/materialdesignicons-webfont.ttf` | Material Design Icons, by Pictogrammers | [Apache License 2.0](https://pictogrammers.com/docs/general/license/) (icons in the Brand/Logos category are excluded) |
+| `fonts/consola.ttf` (Consolas)<br>`fonts/RAVIE.TTF` (Ravie) | Microsoft | Proprietary — not licensed for redistribution, see the note below |
+| `fonts/clock.TTF` | Provenance not recorded | Unknown |
+
+### A note on the bundled fonts
+
+Consolas and Ravie are supplied with Microsoft Windows and Office and are not free to redistribute. They are present in this repository only because they were used while building the display layouts. If you intend to fork, repackage or redistribute this project, please substitute a freely licensed font or source these from your own licensed Windows installation, rather than relying on the copies here.
+
+The provenance of every file in `sounds/` and `images/` has not been recorded, so please satisfy yourself as to their origin before redistributing them.
