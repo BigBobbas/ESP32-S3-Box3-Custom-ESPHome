@@ -56,7 +56,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2025.2.0
+  min_version: 2026.1.0
   on_boot:
     priority: 600
     then:
@@ -247,13 +247,13 @@ script:
           then:
             - if:
                 condition:
-                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                  lambda: return id(wake_word_engine_location).current_option() == "In Home Assistant";
                 then:
                   - lambda: id(va).set_use_wake_word(true);
                   - voice_assistant.start_continuous:
             - if:
                 condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
+                  lambda: return id(wake_word_engine_location).current_option() == "On device";
                 then:
                   - lambda: id(va).set_use_wake_word(false);
                   - micro_wake_word.start
@@ -262,13 +262,13 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+            lambda: return id(wake_word_engine_location).current_option() == "In Home Assistant";
           then:
             - lambda: id(va).set_use_wake_word(false);
             - voice_assistant.stop:
       - if:
           condition:
-            lambda: return id(wake_word_engine_location).state == "On device";
+            lambda: return id(wake_word_engine_location).current_option() == "On device";
           then:
             - voice_assistant.stop:
             - micro_wake_word.stop:
@@ -589,14 +589,14 @@ switch:
           then:
             - if:
                 condition:
-                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                  lambda: return id(wake_word_engine_location).current_option() == "In Home Assistant";
                 then:
                   - lambda: id(va).set_use_wake_word(true);
                   - delay: 50ms
                   - voice_assistant.start_continuous
             - if:
                 condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
+                  lambda: return id(wake_word_engine_location).current_option() == "On device";
                 then:
                   - lambda: id(va).set_use_wake_word(false);
                   - micro_wake_word.start
@@ -658,7 +658,7 @@ switch:
           announcement: true
       - if:
           condition:
-            lambda: return id(wake_word_engine_location).state == "On device";
+            lambda: return id(wake_word_engine_location).current_option() == "On device";
           then:
             - lambda: id(va).set_use_wake_word(false);
             - micro_wake_word.start
@@ -989,7 +989,7 @@ media_player:
                   condition:
                     and:
                       - switch.is_off: mute_switch
-                      - lambda: return id(wake_word_engine_location).state == "On device";
+                      - lambda: return id(wake_word_engine_location).current_option() == "On device";
                   then:
                     - micro_wake_word.start
                   else:
@@ -1201,7 +1201,7 @@ voice_assistant:
         condition:
           and:
             - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
+            - lambda: return id(wake_word_engine_location).current_option() == "On device";
         then:
           - voice_assistant.stop
           - micro_wake_word.start
@@ -1232,7 +1232,7 @@ voice_assistant:
         condition:
           and:
             - switch.is_off: mute_switch
-            - lambda: return id(wake_word_engine_location).state == "On device";
+            - lambda: return id(wake_word_engine_location).current_option() == "On device";
         then:
           - micro_wake_word.start
         else:
